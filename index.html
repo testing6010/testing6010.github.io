@@ -88,11 +88,11 @@
                 
                 <div v-if="!isExamTime" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
                     <p v-if="timeUntilStart > 0">El examen comenzará en: <span class="exam-countdown">{{ formatCountdown(timeUntilStart) }}</span></p>
-                    <p v-else>El examen ha finalizado. El próximo examen estará disponible mañana a las {{ examConfig.startTime }}.</p>
+                    <p v-else-if="timeUntilEnd <= 0">El examen ha finalizado. El próximo examen estará disponible mañana a las {{ examConfig.startTime }}.</p>
                     <p>Horario permitido: {{ examConfig.startTime }} - {{ examConfig.endTime }}</p>
                 </div>
                 
-                <div v-if="hasCompletedExam" class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4">
+                <div v-if="hasCompletedExam && isExamTime" class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4">
                     <p class="font-bold">¡Ya has completado el examen!</p>
                     <p>Tu calificación fue: <span class="font-bold">{{ lastExamScore }}%</span></p>
                     <button 
@@ -106,7 +106,7 @@
                     <input 
                         v-model="enteredCode" 
                         @keyup.enter="verifyCode"
-                        :disabled="isCodeBlocked || !isExamTime || hasCompletedExam"
+                        :disabled="isCodeBlocked || !isExamTime || (hasCompletedExam && isExamTime)"
                         type="text" 
                         class="w-full max-w-xs px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-lg"
                         placeholder="Código de acceso">
@@ -118,7 +118,7 @@
                     
                     <button 
                         @click="verifyCode"
-                        :disabled="isCodeBlocked || !isExamTime || hasCompletedExam"
+                        :disabled="isCodeBlocked || !isExamTime || (hasCompletedExam && isExamTime)"
                         class="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400">
                         Continuar
                     </button>
@@ -340,7 +340,7 @@
                 
                 // Configuración del examen
                 const examConfig = ref({
-                    startTime: '15:03',
+                    startTime: '15:21',
                     endTime: '18:00',
                     duration: 30, // minutos
                     numQuestions: 15
@@ -779,6 +779,17 @@
                     
                     timeUntilStart.value = Math.max(0, startTime - now);
                     timeUntilEnd.value = Math.max(0, endTime - now);
+                    
+                    // Si el examen acaba de comenzar, actualizar el estado
+                    if (timeUntilStart.value <= 0 && isExamTime.value) {
+                        // Limpiar el estado de examen completado si es necesario
+                        if (currentUser.value && currentUser.value.codigo !== 'ADMIN') {
+                            const examCompletedCookie = Cookies.get(`completed_${currentUser.value.codigo}`);
+                            if (!examCompletedCookie) {
+                                hasCompletedExam.value = false;
+                            }
+                        }
+                    }
                 };
                 
                 const startTimeChecker = () => {
@@ -791,6 +802,9 @@
                     timeUpdateInterval.value = setInterval(() => {
                         updateTimeUntilStart();
                     }, 1000);
+                    
+                    // Ejecutar inmediatamente al inicio
+                    updateTimeUntilStart();
                 };
                 
                 const shuffleArray = (array) => {
@@ -807,8 +821,15 @@
                     if (newVal <= 0 && isExamTime.value) {
                         // Forzar actualización del estado cuando es hora del examen
                         currentScreen.value = 'code';
+                        // Limpiar el estado de examen completado si es necesario
+                        if (currentUser.value && currentUser.value.codigo !== 'ADMIN') {
+                            const examCompletedCookie = Cookies.get(`completed_${currentUser.value.codigo}`);
+                            if (!examCompletedCookie) {
+                                hasCompletedExam.value = false;
+                            }
+                        }
                     }
-                });
+                }, { immediate: true });
 
                 // Inicialización
                 onMounted(() => {
@@ -822,9 +843,6 @@
                     
                     // Iniciar el verificador de tiempo del examen
                     startTimeChecker();
-                    
-                    // Calcular tiempo inicial
-                    updateTimeUntilStart();
                 });
 
                 // Limpieza
