@@ -7,6 +7,7 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
+    <!-- Tailwind CSS from CDN (for development only) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .fade-enter-active, .fade-leave-active {
@@ -294,7 +295,7 @@
                                        'text-green-600 font-medium': answer.correct,
                                        'text-red-600': !answer.correct && userAnswers[qIndex] === aIndex
                                    }">
-                                   {{ String.fromCharCode(65 + aIndex) }) {{ answer.text }}
+                                   {{ String.fromCharCode(65 + aIndex) + ') ' + answer.text }}
                                    <span v-if="!answer.correct && userAnswers[qIndex] === aIndex" class="ml-2">← Tu respuesta</span>
                                 </p>
                             </div>
@@ -339,7 +340,7 @@
                 
                 // Configuración del examen
                 const examConfig = ref({
-                    startTime: '13:52',
+                    startTime: '14:17',
                     endTime: '18:00',
                     duration: 30, // minutos
                     numQuestions: 15
