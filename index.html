@@ -340,7 +340,7 @@
                 
                 // Configuración del examen
                 const examConfig = ref({
-                    startTime: '15:21',
+                    startTime: '15:40',
                     endTime: '18:00',
                     duration: 30, // minutos
                     numQuestions: 15
@@ -465,6 +465,13 @@
 
                 // Métodos
                 const verifyCode = () => {
+                    // Si el examen no ha comenzado pero el contador ya llegó a cero
+                    if (!isExamTime.value && timeUntilStart.value <= 0) {
+                        // Forzar actualización del estado del examen
+                        updateTimeUntilStart();
+                        return;
+                    }
+                    
                     if (isCodeBlocked.value) return;
                     
                     const user = users.value.find(u => u.codigo === enteredCode.value);
@@ -780,13 +787,16 @@
                     timeUntilStart.value = Math.max(0, startTime - now);
                     timeUntilEnd.value = Math.max(0, endTime - now);
                     
-                    // Si el examen acaba de comenzar, actualizar el estado
+                    // Cuando el examen comienza, restablecer el estado del usuario
                     if (timeUntilStart.value <= 0 && isExamTime.value) {
-                        // Limpiar el estado de examen completado si es necesario
-                        if (currentUser.value && currentUser.value.codigo !== 'ADMIN') {
+                        // Solo restablecer si no es admin y no está actualmente en el examen
+                        if (currentUser.value && currentUser.value.codigo !== 'ADMIN' && currentScreen.value !== 'exam') {
                             const examCompletedCookie = Cookies.get(`completed_${currentUser.value.codigo}`);
-                            if (!examCompletedCookie) {
+                            // Restablecer solo si no ha completado el examen aún
+                            if (examCompletedCookie !== 'true') {
                                 hasCompletedExam.value = false;
+                                enteredCode.value = '';
+                                currentUser.value = null;
                             }
                         }
                     }
@@ -821,11 +831,14 @@
                     if (newVal <= 0 && isExamTime.value) {
                         // Forzar actualización del estado cuando es hora del examen
                         currentScreen.value = 'code';
-                        // Limpiar el estado de examen completado si es necesario
+                        
+                        // Si el usuario ya estaba en la pantalla de código, forzar recarga de estado
                         if (currentUser.value && currentUser.value.codigo !== 'ADMIN') {
                             const examCompletedCookie = Cookies.get(`completed_${currentUser.value.codigo}`);
-                            if (!examCompletedCookie) {
+                            if (examCompletedCookie !== 'true') {
                                 hasCompletedExam.value = false;
+                                enteredCode.value = '';
+                                currentUser.value = null;
                             }
                         }
                     }
