@@ -36,6 +36,12 @@
             background-color: #dbeafe !important;
             border-color: #3b82f6 !important;
         }
+        .exam-countdown {
+            font-family: monospace;
+            font-size: 1.2rem;
+            color: #3b82f6;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -80,14 +86,19 @@
                 <h1 class="text-2xl font-bold text-center mb-6 text-blue-600">Ingrese su código de acceso</h1>
                 
                 <div v-if="!isExamTime" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
-                    <p v-if="timeUntilStart > 0">El examen comenzará en: <span class="font-bold">{{ formatCountdown(timeUntilStart) }}</span></p>
+                    <p v-if="timeUntilStart > 0">El examen comenzará en: <span class="exam-countdown">{{ formatCountdown(timeUntilStart) }}</span></p>
                     <p v-else>El examen ha finalizado. El próximo examen estará disponible mañana a las {{ examConfig.startTime }}.</p>
                     <p>Horario permitido: {{ examConfig.startTime }} - {{ examConfig.endTime }}</p>
                 </div>
                 
                 <div v-if="hasCompletedExam" class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4">
-                    <p class="font-bold">Ya has completado el examen.</p>
-                    <p>Puedes descargar tus resultados en la sección de calificaciones.</p>
+                    <p class="font-bold">¡Ya has completado el examen!</p>
+                    <p>Tu calificación fue: <span class="font-bold">{{ lastExamScore }}%</span></p>
+                    <button 
+                        @click="downloadPreviousExam"
+                        class="mt-2 px-4 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                        Descargar resultados nuevamente
+                    </button>
                 </div>
                 
                 <div class="flex flex-col items-center">
@@ -164,7 +175,7 @@
                 <div class="flex justify-between items-center mb-6">
                     <div>
                         <h1 class="text-2xl font-bold text-blue-600">Examen Interactivo</h1>
-                        <p class="text-sm text-gray-500">Tiempo restante: {{ formatTime(timeLeft) }}</p>
+                        <p class="text-sm text-gray-500">Tiempo restante: <span class="font-bold">{{ formatTime(timeLeft) }}</span></p>
                     </div>
                     <div class="flex items-center space-x-2">
                         <div class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
@@ -291,9 +302,9 @@
                     </div>
                 </div>
                 
-                <div class="flex justify-center space-x-4">
+                <div class="flex justify-center">
                     <button 
-                        @click="generatePDF"
+                        @click="downloadResults"
                         class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -301,6 +312,16 @@
                         Descargar PDF
                     </button>
                 </div>
+            </div>
+        </transition>
+
+        <!-- Notificación de descarga -->
+        <transition name="fade">
+            <div v-if="showDownloadNotification" class="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>PDF descargado correctamente</span>
             </div>
         </transition>
     </div>
@@ -318,7 +339,7 @@
                 
                 // Configuración del examen
                 const examConfig = ref({
-                    startTime: '12:28',
+                    startTime: '13:08',
                     endTime: '18:00',
                     duration: 30, // minutos
                     numQuestions: 15
@@ -383,7 +404,7 @@
                 ]);
                 
                 // Variables de estado
-                const currentScreen = ref('code'); // code, user-info, exam, results
+                const currentScreen = ref('code');
                 const enteredCode = ref('');
                 const isCodeBlocked = ref(false);
                 const countdown = ref(5);
@@ -407,6 +428,9 @@
                 const timeUntilStart = ref(0);
                 const timeUntilEnd = ref(0);
                 const hasCompletedExam = ref(false);
+                const lastExamScore = ref(0);
+                const showDownloadNotification = ref(false);
+                const examResults = ref(null);
 
                 // Computed properties
                 const currentQuestion = computed(() => selectedQuestions.value[currentQuestionIndex.value]);
@@ -459,8 +483,12 @@
                         
                         // Verificar si ya completó el examen
                         const examCompletedCookie = Cookies.get(`completed_${user.codigo}`);
-                        if (examCompletedCookie === 'true') {
+                        const examResultsCookie = Cookies.get(`results_${user.codigo}`);
+                        
+                        if (examCompletedCookie === 'true' && examResultsCookie) {
                             hasCompletedExam.value = true;
+                            examResults.value = JSON.parse(examResultsCookie);
+                            lastExamScore.value = examResults.value.score;
                             return;
                         }
                         
@@ -583,22 +611,39 @@
                     stopTimer();
                     currentScreen.value = 'results';
                     examCompleted.value = true;
+                    lastExamScore.value = score.value;
+                    
+                    // Guardar resultados del examen
+                    examResults.value = {
+                        userId: currentUser.value.codigo,
+                        nombre: currentUser.value.nombre,
+                        ci: currentUser.value.ci,
+                        correo: currentUser.value.correo,
+                        attempt: attemptNumber.value,
+                        score: score.value,
+                        correctAnswers: correctAnswers.value,
+                        totalQuestions: selectedQuestions.value.length,
+                        time: elapsedTime.value,
+                        date: new Date().toISOString(),
+                        answers: userAnswers.value
+                    };
                     
                     // Marcar como completado en la cookie
                     Cookies.set(`completed_${currentUser.value.codigo}`, 'true', { 
                         expires: 365 // 1 año
                     });
+                    
+                    // Guardar resultados completos en cookie
+                    Cookies.set(`results_${currentUser.value.codigo}`, JSON.stringify(examResults.value), { 
+                        expires: 365 // 1 año
+                    });
+                    
                     hasCompletedExam.value = true;
                     
-                    // Guardar resultados (simulado)
-                    const results = {
-                        userId: currentUser.value.codigo,
-                        attempt: attemptNumber.value,
-                        score: score.value,
-                        time: elapsedTime.value,
-                        date: new Date().toISOString()
-                    };
-                    console.log('Resultados guardados:', results);
+                    // Descargar PDF automáticamente
+                    setTimeout(() => {
+                        generatePDF();
+                    }, 1000);
                 };
                 
                 const generatePDF = () => {
@@ -665,7 +710,31 @@
                         yPos += 5;
                     });
                     
-                    doc.save(`Resultado_Examen_${currentUser.value.nombre.replace(' ', '_')}_Intento_${attemptNumber.value}.pdf`);
+                    const filename = `Resultado_Examen_${currentUser.value.nombre.replace(' ', '_')}_Intento_${attemptNumber.value}.pdf`;
+                    doc.save(filename);
+                    
+                    // Mostrar notificación
+                    showDownloadNotification.value = true;
+                    setTimeout(() => {
+                        showDownloadNotification.value = false;
+                    }, 3000);
+                };
+                
+                const downloadResults = () => {
+                    generatePDF();
+                };
+                
+                const downloadPreviousExam = () => {
+                    if (!examResults.value) return;
+                    
+                    // Restaurar datos del examen anterior
+                    selectedQuestions.value = questionBank.value.slice(0, examResults.value.totalQuestions);
+                    userAnswers.value = examResults.value.answers;
+                    elapsedTime.value = examResults.value.time;
+                    attemptNumber.value = examResults.value.attempt;
+                    
+                    // Generar PDF con los resultados guardados
+                    generatePDF();
                 };
                 
                 const toggleAdmin = () => {
@@ -734,12 +803,6 @@
                     
                     // Iniciar el verificador de tiempo del examen
                     startExamTimeChecker();
-                    
-                    // Verificar si ya completó el examen
-                    if (currentUser.value) {
-                        const examCompletedCookie = Cookies.get(`completed_${currentUser.value.codigo}`);
-                        hasCompletedExam.value = examCompletedCookie === 'true';
-                    }
                 });
 
                 // Limpieza
@@ -772,6 +835,8 @@
                     timeUntilStart,
                     timeUntilEnd,
                     hasCompletedExam,
+                    lastExamScore,
+                    showDownloadNotification,
                     developmentMode,
                     
                     // Computed
@@ -789,7 +854,8 @@
                     checkAnswer,
                     nextQuestion,
                     prevQuestion,
-                    generatePDF,
+                    downloadResults,
+                    downloadPreviousExam,
                     formatTime,
                     formatCountdown,
                     toggleAdmin,
