@@ -340,7 +340,7 @@
                 
                 // Configuración del examen
                 const examConfig = ref({
-                    startTime: '15:40',
+                    startTime: '15:52',
                     endTime: '18:00',
                     duration: 30, // minutos
                     numQuestions: 15
@@ -465,10 +465,12 @@
 
                 // Métodos
                 const verifyCode = () => {
-                    // Si el examen no ha comenzado pero el contador ya llegó a cero
-                    if (!isExamTime.value && timeUntilStart.value <= 0) {
-                        // Forzar actualización del estado del examen
+                    // Forzar actualización del estado si el contador llegó a cero
+                    if (timeUntilStart.value <= 0) {
                         updateTimeUntilStart();
+                    }
+                    
+                    if (!isExamTime.value) {
                         return;
                     }
                     
@@ -787,12 +789,17 @@
                     timeUntilStart.value = Math.max(0, startTime - now);
                     timeUntilEnd.value = Math.max(0, endTime - now);
                     
-                    // Cuando el examen comienza, restablecer el estado del usuario
-                    if (timeUntilStart.value <= 0 && isExamTime.value) {
-                        // Solo restablecer si no es admin y no está actualmente en el examen
-                        if (currentUser.value && currentUser.value.codigo !== 'ADMIN' && currentScreen.value !== 'exam') {
+                    // Cuando el examen comienza, restablecer el estado
+                    if (timeUntilStart.value <= 0 && timeUntilEnd.value > 0) {
+                        // Forzar actualización del estado isExamTime
+                        if (!isExamTime.value) {
+                            // Esto activará el watcher de isExamTime
+                            currentScreen.value = 'code';
+                        }
+                        
+                        // Limpiar estado del usuario si no ha completado el examen
+                        if (currentUser.value && currentUser.value.codigo !== 'ADMIN') {
                             const examCompletedCookie = Cookies.get(`completed_${currentUser.value.codigo}`);
-                            // Restablecer solo si no ha completado el examen aún
                             if (examCompletedCookie !== 'true') {
                                 hasCompletedExam.value = false;
                                 enteredCode.value = '';
@@ -826,21 +833,18 @@
                     return newArray;
                 };
 
-                // Watcher para actualizar automáticamente cuando termina la cuenta regresiva
-                watch(timeUntilStart, (newVal) => {
-                    if (newVal <= 0 && isExamTime.value) {
-                        // Forzar actualización del estado cuando es hora del examen
-                        currentScreen.value = 'code';
-                        
-                        // Si el usuario ya estaba en la pantalla de código, forzar recarga de estado
-                        if (currentUser.value && currentUser.value.codigo !== 'ADMIN') {
-                            const examCompletedCookie = Cookies.get(`completed_${currentUser.value.codigo}`);
-                            if (examCompletedCookie !== 'true') {
-                                hasCompletedExam.value = false;
-                                enteredCode.value = '';
-                                currentUser.value = null;
-                            }
+                // Watchers
+                watch(isExamTime, (newVal) => {
+                    if (newVal) {
+                        if (currentScreen.value !== 'exam' && currentScreen.value !== 'user-info') {
+                            currentScreen.value = 'code';
                         }
+                    }
+                });
+
+                watch(timeUntilStart, (newVal) => {
+                    if (newVal <= 0) {
+                        updateTimeUntilStart();
                     }
                 }, { immediate: true });
 
