@@ -340,7 +340,7 @@
                 
                 // Configuración del examen
                 const examConfig = ref({
-                    startTime: '14:17',
+                    startTime: '14:42',
                     endTime: '18:00',
                     duration: 30, // minutos
                     numQuestions: 15
@@ -432,6 +432,7 @@
                 const lastExamScore = ref(0);
                 const showDownloadNotification = ref(false);
                 const examResults = ref(null);
+                const timeUpdateInterval = ref(null);
 
                 // Computed properties
                 const currentQuestion = computed(() => selectedQuestions.value[currentQuestionIndex.value]);
@@ -459,10 +460,6 @@
                     
                     const endTime = new Date();
                     endTime.setHours(endHours, endMins, 0, 0);
-                    
-                    // Calcular tiempo restante
-                    timeUntilStart.value = Math.max(0, startTime - now);
-                    timeUntilEnd.value = Math.max(0, endTime - now);
                     
                     return now >= startTime && now <= endTime;
                 });
@@ -770,16 +767,30 @@
                     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
                 };
                 
-                const startExamTimeChecker = () => {
+                const updateTimeUntilStart = () => {
+                    const now = new Date();
+                    const [startHours, startMins] = examConfig.value.startTime.split(':').map(Number);
+                    const [endHours, endMins] = examConfig.value.endTime.split(':').map(Number);
+                    
+                    const startTime = new Date();
+                    startTime.setHours(startHours, startMins, 0, 0);
+                    
+                    const endTime = new Date();
+                    endTime.setHours(endHours, endMins, 0, 0);
+                    
+                    timeUntilStart.value = Math.max(0, startTime - now);
+                    timeUntilEnd.value = Math.max(0, endTime - now);
+                };
+                
+                const startTimeChecker = () => {
                     // Limpiar intervalo existente
-                    if (examTimeCheckInterval.value) {
-                        clearInterval(examTimeCheckInterval.value);
+                    if (timeUpdateInterval.value) {
+                        clearInterval(timeUpdateInterval.value);
                     }
                     
-                    // Verificar cada segundo
-                    examTimeCheckInterval.value = setInterval(() => {
-                        // Forzar la actualización del computed property
-                        isExamTime.value;
+                    // Actualizar el tiempo restante cada segundo
+                    timeUpdateInterval.value = setInterval(() => {
+                        updateTimeUntilStart();
                     }, 1000);
                 };
                 
@@ -803,14 +814,17 @@
                     }
                     
                     // Iniciar el verificador de tiempo del examen
-                    startExamTimeChecker();
+                    startTimeChecker();
+                    
+                    // Calcular tiempo inicial
+                    updateTimeUntilStart();
                 });
 
                 // Limpieza
                 onUnmounted(() => {
                     stopTimer();
-                    if (examTimeCheckInterval.value) {
-                        clearInterval(examTimeCheckInterval.value);
+                    if (timeUpdateInterval.value) {
+                        clearInterval(timeUpdateInterval.value);
                     }
                 });
 
