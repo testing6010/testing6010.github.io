@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datos de Excel a JSON</title>
+    <style>
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+
+    <h1>Datos de Excel (vía CSV y JSON)</h1>
+    <div id="data-container">Cargando datos...</div>
+
+    <script>
+        // ** Reemplaza esta URL con la URL CSV que obtuviste al publicar tu hoja de Google Sheets **
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS9gIdwtuBiRCFhaSVoYZfHphHCsYwtW9BuRdtlkYjhnG8nJhw_n3qaVMtlLuMKYYcv22NjJxnKSnF0/pub?output=csv'; 
+
+        async function fetchDataAndDisplay() {
+            try {
+                const response = await fetch(CSV_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const csvText = await response.text();
+
+                // Función para convertir CSV a JSON
+                const data = csvToJson(csvText);
+                console.log('Datos en formato JSON:', data); // Puedes ver el JSON en la consola del navegador
+
+                // Opcional: Mostrar los datos en una tabla HTML
+                displayDataAsTable(data);
+
+            } catch (error) {
+                console.error('Error al obtener o procesar los datos:', error);
+                document.getElementById('data-container').textContent = 'Error al cargar los datos.';
+            }
+        }
+
+        function csvToJson(csv) {
+            const lines = csv.split('\n');
+            const headers = lines[0].split(',').map(header => header.trim()); // Eliminar espacios en blanco
+            const result = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                const obj = {};
+                const currentline = lines[i].split(',');
+
+                // Asegurarse de que no haya líneas vacías al final del CSV
+                if (currentline.length === headers.length) { 
+                    for (let j = 0; j < headers.length; j++) {
+                        obj[headers[j]] = currentline[j].trim(); // Eliminar espacios en blanco en los valores
+                    }
+                    result.push(obj);
+                }
+            }
+            return result;
+        }
+
+        function displayDataAsTable(data) {
+            const container = document.getElementById('data-container');
+            if (data.length === 0) {
+                container.textContent = 'No hay datos para mostrar.';
+                return;
+            }
+
+            const table = document.createElement('table');
+            const thead = document.createElement('thead');
+            const tbody = document.createElement('tbody');
+
+            // Crear encabezados de tabla
+            const headerRow = document.createElement('tr');
+            Object.keys(data[0]).forEach(key => {
+                const th = document.createElement('th');
+                th.textContent = key;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            // Crear filas de datos
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                Object.values(item).forEach(value => {
+                    const td = document.createElement('td');
+                    td.textContent = value;
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+
+            container.innerHTML = ''; // Limpiar el mensaje "Cargando datos..."
+            container.appendChild(table);
+        }
+
+        // Ejecutar la función cuando la página cargue
+        fetchDataAndDisplay();
+    </script>
+
+</body>
+</html>
