@@ -3,103 +3,820 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Datos de Excel a JSON</title>
+    <title>Sistema de Examen Interactivo</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
+        .fade-enter-active, .fade-leave-active {
+            transition: opacity 0.5s ease;
+        }
+        .fade-enter-from, .fade-leave-to {
+            opacity: 0;
+        }
+        .countdown {
+            font-family: 'Arial', sans-serif;
+            font-size: 1.5rem;
+            color: #ef4444;
+            font-weight: bold;
+        }
+        .question-transition {
+            transition: all 0.3s ease;
+        }
+        .correct-answer {
+            background-color: #bbf7d0 !important;
+            border-color: #22c55e !important;
+        }
+        .wrong-answer {
+            background-color: #fecaca !important;
+            border-color: #ef4444 !important;
+        }
+        .selected-answer {
+            background-color: #dbeafe !important;
+            border-color: #3b82f6 !important;
+        }
     </style>
 </head>
-<body>
+<body class="bg-gray-100 min-h-screen">
+    <div id="app" class="container mx-auto p-4 max-w-4xl">
+        <!-- Pantalla de configuración (solo para administrador) -->
+        <transition name="fade">
+            <div v-if="showConfig && isAdmin" class="bg-white rounded-lg shadow-md p-6 mt-10 mb-10">
+                <h1 class="text-2xl font-bold text-center mb-6 text-blue-600">Configuración del Examen</h1>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-1">Hora de inicio:</label>
+                        <input v-model="examConfig.startTime" type="time" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-1">Hora de fin:</label>
+                        <input v-model="examConfig.endTime" type="time" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-1">Duración máxima (minutos):</label>
+                        <input v-model="examConfig.duration" type="number" min="1" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-1">Número de preguntas:</label>
+                        <input v-model="examConfig.numQuestions" type="number" min="5" max="50" class="w-full p-2 border rounded">
+                    </div>
+                </div>
+                
+                <div class="text-center mt-6">
+                    <button 
+                        @click="saveConfig"
+                        class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        Guardar Configuración
+                    </button>
+                </div>
+            </div>
+        </transition>
 
-    <h1>Datos de Excel (vía CSV y JSON)</h1>
-    <div id="data-container">Cargando datos...</div>
+        <!-- Pantalla de ingreso de código -->
+        <transition name="fade">
+            <div v-if="currentScreen === 'code'" class="bg-white rounded-lg shadow-md p-6 mt-10">
+                <h1 class="text-2xl font-bold text-center mb-6 text-blue-600">Ingrese su código de acceso</h1>
+                
+                <div v-if="!isExamTime" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
+                    <p>El examen no está disponible en este momento.</p>
+                    <p>Horario permitido: {{ examConfig.startTime }} - {{ examConfig.endTime }}</p>
+                </div>
+                
+                <div class="flex flex-col items-center">
+                    <input 
+                        v-model="enteredCode" 
+                        @keyup.enter="verifyCode"
+                        :disabled="isCodeBlocked || !isExamTime"
+                        type="text" 
+                        class="w-full max-w-xs px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-lg"
+                        placeholder="Código de acceso">
+                    
+                    <div v-if="isCodeBlocked" class="mt-4 text-center">
+                        <p class="text-red-500 mb-2">Código incorrecto. Espere:</p>
+                        <div class="countdown">{{ countdown }} segundos</div>
+                    </div>
+                    
+                    <button 
+                        @click="verifyCode"
+                        :disabled="isCodeBlocked || !isExamTime"
+                        class="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400">
+                        Continuar
+                    </button>
+                    
+                    <!-- Botón de administrador (solo para desarrollo) -->
+                    <button 
+                        v-if="developmentMode"
+                        @click="toggleAdmin"
+                        class="mt-4 px-4 py-1 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                        {{ isAdmin ? 'Desactivar Admin' : 'Activar Admin' }}
+                    </button>
+                </div>
+            </div>
+        </transition>
+
+        <!-- Pantalla de información del usuario -->
+        <transition name="fade">
+            <div v-if="currentScreen === 'user-info'" class="bg-white rounded-lg shadow-md p-6 mt-10">
+                <h1 class="text-2xl font-bold text-center mb-6 text-blue-600">Verifique su información</h1>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-1">Cédula:</label>
+                        <div class="p-2 bg-gray-50 rounded border">{{ currentUser.ci }}</div>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-1">Nombre:</label>
+                        <div class="p-2 bg-gray-50 rounded border">{{ currentUser.nombre }}</div>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-1">Correo:</label>
+                        <div class="p-2 bg-gray-50 rounded border">{{ currentUser.correo }}</div>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-1">Código:</label>
+                        <div class="p-2 bg-gray-50 rounded border">{{ currentUser.codigo }}</div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-6">
+                    <p class="mb-4">Por favor verifique que esta información es correcta antes de comenzar el examen.</p>
+                    <p class="text-sm text-gray-500 mb-4">Tiempo disponible para el examen: {{ examConfig.duration }} minutos</p>
+                    <button 
+                        @click="startExam"
+                        class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        Confirmar y comenzar examen
+                    </button>
+                </div>
+            </div>
+        </transition>
+
+        <!-- Pantalla de examen -->
+        <transition name="fade">
+            <div v-if="currentScreen === 'exam'" class="bg-white rounded-lg shadow-md p-6 mt-10">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h1 class="text-2xl font-bold text-blue-600">Examen Interactivo</h1>
+                        <p class="text-sm text-gray-500">Tiempo restante: {{ formatTime(timeLeft) }}</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
+                            Pregunta {{ currentQuestionIndex + 1 }} de {{ selectedQuestions.length }}
+                        </div>
+                        <div class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full">
+                            Intento #{{ attemptNumber }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-6 p-4 bg-gray-50 rounded-lg border">
+                    <p class="text-lg font-medium">{{ currentQuestion.text }}</p>
+                </div>
+                
+                <transition-group name="question-transition" tag="div" class="space-y-3">
+                    <div 
+                        v-for="(answer, index) in currentQuestion.answers" 
+                        :key="index"
+                        @click="selectAnswer(index)"
+                        :class="{
+                            'cursor-pointer p-3 border rounded-lg transition-colors': true,
+                            'selected-answer': selectedAnswer === index && !showFeedback,
+                            'correct-answer': showFeedback && answer.correct,
+                            'wrong-answer': showFeedback && selectedAnswer === index && !answer.correct
+                        }">
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 rounded-full border flex items-center justify-center mr-3"
+                                 :class="{
+                                     'border-blue-500': selectedAnswer === index && !showFeedback,
+                                     'border-green-500': showFeedback && answer.correct,
+                                     'border-red-500': showFeedback && selectedAnswer === index && !answer.correct
+                                 }">
+                                {{ String.fromCharCode(65 + index) }}
+                            </div>
+                            <span>{{ answer.text }}</span>
+                        </div>
+                    </div>
+                </transition-group>
+                
+                <div class="mt-6 flex justify-between">
+                    <button 
+                        @click="prevQuestion"
+                        :disabled="currentQuestionIndex === 0"
+                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50">
+                        Anterior
+                    </button>
+                    
+                    <div v-if="showFeedback" class="text-center">
+                        <p v-if="answerIsCorrect" class="text-green-600 font-medium">¡Correcto!</p>
+                        <p v-else class="text-red-600 font-medium">Incorrecto. La respuesta correcta es: {{ correctAnswerText }}</p>
+                    </div>
+                    
+                    <button 
+                        v-if="!showFeedback && selectedAnswer !== null"
+                        @click="checkAnswer"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Verificar
+                    </button>
+                    
+                    <button 
+                        v-if="showFeedback"
+                        @click="nextQuestion"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        {{ isLastQuestion ? 'Finalizar examen' : 'Siguiente' }}
+                    </button>
+                </div>
+                
+                <div class="mt-6 bg-gray-100 p-3 rounded-lg">
+                    <div class="w-full bg-gray-300 rounded-full h-2.5">
+                        <div 
+                            class="bg-blue-600 h-2.5 rounded-full" 
+                            :style="{ width: `${(currentQuestionIndex / selectedQuestions.length) * 100}%` }"></div>
+                    </div>
+                    <div class="flex justify-between mt-2 text-sm text-gray-600">
+                        <span>Progreso: {{ Math.round((currentQuestionIndex / selectedQuestions.length) * 100) }}%</span>
+                        <span>Tiempo transcurrido: {{ formatTime(elapsedTime) }}</span>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- Pantalla de resultados -->
+        <transition name="fade">
+            <div v-if="currentScreen === 'results'" class="bg-white rounded-lg shadow-md p-6 mt-10">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold text-blue-600 mb-2">Resultados del Examen</h1>
+                    <p class="text-lg">Gracias por completar el examen, {{ currentUser.nombre }}!</p>
+                    <p class="text-sm text-gray-500">Intento #{{ attemptNumber }} - {{ new Date().toLocaleString() }}</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-blue-50 p-4 rounded-lg text-center">
+                        <div class="text-4xl font-bold text-blue-600">{{ score }}</div>
+                        <div class="text-gray-600">Puntuación</div>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg text-center">
+                        <div class="text-4xl font-bold text-green-600">{{ correctAnswers }}</div>
+                        <div class="text-gray-600">Respuestas correctas</div>
+                    </div>
+                    <div class="bg-purple-50 p-4 rounded-lg text-center">
+                        <div class="text-4xl font-bold text-purple-600">{{ formatTime(elapsedTime) }}</div>
+                        <div class="text-gray-600">Tiempo empleado</div>
+                    </div>
+                </div>
+                
+                <div class="mb-8">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800">Detalle de respuestas</h2>
+                    <div class="space-y-4">
+                        <div v-for="(question, qIndex) in selectedQuestions" :key="qIndex" class="border-b pb-4">
+                            <p class="font-medium mb-2">{{ qIndex + 1 }}. {{ question.text }}</p>
+                            <div class="ml-4">
+                                <p v-for="(answer, aIndex) in question.answers" 
+                                   :key="aIndex"
+                                   :class="{
+                                       'text-green-600 font-medium': answer.correct,
+                                       'text-red-600': !answer.correct && userAnswers[qIndex] === aIndex
+                                   }">
+                                   {{ String.fromCharCode(65 + aIndex) }}) {{ answer.text }}
+                                   <span v-if="!answer.correct && userAnswers[qIndex] === aIndex" class="ml-2">← Tu respuesta</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-center space-x-4">
+                    <button 
+                        @click="generatePDF"
+                        class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Descargar PDF
+                    </button>
+                    
+                    <button 
+                        v-if="canRetakeExam && isExamTime"
+                        @click="retakeExam"
+                        class="px-6 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors">
+                        Realizar otro examen
+                    </button>
+                </div>
+            </div>
+        </transition>
+    </div>
 
     <script>
-        // ** Reemplaza esta URL con la URL CSV que obtuviste al publicar tu hoja de Google Sheets **
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS9gIdwtuBiRCFhaSVoYZfHphHCsYwtW9BuRdtlkYjhnG8nJhw_n3qaVMtlLuMKYYcv22NjJxnKSnF0/pub?output=csv'; 
-
-        async function fetchDataAndDisplay() {
-            try {
-                const response = await fetch(CSV_URL);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const csvText = await response.text();
-
-                // Función para convertir CSV a JSON
-                const data = csvToJson(csvText);
-                console.log('Datos en formato JSON:', data); // Puedes ver el JSON en la consola del navegador
-
-                // Opcional: Mostrar los datos en una tabla HTML
-                displayDataAsTable(data);
-
-            } catch (error) {
-                console.error('Error al obtener o procesar los datos:', error);
-                document.getElementById('data-container').textContent = 'Error al cargar los datos.';
-            }
-        }
-
-        function csvToJson(csv) {
-            const lines = csv.split('\n');
-            const headers = lines[0].split(',').map(header => header.trim()); // Eliminar espacios en blanco
-            const result = [];
-
-            for (let i = 1; i < lines.length; i++) {
-                const obj = {};
-                const currentline = lines[i].split(',');
-
-                // Asegurarse de que no haya líneas vacías al final del CSV
-                if (currentline.length === headers.length) { 
-                    for (let j = 0; j < headers.length; j++) {
-                        obj[headers[j]] = currentline[j].trim(); // Eliminar espacios en blanco en los valores
-                    }
-                    result.push(obj);
-                }
-            }
-            return result;
-        }
-
-        function displayDataAsTable(data) {
-            const container = document.getElementById('data-container');
-            if (data.length === 0) {
-                container.textContent = 'No hay datos para mostrar.';
-                return;
-            }
-
-            const table = document.createElement('table');
-            const thead = document.createElement('thead');
-            const tbody = document.createElement('tbody');
-
-            // Crear encabezados de tabla
-            const headerRow = document.createElement('tr');
-            Object.keys(data[0]).forEach(key => {
-                const th = document.createElement('th');
-                th.textContent = key;
-                headerRow.appendChild(th);
-            });
-            thead.appendChild(headerRow);
-            table.appendChild(thead);
-
-            // Crear filas de datos
-            data.forEach(item => {
-                const tr = document.createElement('tr');
-                Object.values(item).forEach(value => {
-                    const td = document.createElement('td');
-                    td.textContent = value;
-                    tr.appendChild(td);
+        const { createApp, ref, computed, onMounted, onUnmounted } = Vue;
+        const { jsPDF } = window.jspdf;
+        
+        createApp({
+            setup() {
+                // Modo desarrollo (para testing local)
+                const developmentMode = window.location.href.startsWith('file://') || 
+                                      window.location.hostname === 'localhost' || 
+                                      window.location.hostname === '127.0.0.1';
+                
+                // Configuración del examen
+                const examConfig = ref({
+                    startTime: '12:10',
+                    endTime: '18:00',
+                    duration: 30, // minutos
+                    numQuestions: 15
                 });
-                tbody.appendChild(tr);
-            });
-            table.appendChild(tbody);
-
-            container.innerHTML = ''; // Limpiar el mensaje "Cargando datos..."
-            container.appendChild(table);
-        }
-
-        // Ejecutar la función cuando la página cargue
-        fetchDataAndDisplay();
+                
+                // Datos de usuarios (simulando una base de datos)
+                const users = ref([
+                    { ci: '12345678', nombre: 'Juan Pérez', correo: 'juan@example.com', codigo: 'ABC123' },
+                    { ci: '87654321', nombre: 'María García', correo: 'maria@example.com', codigo: 'DEF456' },
+                    { ci: '45678912', nombre: 'Carlos López', correo: 'carlos@example.com', codigo: 'GHI789' },
+                    { ci: '00000000', nombre: 'Administrador', correo: 'admin@example.com', codigo: 'ADMIN' }
+                ]);
+                
+                // Banco completo de preguntas (50 preguntas)
+                const questionBank = ref([
+                    {
+                        text: "¿Cuál es la capital de Francia?",
+                        answers: [
+                            { text: "Madrid", correct: false },
+                            { text: "París", correct: true },
+                            { text: "Berlín", correct: false },
+                            { text: "Roma", correct: false }
+                        ]
+                    },
+                    {
+                        text: "¿En qué año llegó el hombre a la Luna?",
+                        answers: [
+                            { text: "1965", correct: false },
+                            { text: "1969", correct: true },
+                            { text: "1972", correct: false },
+                            { text: "1958", correct: false }
+                        ]
+                    },
+                    {
+                        text: "¿Cuál es el río más largo del mundo?",
+                        answers: [
+                            { text: "Nilo", correct: false },
+                            { text: "Amazonas", correct: true },
+                            { text: "Yangtsé", correct: false },
+                            { text: "Misisipi", correct: false }
+                        ]
+                    },
+                    {
+                        text: "¿Qué elemento químico tiene el símbolo 'O'?",
+                        answers: [
+                            { text: "Oro", correct: false },
+                            { text: "Osmio", correct: false },
+                            { text: "Oxígeno", correct: true },
+                            { text: "Oganesón", correct: false }
+                        ]
+                    },
+                    {
+                        text: "¿Quién pintó la Mona Lisa?",
+                        answers: [
+                            { text: "Pablo Picasso", correct: false },
+                            { text: "Vincent van Gogh", correct: false },
+                            { text: "Leonardo da Vinci", correct: true },
+                            { text: "Miguel Ángel", correct: false }
+                        ]
+                    },
+                    // ... (añadir más preguntas hasta 50)
+                ]);
+                
+                // Variables de estado
+                const currentScreen = ref('code'); // code, user-info, exam, results
+                const enteredCode = ref('');
+                const isCodeBlocked = ref(false);
+                const countdown = ref(5);
+                const currentUser = ref(null);
+                const selectedQuestions = ref([]);
+                const currentQuestionIndex = ref(0);
+                const selectedAnswer = ref(null);
+                const showFeedback = ref(false);
+                const answerIsCorrect = ref(false);
+                const userAnswers = ref([]);
+                const examStartedAt = ref(null);
+                const elapsedTime = ref(0);
+                const timerInterval = ref(null);
+                const examCompleted = ref(false);
+                const retakeCode = ref('');
+                const attemptNumber = ref(1);
+                const isAdmin = ref(false);
+                const showConfig = ref(false);
+                const examEndTime = ref(null);
+                const timeLeft = ref(0);
+                
+                // Computed properties
+                const currentQuestion = computed(() => selectedQuestions.value[currentQuestionIndex.value]);
+                const isLastQuestion = computed(() => currentQuestionIndex.value === selectedQuestions.value.length - 1);
+                const correctAnswerText = computed(() => {
+                    const correctIndex = currentQuestion.value.answers.findIndex(a => a.correct);
+                    return String.fromCharCode(65 + correctIndex) + ") " + currentQuestion.value.answers[correctIndex].text;
+                });
+                const correctAnswers = computed(() => {
+                    return userAnswers.value.reduce((acc, answerIdx, qIdx) => {
+                        return acc + (selectedQuestions.value[qIdx].answers[answerIdx]?.correct ? 1 : 0);
+                    }, 0);
+                });
+                const score = computed(() => Math.round((correctAnswers.value / selectedQuestions.value.length) * 100));
+                const canRetakeExam = computed(() => retakeCode.value && !examCompleted.value);
+                const isExamTime = computed(() => {
+                    if (developmentMode && isAdmin.value) return true; // Admin siempre puede acceder en desarrollo
+                    
+                    const now = new Date();
+                    const [startHours, startMins] = examConfig.value.startTime.split(':').map(Number);
+                    const [endHours, endMins] = examConfig.value.endTime.split(':').map(Number);
+                    
+                    const startTime = new Date();
+                    startTime.setHours(startHours, startMins, 0, 0);
+                    
+                    const endTime = new Date();
+                    endTime.setHours(endHours, endMins, 0, 0);
+                    
+                    return now >= startTime && now <= endTime;
+                });
+                
+                // Métodos
+                const verifyCode = () => {
+                    if (isCodeBlocked.value) return;
+                    
+                    const user = users.value.find(u => u.codigo === enteredCode.value);
+                    if (user) {
+                        currentUser.value = user;
+                        
+                        // Verificar si es admin
+                        if (user.codigo === 'ADMIN') {
+                            isAdmin.value = true;
+                            showConfig.value = true;
+                            return;
+                        }
+                        
+                        // Verificar intentos previos con cookies
+                        const attemptCookie = Cookies.get(`attempt_${user.codigo}`);
+                        attemptNumber.value = attemptCookie ? parseInt(attemptCookie) + 1 : 1;
+                        
+                        currentScreen.value = 'user-info';
+                    } else {
+                        blockCodeInput();
+                    }
+                };
+                
+                const blockCodeInput = () => {
+                    isCodeBlocked.value = true;
+                    countdown.value = 5;
+                    
+                    const interval = setInterval(() => {
+                        countdown.value--;
+                        
+                        if (countdown.value <= 0) {
+                            clearInterval(interval);
+                            isCodeBlocked.value = false;
+                            enteredCode.value = '';
+                        }
+                    }, 1000);
+                };
+                
+                const startExam = () => {
+                    // Seleccionar preguntas aleatorias
+                    const numQuestions = Math.min(examConfig.value.numQuestions, questionBank.value.length);
+                    selectedQuestions.value = shuffleArray([...questionBank.value]).slice(0, numQuestions);
+                    
+                    // Mezclar respuestas para cada pregunta seleccionada
+                    selectedQuestions.value.forEach(q => {
+                        q.answers = shuffleArray(q.answers);
+                    });
+                    
+                    currentScreen.value = 'exam';
+                    examStartedAt.value = new Date();
+                    
+                    // Calcular hora de finalización
+                    const endTime = new Date(examStartedAt.value);
+                    endTime.setMinutes(endTime.getMinutes() + examConfig.value.duration);
+                    examEndTime.value = endTime;
+                    
+                    startTimer();
+                    userAnswers.value = [];
+                    
+                    // Guardar el número de intento en cookie (solo si no es localhost)
+                    if (!developmentMode) {
+                        Cookies.set(`attempt_${currentUser.value.codigo}`, attemptNumber.value, { 
+                            expires: 1, // 1 día
+                            secure: true,
+                            sameSite: 'strict'
+                        });
+                    }
+                };
+                
+                const startTimer = () => {
+                    elapsedTime.value = 0;
+                    updateTimeLeft();
+                    
+                    timerInterval.value = setInterval(() => {
+                        elapsedTime.value = Math.floor((new Date() - examStartedAt.value) / 1000);
+                        updateTimeLeft();
+                        
+                        // Finalizar automáticamente si se acaba el tiempo
+                        if (timeLeft.value <= 0) {
+                            finishExam();
+                        }
+                    }, 1000);
+                };
+                
+                const updateTimeLeft = () => {
+                    const now = new Date();
+                    timeLeft.value = Math.max(0, Math.floor((examEndTime.value - now) / 1000));
+                };
+                
+                const stopTimer = () => {
+                    if (timerInterval.value) {
+                        clearInterval(timerInterval.value);
+                        timerInterval.value = null;
+                    }
+                };
+                
+                const selectAnswer = (index) => {
+                    if (showFeedback.value) return;
+                    selectedAnswer.value = index;
+                };
+                
+                const checkAnswer = () => {
+                    if (selectedAnswer.value === null) return;
+                    
+                    showFeedback.value = true;
+                    answerIsCorrect.value = currentQuestion.value.answers[selectedAnswer.value].correct;
+                    
+                    // Guardar la respuesta del usuario
+                    if (userAnswers.value.length <= currentQuestionIndex.value) {
+                        userAnswers.value.push(selectedAnswer.value);
+                    } else {
+                        userAnswers.value[currentQuestionIndex.value] = selectedAnswer.value;
+                    }
+                };
+                
+                const nextQuestion = () => {
+                    showFeedback.value = false;
+                    selectedAnswer.value = null;
+                    
+                    if (isLastQuestion.value) {
+                        finishExam();
+                    } else {
+                        currentQuestionIndex.value++;
+                    }
+                };
+                
+                const prevQuestion = () => {
+                    showFeedback.value = false;
+                    selectedAnswer.value = null;
+                    currentQuestionIndex.value--;
+                };
+                
+                const finishExam = () => {
+                    stopTimer();
+                    currentScreen.value = 'results';
+                    examCompleted.value = true;
+                    
+                    // Generar un código para realizar otro examen
+                    retakeCode.value = generateRandomCode();
+                    
+                    // Guardar resultados (simulado)
+                    if (!developmentMode) {
+                        const results = {
+                            userId: currentUser.value.codigo,
+                            attempt: attemptNumber.value,
+                            score: score.value,
+                            time: elapsedTime.value,
+                            date: new Date().toISOString()
+                        };
+                        // En un sistema real, aquí se enviarían los resultados a un servidor
+                        console.log('Resultados guardados:', results);
+                    }
+                };
+                
+                const retakeExam = () => {
+                    if (!retakeCode.value) return;
+                    
+                    // Incrementar número de intento
+                    attemptNumber.value++;
+                    
+                    if (!developmentMode) {
+                        Cookies.set(`attempt_${currentUser.value.codigo}`, attemptNumber.value, { 
+                            expires: 1,
+                            secure: true,
+                            sameSite: 'strict'
+                        });
+                    }
+                    
+                    // Resetear el examen
+                    currentScreen.value = 'exam';
+                    currentQuestionIndex.value = 0;
+                    selectedAnswer.value = null;
+                    showFeedback.value = false;
+                    userAnswers.value = [];
+                    examStartedAt.value = new Date();
+                    
+                    // Calcular nueva hora de finalización
+                    const endTime = new Date(examStartedAt.value);
+                    endTime.setMinutes(endTime.getMinutes() + examConfig.value.duration);
+                    examEndTime.value = endTime;
+                    
+                    elapsedTime.value = 0;
+                    startTimer();
+                    examCompleted.value = false;
+                    
+                    // Seleccionar nuevas preguntas aleatorias
+                    const numQuestions = Math.min(examConfig.value.numQuestions, questionBank.value.length);
+                    selectedQuestions.value = shuffleArray([...questionBank.value])
+                        .filter(q => !selectedQuestions.value.some(sq => sq.text === q.text)) // Evitar repeticiones
+                        .slice(0, numQuestions);
+                    
+                    // Si no hay suficientes preguntas nuevas, completar con otras aleatorias
+                    if (selectedQuestions.value.length < numQuestions) {
+                        const additionalQuestions = shuffleArray([...questionBank.value])
+                            .slice(0, numQuestions - selectedQuestions.value.length);
+                        selectedQuestions.value.push(...additionalQuestions);
+                    }
+                    
+                    // Mezclar respuestas para cada pregunta
+                    selectedQuestions.value.forEach(q => {
+                        q.answers = shuffleArray(q.answers);
+                    });
+                    
+                    // Usar el código de retomar
+                    enteredCode.value = retakeCode.value;
+                    retakeCode.value = '';
+                };
+                
+                const generatePDF = () => {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    
+                    // Título
+                    doc.setFontSize(20);
+                    doc.setTextColor(40, 53, 147);
+                    doc.text('Resultados del Examen', 105, 20, { align: 'center' });
+                    
+                    // Información del usuario
+                    doc.setFontSize(12);
+                    doc.setTextColor(0, 0, 0);
+                    doc.text(`Nombre: ${currentUser.value.nombre}`, 20, 40);
+                    doc.text(`Cédula: ${currentUser.value.ci}`, 20, 50);
+                    doc.text(`Código: ${currentUser.value.codigo}`, 20, 60);
+                    doc.text(`Intento: ${attemptNumber.value}`, 20, 70);
+                    doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 20, 80);
+                    
+                    // Resumen de resultados
+                    doc.setFontSize(14);
+                    doc.setTextColor(40, 53, 147);
+                    doc.text('Resumen de Resultados', 20, 100);
+                    
+                    doc.setFontSize(12);
+                    doc.setTextColor(0, 0, 0);
+                    doc.text(`Puntuación: ${score.value}/100`, 20, 110);
+                    doc.text(`Respuestas correctas: ${correctAnswers.value} de ${selectedQuestions.value.length}`, 20, 120);
+                    doc.text(`Tiempo empleado: ${formatTime(elapsedTime.value)}`, 20, 130);
+                    
+                    // Detalle de respuestas
+                    doc.setFontSize(14);
+                    doc.setTextColor(40, 53, 147);
+                    doc.text('Detalle de Respuestas', 20, 150);
+                    
+                    let yPos = 160;
+                    selectedQuestions.value.forEach((q, qIndex) => {
+                        if (yPos > 250) {
+                            doc.addPage();
+                            yPos = 20;
+                        }
+                        
+                        doc.setFontSize(10);
+                        doc.setTextColor(0, 0, 0);
+                        doc.text(`${qIndex + 1}. ${q.text}`, 20, yPos);
+                        yPos += 7;
+                        
+                        q.answers.forEach((a, aIndex) => {
+                            let answerText = `${String.fromCharCode(65 + aIndex)}) ${a.text}`;
+                            
+                            if (a.correct) {
+                                doc.setTextColor(0, 128, 0);
+                            } else if (userAnswers.value[qIndex] === aIndex && !a.correct) {
+                                doc.setTextColor(255, 0, 0);
+                            } else {
+                                doc.setTextColor(0, 0, 0);
+                            }
+                            
+                            doc.text(answerText, 25, yPos);
+                            yPos += 7;
+                        });
+                        
+                        yPos += 5;
+                    });
+                    
+                    doc.save(`Resultado_Examen_${currentUser.value.nombre.replace(' ', '_')}_Intento_${attemptNumber.value}.pdf`);
+                };
+                
+                const toggleAdmin = () => {
+                    isAdmin.value = !isAdmin.value;
+                    showConfig.value = isAdmin.value;
+                    
+                    if (isAdmin.value) {
+                        currentUser.value = users.value.find(u => u.codigo === 'ADMIN');
+                    } else {
+                        currentUser.value = null;
+                        currentScreen.value = 'code';
+                    }
+                };
+                
+                const saveConfig = () => {
+                    showConfig.value = false;
+                    alert('Configuración guardada (en un sistema real, esto se guardaría en el servidor)');
+                };
+                
+                // Funciones auxiliares
+                const shuffleArray = (array) => {
+                    const newArray = [...array];
+                    for (let i = newArray.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+                    }
+                    return newArray;
+                };
+                
+                const generateRandomCode = () => {
+                    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                    let result = '';
+                    for (let i = 0; i < 6; i++) {
+                        result += chars.charAt(Math.floor(Math.random() * chars.length));
+                    }
+                    return result;
+                };
+                
+                const formatTime = (seconds) => {
+                    const mins = Math.floor(seconds / 60);
+                    const secs = seconds % 60;
+                    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                };
+                
+                // Inicialización
+                onMounted(() => {
+                    // Cargar configuración (simulado)
+                    if (developmentMode) {
+                        const savedConfig = localStorage.getItem('examConfig');
+                        if (savedConfig) {
+                            examConfig.value = JSON.parse(savedConfig);
+                        }
+                    }
+                });
+                
+                // Limpiar el intervalo cuando el componente se desmonta
+                onUnmounted(() => {
+                    stopTimer();
+                });
+                
+                return {
+                    // Datos
+                    currentScreen,
+                    enteredCode,
+                    isCodeBlocked,
+                    countdown,
+                    currentUser,
+                    selectedQuestions,
+                    currentQuestionIndex,
+                    selectedAnswer,
+                    showFeedback,
+                    answerIsCorrect,
+                    userAnswers,
+                    elapsedTime,
+                    retakeCode,
+                    attemptNumber,
+                    isAdmin,
+                    showConfig,
+                    examConfig,
+                    timeLeft,
+                    developmentMode,
+                    
+                    // Computed
+                    currentQuestion,
+                    isLastQuestion,
+                    correctAnswerText,
+                    correctAnswers,
+                    score,
+                    canRetakeExam,
+                    isExamTime,
+                    
+                    // Métodos
+                    verifyCode,
+                    startExam,
+                    selectAnswer,
+                    checkAnswer,
+                    nextQuestion,
+                    prevQuestion,
+                    generatePDF,
+                    retakeExam,
+                    formatTime,
+                    toggleAdmin,
+                    saveConfig
+                };
+            }
+        }).mount('#app');
     </script>
-
 </body>
 </html>
