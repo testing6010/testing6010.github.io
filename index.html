@@ -328,7 +328,7 @@
     </div>
 
     <script>
-        const { createApp, ref, computed, onMounted, onUnmounted } = Vue;
+        const { createApp, ref, computed, onMounted, onUnmounted, watch } = Vue;
         const { jsPDF } = window.jspdf;
         
         createApp({
@@ -340,7 +340,7 @@
                 
                 // Configuración del examen
                 const examConfig = ref({
-                    startTime: '14:42',
+                    startTime: '15:03',
                     endTime: '18:00',
                     duration: 30, // minutos
                     numQuestions: 15
@@ -425,14 +425,13 @@
                 const showConfig = ref(false);
                 const examEndTime = ref(null);
                 const timeLeft = ref(0);
-                const examTimeCheckInterval = ref(null);
+                const timeUpdateInterval = ref(null);
                 const timeUntilStart = ref(0);
                 const timeUntilEnd = ref(0);
                 const hasCompletedExam = ref(false);
                 const lastExamScore = ref(0);
                 const showDownloadNotification = ref(false);
                 const examResults = ref(null);
-                const timeUpdateInterval = ref(null);
 
                 // Computed properties
                 const currentQuestion = computed(() => selectedQuestions.value[currentQuestionIndex.value]);
@@ -802,6 +801,14 @@
                     }
                     return newArray;
                 };
+
+                // Watcher para actualizar automáticamente cuando termina la cuenta regresiva
+                watch(timeUntilStart, (newVal) => {
+                    if (newVal <= 0 && isExamTime.value) {
+                        // Forzar actualización del estado cuando es hora del examen
+                        currentScreen.value = 'code';
+                    }
+                });
 
                 // Inicialización
                 onMounted(() => {
