@@ -9,39 +9,14 @@
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .fade-enter-active, .fade-leave-active {
-            transition: opacity 0.5s ease;
-        }
-        .fade-enter-from, .fade-leave-to {
-            opacity: 0;
-        }
-        .countdown {
-            font-family: 'Arial', sans-serif;
-            font-size: 1.5rem;
-            color: #ef4444;
-            font-weight: bold;
-        }
-        .question-transition {
-            transition: all 0.3s ease;
-        }
-        .correct-answer {
-            background-color: #bbf7d0 !important;
-            border-color: #22c55e !important;
-        }
-        .wrong-answer {
-            background-color: #fecaca !important;
-            border-color: #ef4444 !important;
-        }
-        .selected-answer {
-            background-color: #dbeafe !important;
-            border-color: #3b82f6 !important;
-        }
-        .exam-countdown {
-            font-family: monospace;
-            font-size: 1.2rem;
-            color: #3b82f6;
-            font-weight: bold;
-        }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+        .countdown { font-family: 'Arial', sans-serif; font-size: 1.5rem; color: #ef4444; font-weight: bold; }
+        .question-transition { transition: all 0.3s ease; }
+        .correct-answer { background-color: #bbf7d0 !important; border-color: #22c55e !important; }
+        .wrong-answer { background-color: #fecaca !important; border-color: #ef4444 !important; }
+        .selected-answer { background-color: #dbeafe !important; border-color: #3b82f6 !important; }
+        .exam-countdown { font-family: monospace; font-size: 1.2rem; color: #3b82f6; font-weight: bold; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -50,7 +25,6 @@
         <transition name="fade">
             <div v-if="showConfig && isAdmin" class="bg-white rounded-lg shadow-md p-6 mt-10 mb-10">
                 <h1 class="text-2xl font-bold text-center mb-6 text-blue-600">Configuración del Examen</h1>
-                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div>
                         <label class="block text-gray-700 font-medium mb-1">Hora de inicio:</label>
@@ -69,11 +43,8 @@
                         <input v-model="examConfig.numQuestions" type="number" min="5" max="50" class="w-full p-2 border rounded">
                     </div>
                 </div>
-                
                 <div class="text-center mt-6">
-                    <button 
-                        @click="saveConfig"
-                        class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    <button @click="saveConfig" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
                         Guardar Configuración
                     </button>
                 </div>
@@ -94,9 +65,7 @@
                 <div v-if="hasCompletedExam && isExamTime" class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4">
                     <p class="font-bold">¡Ya has completado el examen!</p>
                     <p>Tu calificación fue: <span class="font-bold">{{ lastExamScore }}%</span></p>
-                    <button 
-                        @click="downloadPreviousExam"
-                        class="mt-2 px-4 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                    <button @click="downloadPreviousExam" class="mt-2 px-4 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
                         Descargar resultados nuevamente
                     </button>
                 </div>
@@ -122,7 +91,6 @@
                         Continuar
                     </button>
                     
-                    <!-- Botón de administrador (solo para desarrollo) -->
                     <button 
                         v-if="developmentMode"
                         @click="toggleAdmin"
@@ -137,7 +105,6 @@
         <transition name="fade">
             <div v-if="currentScreen === 'user-info'" class="bg-white rounded-lg shadow-md p-6 mt-10">
                 <h1 class="text-2xl font-bold text-center mb-6 text-blue-600">Verifique su información</h1>
-                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div>
                         <label class="block text-gray-700 font-medium mb-1">Cédula:</label>
@@ -156,13 +123,10 @@
                         <div class="p-2 bg-gray-50 rounded border">{{ currentUser.codigo }}</div>
                     </div>
                 </div>
-                
                 <div class="text-center mt-6">
                     <p class="mb-4">Por favor verifique que esta información es correcta antes de comenzar el examen.</p>
                     <p class="text-sm text-gray-500 mb-4">Tiempo disponible para el examen: {{ examConfig.duration }} minutos</p>
-                    <button 
-                        @click="startExam"
-                        class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    <button @click="startExam" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
                         Confirmar y comenzar examen
                     </button>
                 </div>
@@ -186,11 +150,9 @@
                         </div>
                     </div>
                 </div>
-                
                 <div class="mb-6 p-4 bg-gray-50 rounded-lg border">
                     <p class="text-lg font-medium">{{ currentQuestion.text }}</p>
                 </div>
-                
                 <transition-group name="question-transition" tag="div" class="space-y-3">
                     <div 
                         v-for="(answer, index) in currentQuestion.answers" 
@@ -215,7 +177,6 @@
                         </div>
                     </div>
                 </transition-group>
-                
                 <div class="mt-6 flex justify-between">
                     <button 
                         @click="prevQuestion"
@@ -223,19 +184,16 @@
                         class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50">
                         Anterior
                     </button>
-                    
                     <div v-if="showFeedback" class="text-center">
                         <p v-if="answerIsCorrect" class="text-green-600 font-medium">¡Correcto!</p>
                         <p v-else class="text-red-600 font-medium">Incorrecto. La respuesta correcta es: {{ correctAnswerText }}</p>
                     </div>
-                    
                     <button 
                         v-if="!showFeedback && selectedAnswer !== null"
                         @click="checkAnswer"
                         class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                         Verificar
                     </button>
-                    
                     <button 
                         v-if="showFeedback"
                         @click="nextQuestion"
@@ -243,12 +201,9 @@
                         {{ isLastQuestion ? 'Finalizar examen' : 'Siguiente' }}
                     </button>
                 </div>
-                
                 <div class="mt-6 bg-gray-100 p-3 rounded-lg">
                     <div class="w-full bg-gray-300 rounded-full h-2.5">
-                        <div 
-                            class="bg-blue-600 h-2.5 rounded-full" 
-                            :style="{ width: `${(currentQuestionIndex / selectedQuestions.length) * 100}%` }"></div>
+                        <div class="bg-blue-600 h-2.5 rounded-full" :style="{ width: `${(currentQuestionIndex / selectedQuestions.length) * 100}%` }"></div>
                     </div>
                     <div class="flex justify-between mt-2 text-sm text-gray-600">
                         <span>Progreso: {{ Math.round((currentQuestionIndex / selectedQuestions.length) * 100) }}%</span>
@@ -266,7 +221,6 @@
                     <p class="text-lg">Gracias por completar el examen, {{ currentUser.nombre }}!</p>
                     <p class="text-sm text-gray-500">Intento #{{ attemptNumber }} - {{ new Date().toLocaleString() }}</p>
                 </div>
-                
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div class="bg-blue-50 p-4 rounded-lg text-center">
                         <div class="text-4xl font-bold text-blue-600">{{ score }}</div>
@@ -281,7 +235,6 @@
                         <div class="text-gray-600">Tiempo empleado</div>
                     </div>
                 </div>
-                
                 <div class="mb-8">
                     <h2 class="text-xl font-semibold mb-4 text-gray-800">Detalle de respuestas</h2>
                     <div class="space-y-4">
@@ -301,7 +254,6 @@
                         </div>
                     </div>
                 </div>
-                
                 <div class="flex justify-center">
                     <button 
                         @click="downloadResults"
@@ -339,13 +291,13 @@
                 
                 // Configuración del examen
                 const examConfig = ref({
-                    startTime: '16:07',
+                    startTime: '16:29',
                     endTime: '18:00',
                     duration: 30, // minutos
                     numQuestions: 15
                 });
                 
-                // Datos de usuarios (simulando una base de datos)
+                // Datos de usuarios
                 const users = ref([
                     { ci: '12345678', nombre: 'Juan Pérez', correo: 'juan@example.com', codigo: 'ABC123' },
                     { ci: '87654321', nombre: 'María García', correo: 'maria@example.com', codigo: 'DEF456' },
@@ -353,7 +305,7 @@
                     { ci: '00000000', nombre: 'Administrador', correo: 'admin@example.com', codigo: 'ADMIN' }
                 ]);
                 
-                // Banco completo de preguntas (50 preguntas)
+                // Banco completo de preguntas
                 const questionBank = ref([
                     {
                         text: "¿Cuál es la capital de Francia?",
@@ -372,35 +324,8 @@
                             { text: "1972", correct: false },
                             { text: "1958", correct: false }
                         ]
-                    },
-                    {
-                        text: "¿Cuál es el río más largo del mundo?",
-                        answers: [
-                            { text: "Nilo", correct: false },
-                            { text: "Amazonas", correct: true },
-                            { text: "Yangtsé", correct: false },
-                            { text: "Misisipi", correct: false }
-                        ]
-                    },
-                    {
-                        text: "¿Qué elemento químico tiene el símbolo 'O'?",
-                        answers: [
-                            { text: "Oro", correct: false },
-                            { text: "Osmio", correct: false },
-                            { text: "Oxígeno", correct: true },
-                            { text: "Oganesón", correct: false }
-                        ]
-                    },
-                    {
-                        text: "¿Quién pintó la Mona Lisa?",
-                        answers: [
-                            { text: "Pablo Picasso", correct: false },
-                            { text: "Vincent van Gogh", correct: false },
-                            { text: "Leonardo da Vinci", correct: true },
-                            { text: "Miguel Ángel", correct: false }
-                        ]
                     }
-                    // ... (añadir más preguntas hasta 50)
+                    // ... más preguntas
                 ]);
                 
                 // Variables de estado
@@ -447,7 +372,7 @@
                 const score = computed(() => Math.round((correctAnswers.value / selectedQuestions.value.length) * 100));
                 
                 const isExamTime = computed(() => {
-                    if (developmentMode && isAdmin.value) return true; // Admin siempre puede acceder en desarrollo
+                    if (developmentMode && isAdmin.value) return true;
                     
                     const now = new Date();
                     const [startHours, startMins] = examConfig.value.startTime.split(':').map(Number);
@@ -506,6 +431,7 @@
                         const attemptCookie = Cookies.get(`attempt_${user.codigo}`);
                         attemptNumber.value = attemptCookie ? parseInt(attemptCookie) + 1 : 1;
                         
+                        // FORZAR ACTUALIZACIÓN DE LA PANTALLA - CORRECCIÓN CLAVE
                         currentScreen.value = 'user-info';
                     } else {
                         blockCodeInput();
@@ -549,9 +475,7 @@
                     userAnswers.value = [];
                     
                     // Guardar el número de intento en cookie
-                    Cookies.set(`attempt_${currentUser.value.codigo}`, attemptNumber.value, { 
-                        expires: 1 // 1 día
-                    });
+                    Cookies.set(`attempt_${currentUser.value.codigo}`, attemptNumber.value, { expires: 1 });
                 };
                 
                 const startTimer = () => {
@@ -562,7 +486,6 @@
                         elapsedTime.value = Math.floor((new Date() - examStartedAt.value) / 1000);
                         updateTimeLeft();
                         
-                        // Finalizar automáticamente si se acaba el tiempo
                         if (timeLeft.value <= 0) {
                             finishExam();
                         }
@@ -592,7 +515,6 @@
                     showFeedback.value = true;
                     answerIsCorrect.value = currentQuestion.value.answers[selectedAnswer.value].correct;
                     
-                    // Guardar la respuesta del usuario
                     if (userAnswers.value.length <= currentQuestionIndex.value) {
                         userAnswers.value.push(selectedAnswer.value);
                     } else {
@@ -623,7 +545,6 @@
                     examCompleted.value = true;
                     lastExamScore.value = score.value;
                     
-                    // Guardar resultados del examen
                     examResults.value = {
                         userId: currentUser.value.codigo,
                         nombre: currentUser.value.nombre,
@@ -638,19 +559,11 @@
                         answers: userAnswers.value
                     };
                     
-                    // Marcar como completado en la cookie
-                    Cookies.set(`completed_${currentUser.value.codigo}`, 'true', { 
-                        expires: 365 // 1 año
-                    });
-                    
-                    // Guardar resultados completos en cookie
-                    Cookies.set(`results_${currentUser.value.codigo}`, JSON.stringify(examResults.value), { 
-                        expires: 365 // 1 año
-                    });
+                    Cookies.set(`completed_${currentUser.value.codigo}`, 'true', { expires: 365 });
+                    Cookies.set(`results_${currentUser.value.codigo}`, JSON.stringify(examResults.value), { expires: 365 });
                     
                     hasCompletedExam.value = true;
                     
-                    // Descargar PDF automáticamente
                     setTimeout(() => {
                         generatePDF();
                     }, 1000);
@@ -660,12 +573,10 @@
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF();
                     
-                    // Título
                     doc.setFontSize(20);
                     doc.setTextColor(40, 53, 147);
                     doc.text('Resultados del Examen', 105, 20, { align: 'center' });
                     
-                    // Información del usuario
                     doc.setFontSize(12);
                     doc.setTextColor(0, 0, 0);
                     doc.text(`Nombre: ${currentUser.value.nombre}`, 20, 40);
@@ -674,7 +585,6 @@
                     doc.text(`Intento: ${attemptNumber.value}`, 20, 70);
                     doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 20, 80);
                     
-                    // Resumen de resultados
                     doc.setFontSize(14);
                     doc.setTextColor(40, 53, 147);
                     doc.text('Resumen de Resultados', 20, 100);
@@ -685,7 +595,6 @@
                     doc.text(`Respuestas correctas: ${correctAnswers.value} de ${selectedQuestions.value.length}`, 20, 120);
                     doc.text(`Tiempo empleado: ${formatTime(elapsedTime.value)}`, 20, 130);
                     
-                    // Detalle de respuestas
                     doc.setFontSize(14);
                     doc.setTextColor(40, 53, 147);
                     doc.text('Detalle de Respuestas', 20, 150);
@@ -723,7 +632,6 @@
                     const filename = `Resultado_Examen_${currentUser.value.nombre.replace(' ', '_')}_Intento_${attemptNumber.value}.pdf`;
                     doc.save(filename);
                     
-                    // Mostrar notificación
                     showDownloadNotification.value = true;
                     setTimeout(() => {
                         showDownloadNotification.value = false;
@@ -737,13 +645,11 @@
                 const downloadPreviousExam = () => {
                     if (!examResults.value) return;
                     
-                    // Restaurar datos del examen anterior
                     selectedQuestions.value = questionBank.value.slice(0, examResults.value.totalQuestions);
                     userAnswers.value = examResults.value.answers;
                     elapsedTime.value = examResults.value.time;
                     attemptNumber.value = examResults.value.attempt;
                     
-                    // Generar PDF con los resultados guardados
                     generatePDF();
                 };
                 
@@ -793,14 +699,11 @@
                     const newTimeUntilStart = Math.max(0, startTime - now);
                     const newTimeUntilEnd = Math.max(0, endTime - now);
                     
-                    // Solo actualizar si hay un cambio real
                     if (newTimeUntilStart !== timeUntilStart.value || newTimeUntilEnd !== timeUntilEnd.value) {
                         timeUntilStart.value = newTimeUntilStart;
                         timeUntilEnd.value = newTimeUntilEnd;
                         
-                        // Forzar actualización cuando el examen debe comenzar
                         if (timeUntilStart.value <= 0 && timeUntilEnd.value > 0) {
-                            // Limpiar estado para permitir nuevo acceso
                             if (currentUser.value && currentUser.value.codigo !== 'ADMIN' && 
                                 !Cookies.get(`completed_${currentUser.value.codigo}`)) {
                                 hasCompletedExam.value = false;
@@ -812,30 +715,25 @@
                 };
                 
                 const startTimeChecker = () => {
-                    // Limpiar intervalo existente
                     if (timeUpdateInterval.value) {
                         clearInterval(timeUpdateInterval.value);
                     }
                     
-                    // Actualizar el tiempo restante cada segundo
                     timeUpdateInterval.value = setInterval(() => {
                         updateTimeUntilStart();
                         
-                        // Verificación adicional cuando el examen está por comenzar
-                        if (timeUntilStart.value <= 60000) { // Último minuto
+                        if (timeUntilStart.value <= 60000) {
                             const now = new Date();
                             const [startHours, startMins] = examConfig.value.startTime.split(':').map(Number);
                             const startTime = new Date();
                             startTime.setHours(startHours, startMins, 0, 0);
                             
                             if (now >= startTime) {
-                                // Forzar actualización de la interfaz
                                 currentScreen.value = 'code';
                             }
                         }
                     }, 1000);
                     
-                    // Ejecutar inmediatamente al inicio
                     updateTimeUntilStart();
                 };
                 
@@ -850,12 +748,9 @@
 
                 // Watchers
                 watch(timeUntilStart, (newVal, oldVal) => {
-                    // Cuando el tiempo llega exactamente a 0
                     if (newVal <= 0 && oldVal > 0) {
-                        // Forzar actualización de la interfaz
                         currentScreen.value = 'code';
                         
-                        // Verificar estado del examen
                         const now = new Date();
                         const [startHours, startMins] = examConfig.value.startTime.split(':').map(Number);
                         const [endHours, endMins] = examConfig.value.endTime.split(':').map(Number);
@@ -866,9 +761,7 @@
                         const endTime = new Date();
                         endTime.setHours(endHours, endMins, 0, 0);
                         
-                        // Si estamos en el horario permitido, asegurar que isExamTime sea true
                         if (now >= startTime && now <= endTime) {
-                            // Forzar actualización de controles
                             if (currentUser.value && currentUser.value.codigo !== 'ADMIN') {
                                 const examCompletedCookie = Cookies.get(`completed_${currentUser.value.codigo}`);
                                 if (examCompletedCookie !== 'true') {
@@ -881,7 +774,6 @@
 
                 // Inicialización
                 onMounted(() => {
-                    // Cargar configuración (simulado)
                     if (developmentMode) {
                         const savedConfig = localStorage.getItem('examConfig');
                         if (savedConfig) {
@@ -889,7 +781,6 @@
                         }
                     }
                     
-                    // Iniciar verificador de tiempo
                     startTimeChecker();
                 });
 
@@ -902,7 +793,6 @@
                 });
 
                 return {
-                    // Datos
                     currentScreen,
                     enteredCode,
                     isCodeBlocked,
@@ -926,16 +816,12 @@
                     lastExamScore,
                     showDownloadNotification,
                     developmentMode,
-                    
-                    // Computed
                     currentQuestion,
                     isLastQuestion,
                     correctAnswerText,
                     correctAnswers,
                     score,
                     isExamTime,
-                    
-                    // Métodos
                     verifyCode,
                     startExam,
                     selectAnswer,
