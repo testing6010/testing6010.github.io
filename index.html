@@ -7,7 +7,6 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
-    <!-- Tailwind CSS from CDN (for development only) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .fade-enter-active, .fade-leave-active {
@@ -89,7 +88,7 @@
                 <div v-if="!isExamTime" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
                     <p v-if="timeUntilStart > 0">El examen comenzará en: <span class="exam-countdown">{{ formatCountdown(timeUntilStart) }}</span></p>
                     <p v-else-if="timeUntilEnd <= 0">El examen ha finalizado. El próximo examen estará disponible mañana a las {{ examConfig.startTime }}.</p>
-                    <p>Horario permitido: {{ examConfig.startTime }} - {{ examConfig.endTime }}</p>
+                    <p v-else>Horario permitido: {{ examConfig.startTime }} - {{ examConfig.endTime }}</p>
                 </div>
                 
                 <div v-if="hasCompletedExam && isExamTime" class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4">
@@ -340,7 +339,7 @@
                 
                 // Configuración del examen
                 const examConfig = ref({
-                    startTime: '15:52',
+                    startTime: '16:07',
                     endTime: '18:00',
                     duration: 30, // minutos
                     numQuestions: 15
@@ -400,7 +399,7 @@
                             { text: "Leonardo da Vinci", correct: true },
                             { text: "Miguel Ángel", correct: false }
                         ]
-                    },
+                    }
                     // ... (añadir más preguntas hasta 50)
                 ]);
                 
@@ -460,18 +459,23 @@
                     const endTime = new Date();
                     endTime.setHours(endHours, endMins, 0, 0);
                     
+                    // Verificación explícita cuando el contador llega a 0
+                    if (timeUntilStart.value <= 0 && timeUntilEnd.value > 0) {
+                        return true;
+                    }
+                    
                     return now >= startTime && now <= endTime;
                 });
 
                 // Métodos
                 const verifyCode = () => {
-                    // Forzar actualización del estado si el contador llegó a cero
+                    // Verificación doble del estado del examen
                     if (timeUntilStart.value <= 0) {
                         updateTimeUntilStart();
-                    }
-                    
-                    if (!isExamTime.value) {
-                        return;
+                        if (!isExamTime.value) {
+                            console.log("El examen aún no está disponible según isExamTime");
+                            return;
+                        }
                     }
                     
                     if (isCodeBlocked.value) return;
@@ -786,21 +790,19 @@
                     const endTime = new Date();
                     endTime.setHours(endHours, endMins, 0, 0);
                     
-                    timeUntilStart.value = Math.max(0, startTime - now);
-                    timeUntilEnd.value = Math.max(0, endTime - now);
+                    const newTimeUntilStart = Math.max(0, startTime - now);
+                    const newTimeUntilEnd = Math.max(0, endTime - now);
                     
-                    // Cuando el examen comienza, restablecer el estado
-                    if (timeUntilStart.value <= 0 && timeUntilEnd.value > 0) {
-                        // Forzar actualización del estado isExamTime
-                        if (!isExamTime.value) {
-                            // Esto activará el watcher de isExamTime
-                            currentScreen.value = 'code';
-                        }
+                    // Solo actualizar si hay un cambio real
+                    if (newTimeUntilStart !== timeUntilStart.value || newTimeUntilEnd !== timeUntilEnd.value) {
+                        timeUntilStart.value = newTimeUntilStart;
+                        timeUntilEnd.value = newTimeUntilEnd;
                         
-                        // Limpiar estado del usuario si no ha completado el examen
-                        if (currentUser.value && currentUser.value.codigo !== 'ADMIN') {
-                            const examCompletedCookie = Cookies.get(`completed_${currentUser.value.codigo}`);
-                            if (examCompletedCookie !== 'true') {
+                        // Forzar actualización cuando el examen debe comenzar
+                        if (timeUntilStart.value <= 0 && timeUntilEnd.value > 0) {
+                            // Limpiar estado para permitir nuevo acceso
+                            if (currentUser.value && currentUser.value.codigo !== 'ADMIN' && 
+                                !Cookies.get(`completed_${currentUser.value.codigo}`)) {
                                 hasCompletedExam.value = false;
                                 enteredCode.value = '';
                                 currentUser.value = null;
@@ -818,6 +820,19 @@
                     // Actualizar el tiempo restante cada segundo
                     timeUpdateInterval.value = setInterval(() => {
                         updateTimeUntilStart();
+                        
+                        // Verificación adicional cuando el examen está por comenzar
+                        if (timeUntilStart.value <= 60000) { // Último minuto
+                            const now = new Date();
+                            const [startHours, startMins] = examConfig.value.startTime.split(':').map(Number);
+                            const startTime = new Date();
+                            startTime.setHours(startHours, startMins, 0, 0);
+                            
+                            if (now >= startTime) {
+                                // Forzar actualización de la interfaz
+                                currentScreen.value = 'code';
+                            }
+                        }
                     }, 1000);
                     
                     // Ejecutar inmediatamente al inicio
@@ -834,19 +849,35 @@
                 };
 
                 // Watchers
-                watch(isExamTime, (newVal) => {
-                    if (newVal) {
-                        if (currentScreen.value !== 'exam' && currentScreen.value !== 'user-info') {
-                            currentScreen.value = 'code';
+                watch(timeUntilStart, (newVal, oldVal) => {
+                    // Cuando el tiempo llega exactamente a 0
+                    if (newVal <= 0 && oldVal > 0) {
+                        // Forzar actualización de la interfaz
+                        currentScreen.value = 'code';
+                        
+                        // Verificar estado del examen
+                        const now = new Date();
+                        const [startHours, startMins] = examConfig.value.startTime.split(':').map(Number);
+                        const [endHours, endMins] = examConfig.value.endTime.split(':').map(Number);
+                        
+                        const startTime = new Date();
+                        startTime.setHours(startHours, startMins, 0, 0);
+                        
+                        const endTime = new Date();
+                        endTime.setHours(endHours, endMins, 0, 0);
+                        
+                        // Si estamos en el horario permitido, asegurar que isExamTime sea true
+                        if (now >= startTime && now <= endTime) {
+                            // Forzar actualización de controles
+                            if (currentUser.value && currentUser.value.codigo !== 'ADMIN') {
+                                const examCompletedCookie = Cookies.get(`completed_${currentUser.value.codigo}`);
+                                if (examCompletedCookie !== 'true') {
+                                    hasCompletedExam.value = false;
+                                }
+                            }
                         }
                     }
                 });
-
-                watch(timeUntilStart, (newVal) => {
-                    if (newVal <= 0) {
-                        updateTimeUntilStart();
-                    }
-                }, { immediate: true });
 
                 // Inicialización
                 onMounted(() => {
@@ -858,7 +889,7 @@
                         }
                     }
                     
-                    // Iniciar el verificador de tiempo del examen
+                    // Iniciar verificador de tiempo
                     startTimeChecker();
                 });
 
