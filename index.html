@@ -294,7 +294,7 @@
                                        'text-green-600 font-medium': answer.correct,
                                        'text-red-600': !answer.correct && userAnswers[qIndex] === aIndex
                                    }">
-                                   {{ String.fromCharCode(65 + aIndex) }}) {{ answer.text }}
+                                   {{ String.fromCharCode(65 + aIndex) }) {{ answer.text }}
                                    <span v-if="!answer.correct && userAnswers[qIndex] === aIndex" class="ml-2">← Tu respuesta</span>
                                 </p>
                             </div>
@@ -339,7 +339,7 @@
                 
                 // Configuración del examen
                 const examConfig = ref({
-                    startTime: '13:08',
+                    startTime: '13:52',
                     endTime: '18:00',
                     duration: 30, // minutos
                     numQuestions: 15
