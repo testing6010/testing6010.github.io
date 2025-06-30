@@ -235,6 +235,30 @@
                         <div class="text-gray-600">Tiempo empleado</div>
                     </div>
                 </div>
+                
+                <!-- Nueva sección de información del examen -->
+                <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                    <h2 class="text-xl font-semibold mb-3 text-gray-800">Información del Examen</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="font-medium">Hora de inicio:</p>
+                            <p>{{ formatDateTime(examStartTime) }}</p>
+                        </div>
+                        <div>
+                            <p class="font-medium">Hora de finalización:</p>
+                            <p>{{ formatDateTime(examFinishTime) }}</p>
+                        </div>
+                        <div v-if="examLocation">
+                            <p class="font-medium">Ubicación:</p>
+                            <p>Lat: {{ examLocation.latitude.toFixed(6) }}, Long: {{ examLocation.longitude.toFixed(6) }}</p>
+                        </div>
+                        <div v-if="locationError">
+                            <p class="font-medium text-red-500">Error de ubicación:</p>
+                            <p>{{ locationError }}</p>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="mb-8">
                     <h2 class="text-xl font-semibold mb-4 text-gray-800">Detalle de respuestas</h2>
                     <div class="space-y-4">
@@ -291,7 +315,7 @@
                 
                 // Configuración del examen
                 const examConfig = ref({
-                    startTime: '16:40',
+                    startTime: '17:19',
                     endTime: '18:00',
                     duration: 30, // minutos
                     numQuestions: 15
@@ -356,6 +380,12 @@
                 const lastExamScore = ref(0);
                 const showDownloadNotification = ref(false);
                 const examResults = ref(null);
+                
+                // Nuevas variables para geolocalización y tiempos
+                const examLocation = ref(null);
+                const examStartTime = ref(null);
+                const examFinishTime = ref(null);
+                const locationError = ref(null);
 
                 // Computed properties
                 const currentQuestion = computed(() => selectedQuestions.value[currentQuestionIndex.value]);
@@ -457,7 +487,42 @@
                     }, 1000);
                 };
                 
-                const startExam = () => {
+                // Método para obtener la ubicación
+                const getLocation = () => {
+                    return new Promise((resolve, reject) => {
+                        if (!navigator.geolocation) {
+                            reject("Geolocation no está soportado por tu navegador");
+                            return;
+                        }
+
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                                examLocation.value = {
+                                    latitude: position.coords.latitude,
+                                    longitude: position.coords.longitude,
+                                    accuracy: position.coords.accuracy
+                                };
+                                resolve(examLocation.value);
+                            },
+                            (error) => {
+                                locationError.value = error.message;
+                                reject(error.message);
+                            },
+                            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                        );
+                    });
+                };
+                
+                const startExam = async () => {
+                    try {
+                        await getLocation();
+                    } catch (error) {
+                        console.error("Error obteniendo ubicación:", error);
+                        // Continuar con el examen aunque falle la geolocalización
+                    }
+
+                    examStartTime.value = new Date();
+                    
                     // Seleccionar preguntas aleatorias
                     const numQuestions = Math.min(examConfig.value.numQuestions, questionBank.value.length);
                     selectedQuestions.value = shuffleArray([...questionBank.value]).slice(0, numQuestions);
@@ -544,6 +609,7 @@
                 };
                 
                 const finishExam = () => {
+                    examFinishTime.value = new Date();
                     stopTimer();
                     currentScreen.value = 'results';
                     examCompleted.value = true;
@@ -560,7 +626,11 @@
                         totalQuestions: selectedQuestions.value.length,
                         time: elapsedTime.value,
                         date: new Date().toISOString(),
-                        answers: userAnswers.value
+                        answers: userAnswers.value,
+                        startTime: examStartTime.value.toISOString(),
+                        finishTime: examFinishTime.value.toISOString(),
+                        location: examLocation.value,
+                        locationError: locationError.value
                     };
                     
                     Cookies.set(`completed_${currentUser.value.codigo}`, 'true', { expires: 365 });
@@ -571,6 +641,18 @@
                     setTimeout(() => {
                         generatePDF();
                     }, 1000);
+                };
+                
+                const formatDateTime = (date) => {
+                    if (!date) return "No disponible";
+                    return date.toLocaleString('es-ES', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
                 };
                 
                 const generatePDF = () => {
@@ -589,21 +671,39 @@
                     doc.text(`Intento: ${attemptNumber.value}`, 20, 70);
                     doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 20, 80);
                     
+                    // Nueva sección de información del examen
                     doc.setFontSize(14);
                     doc.setTextColor(40, 53, 147);
-                    doc.text('Resumen de Resultados', 20, 100);
+                    doc.text('Información del Examen', 20, 100);
                     
                     doc.setFontSize(12);
                     doc.setTextColor(0, 0, 0);
-                    doc.text(`Puntuación: ${score.value}/100`, 20, 110);
-                    doc.text(`Respuestas correctas: ${correctAnswers.value} de ${selectedQuestions.value.length}`, 20, 120);
-                    doc.text(`Tiempo empleado: ${formatTime(elapsedTime.value)}`, 20, 130);
+                    doc.text(`Hora de inicio: ${formatDateTime(examStartTime.value)}`, 20, 110);
+                    doc.text(`Hora de finalización: ${formatDateTime(examFinishTime.value)}`, 20, 120);
+                    
+                    if (examLocation.value) {
+                        doc.text(`Ubicación: Lat ${examLocation.value.latitude.toFixed(6)}, Long ${examLocation.value.longitude.toFixed(6)}`, 20, 130);
+                    } else if (locationError.value) {
+                        doc.setTextColor(255, 0, 0);
+                        doc.text(`Error de ubicación: ${locationError.value}`, 20, 130);
+                        doc.setTextColor(0, 0, 0);
+                    }
                     
                     doc.setFontSize(14);
                     doc.setTextColor(40, 53, 147);
-                    doc.text('Detalle de Respuestas', 20, 150);
+                    doc.text('Resumen de Resultados', 20, 150);
                     
-                    let yPos = 160;
+                    doc.setFontSize(12);
+                    doc.setTextColor(0, 0, 0);
+                    doc.text(`Puntuación: ${score.value}/100`, 20, 160);
+                    doc.text(`Respuestas correctas: ${correctAnswers.value} de ${selectedQuestions.value.length}`, 20, 170);
+                    doc.text(`Tiempo empleado: ${formatTime(elapsedTime.value)}`, 20, 180);
+                    
+                    doc.setFontSize(14);
+                    doc.setTextColor(40, 53, 147);
+                    doc.text('Detalle de Respuestas', 20, 200);
+                    
+                    let yPos = 210;
                     selectedQuestions.value.forEach((q, qIndex) => {
                         if (yPos > 250) {
                             doc.addPage();
@@ -653,6 +753,10 @@
                     userAnswers.value = examResults.value.answers;
                     elapsedTime.value = examResults.value.time;
                     attemptNumber.value = examResults.value.attempt;
+                    examStartTime.value = new Date(examResults.value.startTime);
+                    examFinishTime.value = new Date(examResults.value.finishTime);
+                    examLocation.value = examResults.value.location;
+                    locationError.value = examResults.value.locationError;
                     
                     generatePDF();
                 };
@@ -780,6 +884,10 @@
                     correctAnswers,
                     score,
                     isExamTime,
+                    examLocation,
+                    examStartTime,
+                    examFinishTime,
+                    locationError,
                     verifyCode,
                     startExam,
                     selectAnswer,
@@ -790,6 +898,7 @@
                     downloadPreviousExam,
                     formatTime,
                     formatCountdown,
+                    formatDateTime,
                     toggleAdmin,
                     saveConfig
                 };
