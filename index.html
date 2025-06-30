@@ -291,7 +291,7 @@
                 
                 // Configuración del examen
                 const examConfig = ref({
-                    startTime: '16:29',
+                    startTime: '16:40',
                     endTime: '18:00',
                     duration: 30, // minutos
                     numQuestions: 15
@@ -431,8 +431,12 @@
                         const attemptCookie = Cookies.get(`attempt_${user.codigo}`);
                         attemptNumber.value = attemptCookie ? parseInt(attemptCookie) + 1 : 1;
                         
-                        // FORZAR ACTUALIZACIÓN DE LA PANTALLA - CORRECCIÓN CLAVE
+                        // CORRECCIÓN CLAVE: Forzar la actualización de la pantalla
+                        // y asegurar que no hay watchers que reviertan el cambio
                         currentScreen.value = 'user-info';
+                        
+                        // Limpiar el código ingresado después de la verificación exitosa
+                        enteredCode.value = '';
                     } else {
                         blockCodeInput();
                     }
@@ -702,15 +706,6 @@
                     if (newTimeUntilStart !== timeUntilStart.value || newTimeUntilEnd !== timeUntilEnd.value) {
                         timeUntilStart.value = newTimeUntilStart;
                         timeUntilEnd.value = newTimeUntilEnd;
-                        
-                        if (timeUntilStart.value <= 0 && timeUntilEnd.value > 0) {
-                            if (currentUser.value && currentUser.value.codigo !== 'ADMIN' && 
-                                !Cookies.get(`completed_${currentUser.value.codigo}`)) {
-                                hasCompletedExam.value = false;
-                                enteredCode.value = '';
-                                currentUser.value = null;
-                            }
-                        }
                     }
                 };
                 
@@ -721,17 +716,6 @@
                     
                     timeUpdateInterval.value = setInterval(() => {
                         updateTimeUntilStart();
-                        
-                        if (timeUntilStart.value <= 60000) {
-                            const now = new Date();
-                            const [startHours, startMins] = examConfig.value.startTime.split(':').map(Number);
-                            const startTime = new Date();
-                            startTime.setHours(startHours, startMins, 0, 0);
-                            
-                            if (now >= startTime) {
-                                currentScreen.value = 'code';
-                            }
-                        }
                     }, 1000);
                     
                     updateTimeUntilStart();
@@ -745,32 +729,6 @@
                     }
                     return newArray;
                 };
-
-                // Watchers
-                watch(timeUntilStart, (newVal, oldVal) => {
-                    if (newVal <= 0 && oldVal > 0) {
-                        currentScreen.value = 'code';
-                        
-                        const now = new Date();
-                        const [startHours, startMins] = examConfig.value.startTime.split(':').map(Number);
-                        const [endHours, endMins] = examConfig.value.endTime.split(':').map(Number);
-                        
-                        const startTime = new Date();
-                        startTime.setHours(startHours, startMins, 0, 0);
-                        
-                        const endTime = new Date();
-                        endTime.setHours(endHours, endMins, 0, 0);
-                        
-                        if (now >= startTime && now <= endTime) {
-                            if (currentUser.value && currentUser.value.codigo !== 'ADMIN') {
-                                const examCompletedCookie = Cookies.get(`completed_${currentUser.value.codigo}`);
-                                if (examCompletedCookie !== 'true') {
-                                    hasCompletedExam.value = false;
-                                }
-                            }
-                        }
-                    }
-                });
 
                 // Inicialización
                 onMounted(() => {
