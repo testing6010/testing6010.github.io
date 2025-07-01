@@ -615,6 +615,41 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Estilos para impresión */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #app .card, #app .card * {
+                visibility: visible;
+            }
+            #app .card {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                box-shadow: none;
+                padding: 10px;
+                margin: 0;
+            }
+            .results-grid {
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+            .result-card {
+                padding: 10px;
+                flex: 1;
+            }
+            .result-value {
+                font-size: 1.5rem;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -908,37 +943,16 @@
                         </div>
                     </div>
                     
-                    <div class="mb-8">
-                        <h3 class="text-lg font-semibold mb-4">Detalle de respuestas</h3>
-                        <div class="space-y-6">
-                            <div v-for="(question, qIndex) in selectedQuestions" :key="qIndex" class="border-b pb-6">
-                                <h4 class="font-medium mb-3">{{ qIndex + 1 }}. {{ question.text }}</h4>
-                                <div class="ml-4 space-y-2">
-                                    <div v-for="(answer, aIndex) in question.answers" 
-                                         :key="aIndex"
-                                         class="flex items-start"
-                                         :class="{
-                                             'text-success': answer.correct && isQuestionFullyCorrect(qIndex),
-                                             'text-danger': !answer.correct && userAnswers[qIndex].includes(aIndex),
-                                             'text-warning': answer.correct && userAnswers[qIndex].includes(aIndex) && !isQuestionFullyCorrect(qIndex)
-                                         }">
-                                        <span class="mr-2">{{ String.fromCharCode(65 + aIndex) }})</span>
-                                        <div>
-                                            {{ answer.text }}
-                                            <span v-if="!answer.correct && userAnswers[qIndex].includes(aIndex)" class="text-xs ml-2">← Tu respuesta</span>
-                                            <span v-if="answer.correct && userAnswers[qIndex].includes(aIndex) && !isQuestionFullyCorrect(qIndex)" class="text-xs ml-2">← Correcta pero incompleta</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="text-center">
+                    <div class="text-center no-print">
                         <button 
                             @click="downloadResults"
                             class="btn btn-danger">
                             Descargar PDF
+                        </button>
+                        <button 
+                            @click="window.print()"
+                            class="btn btn-primary ml-4">
+                            Imprimir Resultados
                         </button>
                     </div>
                 </div>
@@ -972,7 +986,7 @@
                 
                 // Configuración del examen
                 const examConfig = ref({
-                    startTime: '16:52',
+                    startTime: '17:26',
                     endTime: '18:00',
                     duration: 30,
                     numQuestions: 15,
@@ -1451,28 +1465,6 @@
                     });
                 };
                 
-                const captureResultsForPDF = async () => {
-                    const resultsContainer = document.querySelector('#app .card');
-                    if (!resultsContainer) return null;
-                    
-                    try {
-                        const canvas = await html2canvas(resultsContainer, {
-                            scale: 2,
-                            logging: false,
-                            useCORS: true,
-                            scrollX: 0,
-                            scrollY: 0,
-                            windowWidth: resultsContainer.scrollWidth,
-                            windowHeight: resultsContainer.scrollHeight
-                        });
-                        
-                        return canvas.toDataURL('image/png');
-                    } catch (error) {
-                        console.error('Error al capturar resultados:', error);
-                        return null;
-                    }
-                };
-                
                 const generatePDF = async () => {
                     if (!window.jspdf || !window.jspdf.jsPDF) {
                         alert('Error: La funcionalidad de PDF no está disponible. Por favor recarga la página.');
@@ -1634,66 +1626,6 @@
                         }
                     }
                     
-                    // Detalle de respuestas (nueva página si es necesario)
-                    if (yPos > 250) {
-                        doc.addPage();
-                        yPos = margin;
-                    }
-                    
-                    doc.setFontSize(14);
-                    doc.setTextColor(94, 53, 177);
-                    doc.text('Detalle de Respuestas', margin, yPos);
-                    yPos += 8;
-                    
-                    doc.setFontSize(12);
-                    doc.setTextColor(0, 0, 0);
-                    
-                    selectedQuestions.value.forEach((q, qIndex) => {
-                        if (yPos > 250) {
-                            doc.addPage();
-                            yPos = margin;
-                        }
-                        
-                        doc.text(`${qIndex + 1}. ${q.text}`, margin, yPos);
-                        yPos += 7;
-                        
-                        q.answers.forEach((a, aIndex) => {
-                            if (yPos > 250) {
-                                doc.addPage();
-                                yPos = margin;
-                            }
-                            
-                            const isCorrect = a.correct;
-                            const isSelected = userAnswers.value[qIndex].includes(aIndex);
-                            const isFullyCorrect = isQuestionFullyCorrect(qIndex);
-                            
-                            if (isCorrect && isSelected && isFullyCorrect) {
-                                doc.setTextColor(0, 128, 0); // Verde - correcta y seleccionada
-                            } else if (isCorrect && isSelected) {
-                                doc.setTextColor(210, 150, 0); // Amarillo - correcta pero incompleta
-                            } else if (isCorrect) {
-                                doc.setTextColor(0, 128, 0); // Verde - correcta no seleccionada
-                            } else if (isSelected) {
-                                doc.setTextColor(255, 0, 0); // Rojo - incorrecta seleccionada
-                            } else {
-                                doc.setTextColor(0, 0, 0); // Negro - normal
-                            }
-                            
-                            let answerText = `${String.fromCharCode(65 + aIndex)}) ${a.text}`;
-                            doc.text(answerText, margin + 10, yPos);
-                            
-                            if (!a.correct && isSelected) {
-                                doc.text('← Tu respuesta', margin + 80, yPos);
-                            } else if (a.correct && isSelected && !isFullyCorrect) {
-                                doc.text('← Correcta pero incompleta', margin + 80, yPos);
-                            }
-                            
-                            yPos += 7;
-                        });
-                        
-                        yPos += 5;
-                    });
-                    
                     // Pie de página
                     doc.setFontSize(10);
                     doc.setTextColor(100, 100, 100);
@@ -1759,12 +1691,6 @@
                     
                     // Inicializar mapa Leaflet
                     initLeafletMap();
-                    
-                    // Esperar un momento para que todo se renderice
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                    
-                    // Generar PDF automáticamente al finalizar
-                    generatePDF();
                 };
                 
                 const formatDateTime = (date) => {
