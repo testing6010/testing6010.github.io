@@ -908,6 +908,7 @@
                             <div class="map-container">
                                 <img :src="getStaticMapUrl()" alt="Ubicación del examen" class="w-full h-full object-cover">
                             </div>
+                            <p class="text-sm text-gray-500 mt-2">Esta ubicación se incluirá en el certificado</p>
                         </div>
                         <div v-else-if="locationError" class="map-container">
                             <div class="map-placeholder">
@@ -976,7 +977,7 @@
                 
                 // Configuración del examen
                 const examConfig = ref({
-                    startTime: '12:08',
+                    startTime: '12:28',
                     endTime: '18:00',
                     duration: 30,
                     numQuestions: 15,
@@ -1058,6 +1059,7 @@
                 const attemptNumber = ref(1);
                 const isAdmin = ref(false);
                 const showConfig = ref(false);
+                const mapImageData = ref(null);
 
                 // Computed properties
                 const currentQuestion = computed(() => selectedQuestions.value[currentQuestionIndex.value]);
@@ -1444,9 +1446,10 @@
                     
                     hasCompletedExam.value = true;
                     
-                    setTimeout(() => {
-                        generatePDF();
-                    }, 1000);
+                    // Prepara la imagen del mapa para el PDF
+                    if (examLocation.value) {
+                        prepareMapForPDF();
+                    }
                 };
                 
                 const formatDateTime = (date) => {
@@ -1464,11 +1467,45 @@
                 const getStaticMapUrl = () => {
                     if (!examLocation.value) return '';
                     const { latitude, longitude } = examLocation.value;
-                    const apiKey = 'AIzaSyD9BxeKK6QJmYx8QJ4v3Xq9V7y6QK6Q6Q6'; // Reemplaza con tu API key de Google Maps
+                    // API key de ejemplo - reemplaza con tu propia API key de Google Maps
+                    const apiKey = 'AIzaSyD9BxeKK6QJmYx8QJ4v3Xq9V7y6QK6Q6Q6';
                     return `https://maps.googleapis.com/maps/api/staticmap?center=${latitude},${longitude}&zoom=15&size=600x200&maptype=roadmap&markers=color:red%7C${latitude},${longitude}&key=${apiKey}`;
                 };
                 
-                const generatePDF = () => {
+                const prepareMapForPDF = async () => {
+                    try {
+                        const mapContainer = document.createElement('div');
+                        mapContainer.style.width = '600px';
+                        mapContainer.style.height = '200px';
+                        mapContainer.style.position = 'absolute';
+                        mapContainer.style.left = '-9999px';
+                        
+                        const mapImg = document.createElement('img');
+                        mapImg.src = getStaticMapUrl();
+                        mapImg.style.width = '100%';
+                        mapImg.style.height = '100%';
+                        mapImg.style.objectFit = 'cover';
+                        
+                        mapContainer.appendChild(mapImg);
+                        document.body.appendChild(mapContainer);
+                        
+                        const canvas = await html2canvas(mapContainer, {
+                            width: 600,
+                            height: 200,
+                            scale: 1,
+                            logging: false,
+                            useCORS: true
+                        });
+                        
+                        mapImageData.value = canvas.toDataURL('image/png');
+                        document.body.removeChild(mapContainer);
+                    } catch (error) {
+                        console.error('Error al preparar mapa para PDF:', error);
+                        mapImageData.value = null;
+                    }
+                };
+                
+                const generatePDF = async () => {
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF({
                         orientation: 'portrait',
@@ -1533,11 +1570,10 @@
                     doc.line(20, 146, 190, 146);
                     
                     // Mapa de ubicación (si está disponible)
-                    if (examLocation.value) {
+                    if (mapImageData.value) {
                         try {
-                            // Agregar imagen del mapa estático
-                            const mapUrl = getStaticMapUrl();
-                            doc.addImage(mapUrl, 'JPEG', 20, 150, 170, 50);
+                            // Agregar imagen del mapa al PDF
+                            doc.addImage(mapImageData.value, 'PNG', 20, 150, 170, 50);
                             doc.text('Ubicación aproximada del examen', 20, 205);
                         } catch (error) {
                             console.error('Error al agregar mapa al PDF:', error);
