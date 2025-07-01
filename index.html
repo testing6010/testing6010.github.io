@@ -11,26 +11,27 @@
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         :root {
-            --primary: #4361ee;
-            --primary-dark: #3a56d4;
-            --primary-light: #e6e9ff;
-            --secondary: #3f37c9;
-            --success: #28a745;
-            --success-light: #e6f9ed;
-            --danger: #dc3545;
-            --danger-light: #fde8ea;
-            --warning: #ffc107;
-            --warning-light: #fff8e6;
-            --info: #17a2b8;
-            --light: #f8f9fa;
-            --light-gray: #f0f2f5;
-            --gray: #6c757d;
-            --dark: #212529;
+            --primary: #5e35b1;
+            --primary-dark: #4527a0;
+            --primary-light: #d1c4e9;
+            --secondary: #3949ab;
+            --success: #43a047;
+            --success-light: #e8f5e9;
+            --danger: #e53935;
+            --danger-light: #ffebee;
+            --warning: #fb8c00;
+            --warning-light: #fff3e0;
+            --info: #039be5;
+            --info-light: #e1f5fe;
+            --light: #f5f5f5;
+            --light-gray: #eceff1;
+            --gray: #78909c;
+            --dark: #263238;
             --white: #ffffff;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --shadow-hover: 0 10px 15px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
-            --border-radius: 8px;
+            --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            --shadow-hover: 0 4px 8px rgba(0, 0, 0, 0.15);
+            --transition: all 0.2s ease;
+            --border-radius: 6px;
         }
 
         * {
@@ -51,74 +52,29 @@
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 800px;
             margin: 0 auto;
             padding: 20px;
         }
 
-        /* Transiciones y animaciones */
+        /* Transiciones */
         .fade-enter-active,
         .fade-leave-active {
-            transition: opacity 0.3s ease, transform 0.3s ease;
+            transition: opacity 0.3s ease;
         }
 
         .fade-enter-from,
         .fade-leave-to {
             opacity: 0;
-            transform: translateY(10px);
         }
 
-        .slide-fade-enter-active,
-        .slide-fade-leave-active {
-            transition: all 0.2s ease-out;
-        }
-
-        .slide-fade-enter-from {
-            transform: translateX(10px);
-            opacity: 0;
-        }
-
-        .slide-fade-leave-to {
-            transform: translateX(-10px);
-            opacity: 0;
-        }
-
-        .bounce-enter-active {
-            animation: bounce-in 0.3s;
-        }
-
-        .bounce-leave-active {
-            animation: bounce-in 0.3s reverse;
-        }
-
-        @keyframes bounce-in {
-            0% {
-                transform: scale(0.95);
-                opacity: 0;
-            }
-            50% {
-                transform: scale(1.02);
-            }
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
-        /* Estilos para las tarjetas */
+        /* Tarjetas */
         .card {
             background-color: var(--white);
             border-radius: var(--border-radius);
             box-shadow: var(--shadow);
             padding: 25px;
             margin-bottom: 20px;
-            transition: var(--transition);
-            border: 1px solid rgba(0, 0, 0, 0.05);
-        }
-
-        .card:hover {
-            transform: translateY(-3px);
-            box-shadow: var(--shadow-hover);
         }
 
         .card-header {
@@ -162,8 +118,7 @@
 
         .btn-primary:hover {
             background-color: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow);
+            box-shadow: var(--shadow-hover);
         }
 
         .btn-secondary {
@@ -205,69 +160,25 @@
         .btn-disabled {
             opacity: 0.6;
             cursor: not-allowed;
-            transform: none !important;
-            box-shadow: none !important;
         }
 
         /* Inputs */
         .form-control {
             width: 100%;
+            max-width: 400px;
             padding: 12px 15px;
             border: 1px solid #ddd;
             border-radius: var(--border-radius);
             font-size: 1rem;
             transition: var(--transition);
             background-color: var(--white);
+            margin: 0 auto;
         }
 
         .form-control:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+            box-shadow: 0 0 0 3px rgba(94, 53, 177, 0.2);
             outline: none;
-        }
-
-        /* Badges */
-        .badge {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-
-        .badge-primary {
-            background-color: var(--primary);
-            color: var(--white);
-        }
-
-        .badge-secondary {
-            background-color: var(--secondary);
-            color: var(--white);
-        }
-
-        .badge-success {
-            background-color: var(--success);
-            color: var(--white);
-        }
-
-        .badge-danger {
-            background-color: var(--danger);
-            color: var(--white);
-        }
-
-        .badge-warning {
-            background-color: var(--warning);
-            color: var(--white);
-        }
-
-        .badge-info {
-            background-color: var(--info);
-            color: var(--white);
-        }
-
-        .badge-light {
-            background-color: var(--light);
-            color: var(--dark);
         }
 
         /* Alertas */
@@ -282,32 +193,32 @@
         .alert-success {
             background-color: var(--success-light);
             border-color: var(--success);
-            color: #0c5460;
+            color: #2e7d32;
         }
 
         .alert-danger {
             background-color: var(--danger-light);
             border-color: var(--danger);
-            color: #721c24;
+            color: #c62828;
         }
 
         .alert-warning {
             background-color: var(--warning-light);
             border-color: var(--warning);
-            color: #856404;
+            color: #e65100;
         }
 
         .alert-info {
-            background-color: rgba(72, 149, 239, 0.1);
+            background-color: var(--info-light);
             border-color: var(--info);
-            color: #0c5460;
+            color: #0277bd;
         }
 
         /* Progress bar */
         .progress {
-            height: 8px;
+            height: 6px;
             background-color: #e9ecef;
-            border-radius: 4px;
+            border-radius: 3px;
             overflow: hidden;
         }
 
@@ -345,13 +256,7 @@
             width: 90%;
             max-width: 500px;
             padding: 25px;
-            transform: translateY(-20px);
-            transition: var(--transition);
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-        }
-
-        .modal.show .modal-content {
-            transform: translateY(0);
         }
 
         .modal-header {
@@ -409,11 +314,6 @@
             transition: var(--transition);
         }
 
-        .answer-option:hover {
-            border-color: var(--primary);
-            background-color: var(--primary-light);
-        }
-
         .answer-option.selected {
             border-color: var(--primary);
             background-color: var(--primary-light);
@@ -447,7 +347,6 @@
             color: var(--dark);
             flex-shrink: 0;
             font-size: 0.9rem;
-            transition: var(--transition);
         }
 
         .answer-option.selected .answer-letter {
@@ -484,7 +383,6 @@
             padding: 20px;
             text-align: center;
             box-shadow: var(--shadow);
-            border: 1px solid rgba(0, 0, 0, 0.05);
         }
 
         .result-value {
@@ -874,35 +772,25 @@
                 </div>
                 
                 <div class="answers-container">
-                    <transition-group name="slide-fade">
-                        <div 
-                            v-for="(answer, index) in currentQuestion.answers" 
-                            :key="index"
-                            @click="toggleAnswer(index)"
-                            class="answer-option"
-                            :class="{
-                                'selected': selectedAnswers.includes(index) && !showFeedback,
-                                'correct': showFeedback && answer.correct,
-                                'incorrect': showFeedback && selectedAnswers.includes(index) && !answer.correct,
-                                'partially-correct': showFeedback && answer.correct && selectedAnswers.includes(index) && !allCorrectAnswersSelected
-                            }">
-                            <div class="answer-letter">
-                                {{ String.fromCharCode(65 + index) }}
-                            </div>
-                            <div>{{ answer.text }}</div>
+                    <div 
+                        v-for="(answer, index) in currentQuestion.answers" 
+                        :key="index"
+                        @click="toggleAnswer(index)"
+                        class="answer-option"
+                        :class="{
+                            'selected': selectedAnswers.includes(index) && !showFeedback,
+                            'correct': showFeedback && answer.correct,
+                            'incorrect': showFeedback && selectedAnswers.includes(index) && !answer.correct,
+                            'partially-correct': showFeedback && answer.correct && selectedAnswers.includes(index) && !allCorrectAnswersSelected
+                        }">
+                        <div class="answer-letter">
+                            {{ String.fromCharCode(65 + index) }}
                         </div>
-                    </transition-group>
+                        <div>{{ answer.text }}</div>
+                    </div>
                 </div>
                 
-                <div class="flex flex-col md:flex-row md:justify-between md:items-center mt-6 gap-4">
-                    <button 
-                        @click="prevQuestion"
-                        :disabled="currentQuestionIndex === 0 || hasVerifiedAnswers[currentQuestionIndex]"
-                        class="btn btn-outline"
-                        :class="{'btn-disabled': hasVerifiedAnswers[currentQuestionIndex]}">
-                        Anterior
-                    </button>
-                    
+                <div class="flex flex-col md:flex-row md:justify-center md:items-center mt-6 gap-4">
                     <div v-if="showFeedback" class="text-center">
                         <p v-if="answerIsFullyCorrect" class="text-success font-bold">¡Respuesta correcta!</p>
                         <p v-else-if="answerIsPartiallyCorrect" class="text-warning font-bold">Parcialmente correcta</p>
@@ -1040,7 +928,7 @@
                 
                 // Configuración del examen
                 const examConfig = ref({
-                    startTime: '11:01',
+                    startTime: '11:20',
                     endTime: '18:00',
                     duration: 30,
                     numQuestions: 15,
@@ -1100,7 +988,6 @@
                 const answerIsFullyCorrect = ref(false);
                 const answerIsPartiallyCorrect = ref(false);
                 const userAnswers = ref([]);
-                const hasVerifiedAnswers = ref([]); // Nuevo: para controlar preguntas verificadas
                 const examStartedAt = ref(null);
                 const elapsedTime = ref(0);
                 const timerInterval = ref(null);
@@ -1335,7 +1222,6 @@
                     
                     currentScreen.value = 'exam';
                     examStartedAt.value = new Date();
-                    hasVerifiedAnswers.value = Array(selectedQuestions.value.length).fill(false);
                     
                     const endTime = new Date(examStartedAt.value);
                     endTime.setMinutes(endTime.getMinutes() + examConfig.value.duration);
@@ -1417,7 +1303,6 @@
                     if (selectedAnswers.value.length === 0) return;
                     
                     showFeedback.value = true;
-                    hasVerifiedAnswers.value[currentQuestionIndex.value] = true;
                     
                     const correctIndices = currentQuestion.value.answers
                         .map((answer, index) => answer.correct ? index : -1)
@@ -1453,23 +1338,6 @@
                         if (examConfig.value.protectQuestions) {
                             await updateCurrentQuestionImage();
                         }
-                    }
-                };
-                
-                const prevQuestion = async () => {
-                    showFeedback.value = false;
-                    selectedAnswers.value = [];
-                    answerIsFullyCorrect.value = false;
-                    answerIsPartiallyCorrect.value = false;
-                    currentQuestionIndex.value--;
-                    
-                    if (examConfig.value.protectQuestions) {
-                        await updateCurrentQuestionImage();
-                    }
-                    
-                    // Cargar respuestas previas del usuario
-                    if (userAnswers.value[currentQuestionIndex.value]) {
-                        selectedAnswers.value = [...userAnswers.value[currentQuestionIndex.value]];
                     }
                 };
                 
@@ -1551,7 +1419,7 @@
                     
                     // Configuración inicial
                     doc.setFontSize(20);
-                    doc.setTextColor(67, 97, 238);
+                    doc.setTextColor(94, 53, 177);
                     doc.text('Resultados del Examen', 105, 20, { align: 'center' });
                     
                     // Información del usuario
@@ -1565,7 +1433,7 @@
                     
                     // Información del examen
                     doc.setFontSize(14);
-                    doc.setTextColor(67, 97, 238);
+                    doc.setTextColor(94, 53, 177);
                     doc.text('Información del Examen', 20, 100);
                     
                     doc.setFontSize(12);
@@ -1582,7 +1450,7 @@
                     
                     // Resumen de resultados
                     doc.setFontSize(14);
-                    doc.setTextColor(67, 97, 238);
+                    doc.setTextColor(94, 53, 177);
                     doc.text('Resumen de Resultados', 20, 150);
                     
                     doc.setFontSize(12);
@@ -1592,7 +1460,7 @@
                     
                     // Detalle de respuestas
                     doc.setFontSize(14);
-                    doc.setTextColor(67, 97, 238);
+                    doc.setTextColor(94, 53, 177);
                     doc.text('Detalle de Respuestas', 20, 200);
                     
                     let yPos = 210;
@@ -1786,7 +1654,6 @@
                     answerIsFullyCorrect,
                     answerIsPartiallyCorrect,
                     userAnswers,
-                    hasVerifiedAnswers,
                     elapsedTime,
                     attemptNumber,
                     isAdmin,
@@ -1819,7 +1686,6 @@
                     toggleAnswer,
                     checkAnswer,
                     nextQuestion,
-                    prevQuestion,
                     downloadResults,
                     downloadPreviousExam,
                     formatTime,
