@@ -8,6 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         .fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }
         .fade-enter-from, .fade-leave-to { opacity: 0; }
@@ -17,9 +18,24 @@
         .wrong-answer { background-color: #fecaca !important; border-color: #ef4444 !important; }
         .selected-answer { background-color: #dbeafe !important; border-color: #3b82f6 !important; }
         .exam-countdown { font-family: monospace; font-size: 1.2rem; color: #3b82f6; font-weight: bold; }
+        
+        /* Estilos para deshabilitar selección */
+        body {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        
+        /* Estilo para las preguntas como imágenes */
+        .question-image {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 1rem;
+        }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-100 min-h-screen" oncontextmenu="return false;">
     <div id="app" class="container mx-auto p-4 max-w-4xl">
         <!-- Pantalla de configuración (solo para administrador) -->
         <transition name="fade">
@@ -41,6 +57,13 @@
                     <div>
                         <label class="block text-gray-700 font-medium mb-1">Número de preguntas:</label>
                         <input v-model="examConfig.numQuestions" type="number" min="5" max="50" class="w-full p-2 border rounded">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-gray-700 font-medium mb-1">Proteger preguntas como imágenes:</label>
+                        <select v-model="examConfig.protectQuestions" class="w-full p-2 border rounded">
+                            <option :value="true">Sí (recomendado)</option>
+                            <option :value="false">No</option>
+                        </select>
                     </div>
                 </div>
                 <div class="text-center mt-6">
@@ -151,7 +174,11 @@
                     </div>
                 </div>
                 <div class="mb-6 p-4 bg-gray-50 rounded-lg border">
-                    <p class="text-lg font-medium">{{ currentQuestion.text }}</p>
+                    <!-- Mostrar pregunta como imagen si está habilitado -->
+                    <div v-if="examConfig.protectQuestions" class="question-container">
+                        <img :src="currentQuestionImage" class="question-image" alt="Pregunta del examen">
+                    </div>
+                    <p v-else class="text-lg font-medium">{{ currentQuestion.text }}</p>
                 </div>
                 <transition-group name="question-transition" tag="div" class="space-y-3">
                     <div 
@@ -315,10 +342,11 @@
                 
                 // Configuración del examen
                 const examConfig = ref({
-                    startTime: '17:35',
+                    startTime: '9:31',
                     endTime: '18:00',
                     duration: 30, // minutos
-                    numQuestions: 15
+                    numQuestions: 15,
+                    protectQuestions: true // Nueva opción para proteger preguntas
                 });
                 
                 // Datos de usuarios
@@ -380,6 +408,8 @@
                 const lastExamScore = ref(0);
                 const showDownloadNotification = ref(false);
                 const examResults = ref(null);
+                const currentQuestionImage = ref(null); // Para almacenar la imagen de la pregunta actual
+                const questionImages = ref({}); // Cache de imágenes de preguntas
                 
                 // Nuevas variables para geolocalización y tiempos
                 const examLocation = ref(null);
@@ -513,6 +543,62 @@
                     });
                 };
                 
+                // Método para convertir texto a imagen
+                const textToImage = async (text, questionId) => {
+                    // Si ya tenemos la imagen en caché, la retornamos
+                    if (questionImages.value[questionId]) {
+                        return questionImages.value[questionId];
+                    }
+                    
+                    // Crear un elemento temporal para renderizar el texto
+                    const tempElement = document.createElement('div');
+                    tempElement.style.position = 'absolute';
+                    tempElement.style.left = '-9999px';
+                    tempElement.style.width = '600px';
+                    tempElement.style.padding = '1rem';
+                    tempElement.style.backgroundColor = '#f9fafb';
+                    tempElement.style.border = '1px solid #e5e7eb';
+                    tempElement.style.borderRadius = '0.5rem';
+                    tempElement.style.fontSize = '1.125rem';
+                    tempElement.style.fontWeight = '500';
+                    tempElement.style.color = '#111827';
+                    tempElement.textContent = text;
+                    
+                    document.body.appendChild(tempElement);
+                    
+                    try {
+                        // Usar html2canvas para convertir a imagen
+                        const canvas = await html2canvas(tempElement, {
+                            width: tempElement.offsetWidth,
+                            height: tempElement.offsetHeight,
+                            scale: 1,
+                            logging: false,
+                            useCORS: true
+                        });
+                        
+                        const imageData = canvas.toDataURL('image/png');
+                        questionImages.value[questionId] = imageData; // Guardar en caché
+                        return imageData;
+                    } catch (error) {
+                        console.error('Error al convertir texto a imagen:', error);
+                        return null;
+                    } finally {
+                        document.body.removeChild(tempElement);
+                    }
+                };
+                
+                // Método para actualizar la imagen de la pregunta actual
+                const updateCurrentQuestionImage = async () => {
+                    if (!examConfig.value.protectQuestions) return;
+                    
+                    const question = currentQuestion.value;
+                    if (!question) return;
+                    
+                    const questionId = question.text; // Usamos el texto como ID único
+                    const imageData = await textToImage(question.text, questionId);
+                    currentQuestionImage.value = imageData;
+                };
+                
                 const startExam = async () => {
                     try {
                         await getLocation();
@@ -542,6 +628,11 @@
                     
                     startTimer();
                     userAnswers.value = [];
+                    
+                    // Generar imágenes para las preguntas si está habilitado
+                    if (examConfig.value.protectQuestions) {
+                        await updateCurrentQuestionImage();
+                    }
                     
                     // Guardar el número de intento en cookie
                     Cookies.set(`attempt_${currentUser.value.codigo}`, attemptNumber.value, { expires: 1 });
@@ -591,7 +682,7 @@
                     }
                 };
                 
-                const nextQuestion = () => {
+                const nextQuestion = async () => {
                     showFeedback.value = false;
                     selectedAnswer.value = null;
                     
@@ -599,13 +690,22 @@
                         finishExam();
                     } else {
                         currentQuestionIndex.value++;
+                        // Actualizar la imagen de la pregunta si está habilitado
+                        if (examConfig.value.protectQuestions) {
+                            await updateCurrentQuestionImage();
+                        }
                     }
                 };
                 
-                const prevQuestion = () => {
+                const prevQuestion = async () => {
                     showFeedback.value = false;
                     selectedAnswer.value = null;
                     currentQuestionIndex.value--;
+                    
+                    // Actualizar la imagen de la pregunta si está habilitado
+                    if (examConfig.value.protectQuestions) {
+                        await updateCurrentQuestionImage();
+                    }
                 };
                 
                 const finishExam = () => {
@@ -844,6 +944,21 @@
                     }
                     
                     startTimeChecker();
+                    
+                    // Deshabilitar atajos de teclado
+                    document.addEventListener('keydown', (e) => {
+                        // Bloquear Ctrl+C, Ctrl+A, Ctrl+X, etc.
+                        if (e.ctrlKey && (e.key === 'c' || e.key === 'C' || e.key === 'x' || e.key === 'X' || e.key === 'a' || e.key === 'A')) {
+                            e.preventDefault();
+                            return false;
+                        }
+                        
+                        // Bloquear F12 para evitar herramientas de desarrollador
+                        if (e.key === 'F12') {
+                            e.preventDefault();
+                            return false;
+                        }
+                    });
                 });
 
                 // Limpieza
@@ -888,6 +1003,7 @@
                     examStartTime,
                     examFinishTime,
                     locationError,
+                    currentQuestionImage,
                     verifyCode,
                     startExam,
                     selectAnswer,
