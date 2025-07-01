@@ -4,97 +4,600 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Examen Interactivo</title>
-    <!-- Usando Tailwind CSS desde npm (recomendado para producción) -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #3f37c9;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
+            --info: #4895ef;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --white: #ffffff;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Transiciones y animaciones */
+        .fade-enter-active,
+        .fade-leave-active {
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .fade-enter-from,
+        .fade-leave-to {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .slide-fade-enter-active,
+        .slide-fade-leave-active {
+            transition: all 0.3s ease-out;
+        }
+
+        .slide-fade-enter-from {
+            transform: translateX(20px);
+            opacity: 0;
+        }
+
+        .slide-fade-leave-to {
+            transform: translateX(-20px);
+            opacity: 0;
+        }
+
+        .bounce-enter-active {
+            animation: bounce-in 0.5s;
+        }
+
+        .bounce-leave-active {
+            animation: bounce-in 0.5s reverse;
+        }
+
+        @keyframes bounce-in {
+            0% {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Estilos para las tarjetas */
+        .card {
+            background-color: var(--white);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 30px;
+            margin-bottom: 30px;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary);
+            text-align: center;
+        }
+
+        /* Botones */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            outline: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: var(--white);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: var(--white);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: var(--white);
+        }
+
+        .btn-warning {
+            background-color: var(--warning);
+            color: var(--white);
+        }
+
+        .btn-info {
+            background-color: var(--info);
+            color: var(--white);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Inputs */
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+            outline: none;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .badge-primary {
+            background-color: var(--primary);
+            color: var(--white);
+        }
+
+        .badge-secondary {
+            background-color: var(--secondary);
+            color: var(--white);
+        }
+
+        .badge-success {
+            background-color: var(--success);
+            color: var(--white);
+        }
+
+        .badge-danger {
+            background-color: var(--danger);
+            color: var(--white);
+        }
+
+        .badge-warning {
+            background-color: var(--warning);
+            color: var(--white);
+        }
+
+        .badge-info {
+            background-color: var(--info);
+            color: var(--white);
+        }
+
+        .badge-light {
+            background-color: var(--light);
+            color: var(--dark);
+        }
+
+        /* Alertas */
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid transparent;
+        }
+
+        .alert-success {
+            background-color: rgba(76, 201, 240, 0.1);
+            border-color: var(--success);
+            color: #0c5460;
+        }
+
+        .alert-danger {
+            background-color: rgba(247, 37, 133, 0.1);
+            border-color: var(--danger);
+            color: #721c24;
+        }
+
+        .alert-warning {
+            background-color: rgba(248, 150, 30, 0.1);
+            border-color: var(--warning);
+            color: #856404;
+        }
+
+        .alert-info {
+            background-color: rgba(72, 149, 239, 0.1);
+            border-color: var(--info);
+            color: #0c5460;
+        }
+
+        /* Progress bar */
+        .progress {
+            height: 10px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary);
+            transition: width 0.6s ease;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: var(--white);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            padding: 25px;
+            transform: translateY(-50px);
+            transition: var(--transition);
+        }
+
+        .modal.show .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* Preguntas y respuestas */
+        .question-container {
+            background-color: var(--light);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 15px;
+        }
+
+        .answers-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .answer-option {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: var(--white);
+            border: 1px solid #ddd;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .answer-option:hover {
+            border-color: var(--primary);
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+
+        .answer-option.selected {
+            border-color: var(--primary);
+            background-color: rgba(67, 97, 238, 0.1);
+        }
+
+        .answer-option.correct {
+            border-color: #28a745;
+            background-color: rgba(40, 167, 69, 0.1);
+        }
+
+        .answer-option.incorrect {
+            border-color: #dc3545;
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+
+        .answer-option.partially-correct {
+            border-color: #ffc107;
+            background-color: rgba(255, 193, 7, 0.1);
+        }
+
+        .answer-letter {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-weight: 600;
+            background-color: var(--light);
+            color: var(--dark);
+            flex-shrink: 0;
+        }
+
+        .answer-option.selected .answer-letter {
+            background-color: var(--primary);
+            color: var(--white);
+        }
+
+        .answer-option.correct .answer-letter {
+            background-color: #28a745;
+            color: var(--white);
+        }
+
+        .answer-option.incorrect .answer-letter {
+            background-color: #dc3545;
+            color: var(--white);
+        }
+
+        .answer-option.partially-correct .answer-letter {
+            background-color: #ffc107;
+            color: var(--white);
+        }
+
+        /* Resultados */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .result-card {
+            background-color: var(--white);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        .result-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .result-label {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        /* Notificación */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--success);
+            color: var(--white);
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(100%);
+            transition: var(--transition);
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .notification-icon {
+            margin-right: 10px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .card {
+                padding: 20px;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 15px;
+            }
+        }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen" oncontextmenu="return false;">
-    <div id="app" class="container mx-auto p-4 max-w-4xl">
-        <!-- Modal de ubicación requerida -->
-        <div v-if="showLocationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white rounded-lg p-6 max-w-md w-full">
-                <h2 class="text-xl font-bold text-red-600 mb-4">Ubicación Requerida</h2>
-                <p class="mb-4">Para continuar con el examen, es necesario compartir tu ubicación. Esto nos ayuda a garantizar la integridad del proceso.</p>
-                <p class="mb-6 text-sm text-gray-600">No almacenaremos tu ubicación después de que finalice el examen.</p>
-                <div v-if="locationError" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 text-left">
-                    <p>Error: {{ locationError }}</p>
+<body>
+    <div id="app">
+        <!-- Modal de ubicación -->
+        <div class="modal" :class="{show: showLocationModal}">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Ubicación Requerida</h3>
                 </div>
-                <div class="flex justify-center space-x-4">
-                    <button 
-                        @click="requestLocation"
-                        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                        Compartir Ubicación
-                    </button>
-                    <button 
-                        @click="cancelExam"
-                        class="px-6 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors">
-                        Cancelar Examen
-                    </button>
+                <div class="modal-body">
+                    <p>Para continuar con el examen, necesitamos acceder a tu ubicación. Esto nos ayuda a garantizar la integridad del proceso.</p>
+                    <div v-if="locationError" class="alert alert-danger mt-3">
+                        {{ locationError }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button @click="cancelExam" class="btn btn-outline">Cancelar</button>
+                    <button @click="requestLocation" class="btn btn-primary">Compartir Ubicación</button>
                 </div>
             </div>
         </div>
 
-        <!-- Pantalla de configuración (solo para administrador) -->
+        <!-- Pantalla de configuración -->
         <transition name="fade">
-            <div v-if="showConfig && isAdmin" class="bg-white rounded-lg shadow-md p-6 my-10">
-                <h1 class="text-2xl font-bold text-center mb-6 text-blue-600">Configuración del Examen</h1>
+            <div v-if="showConfig && isAdmin" class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Configuración del Examen</h2>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div>
-                        <label class="block text-gray-700 font-medium mb-1">Hora de inicio:</label>
-                        <input v-model="examConfig.startTime" type="time" class="w-full p-2 border rounded">
+                        <label class="block mb-2 font-medium">Hora de inicio:</label>
+                        <input v-model="examConfig.startTime" type="time" class="form-control">
                     </div>
                     <div>
-                        <label class="block text-gray-700 font-medium mb-1">Hora de fin:</label>
-                        <input v-model="examConfig.endTime" type="time" class="w-full p-2 border rounded">
+                        <label class="block mb-2 font-medium">Hora de fin:</label>
+                        <input v-model="examConfig.endTime" type="time" class="form-control">
                     </div>
                     <div>
-                        <label class="block text-gray-700 font-medium mb-1">Duración (minutos):</label>
-                        <input v-model="examConfig.duration" type="number" min="1" class="w-full p-2 border rounded">
+                        <label class="block mb-2 font-medium">Duración (minutos):</label>
+                        <input v-model="examConfig.duration" type="number" min="1" class="form-control">
                     </div>
                     <div>
-                        <label class="block text-gray-700 font-medium mb-1">Número de preguntas:</label>
-                        <input v-model="examConfig.numQuestions" type="number" min="5" max="50" class="w-full p-2 border rounded">
+                        <label class="block mb-2 font-medium">Número de preguntas:</label>
+                        <input v-model="examConfig.numQuestions" type="number" min="5" max="50" class="form-control">
                     </div>
                     <div>
-                        <label class="block text-gray-700 font-medium mb-1">Proteger preguntas:</label>
-                        <select v-model="examConfig.protectQuestions" class="w-full p-2 border rounded">
+                        <label class="block mb-2 font-medium">Proteger preguntas:</label>
+                        <select v-model="examConfig.protectQuestions" class="form-control">
                             <option :value="true">Sí</option>
                             <option :value="false">No</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-gray-700 font-medium mb-1">Ubicación obligatoria:</label>
-                        <select v-model="examConfig.requireLocation" class="w-full p-2 border rounded">
+                        <label class="block mb-2 font-medium">Ubicación obligatoria:</label>
+                        <select v-model="examConfig.requireLocation" class="form-control">
                             <option :value="true">Sí</option>
                             <option :value="false">No</option>
                         </select>
                     </div>
                 </div>
-                <div class="text-center mt-6">
-                    <button @click="saveConfig" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                        Guardar Configuración
-                    </button>
+                <div class="text-center">
+                    <button @click="saveConfig" class="btn btn-success">Guardar Configuración</button>
                 </div>
             </div>
         </transition>
 
         <!-- Pantalla de ingreso de código -->
         <transition name="fade">
-            <div v-if="currentScreen === 'code'" class="bg-white rounded-lg shadow-md p-6 my-10">
-                <h1 class="text-2xl font-bold text-center mb-6 text-blue-600">Ingrese su código de acceso</h1>
+            <div v-if="currentScreen === 'code'" class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Ingrese su código de acceso</h2>
+                </div>
                 
-                <div v-if="!isExamTime" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
-                    <p v-if="timeUntilStart > 0">El examen comenzará en: <span class="font-mono font-bold text-blue-600">{{ formatCountdown(timeUntilStart) }}</span></p>
+                <div v-if="!isExamTime" class="alert alert-warning">
+                    <p v-if="timeUntilStart > 0">El examen comenzará en: <strong class="text-primary">{{ formatCountdown(timeUntilStart) }}</strong></p>
                     <p v-else-if="timeUntilEnd <= 0">El examen ha finalizado. Próximo examen: {{ examConfig.startTime }}</p>
                     <p v-else>Horario permitido: {{ examConfig.startTime }} - {{ examConfig.endTime }}</p>
                 </div>
                 
-                <div v-if="hasCompletedExam && isExamTime" class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4">
+                <div v-if="hasCompletedExam && isExamTime" class="alert alert-info">
                     <p class="font-bold">¡Ya completaste el examen!</p>
-                    <p>Calificación: <span class="font-bold">{{ lastExamScore }}%</span></p>
-                    <button @click="downloadPreviousExam" class="mt-2 px-4 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                    <p>Tu calificación: <strong>{{ lastExamScore }}%</strong></p>
+                    <button @click="downloadPreviousExam" class="btn btn-sm btn-info mt-2">
                         Descargar resultados
                     </button>
                 </div>
@@ -105,25 +608,25 @@
                         @keyup.enter="verifyCode"
                         :disabled="isCodeBlocked || !isExamTime || (hasCompletedExam && isExamTime)"
                         type="text" 
-                        class="w-full max-w-xs px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-lg"
-                        placeholder="Código de acceso">
+                        class="form-control mb-4 text-center"
+                        placeholder="Ingrese su código">
                     
-                    <div v-if="isCodeBlocked" class="mt-4 text-center">
-                        <p class="text-red-500 mb-2">Código incorrecto. Espere:</p>
-                        <div class="font-mono text-xl text-red-600">{{ countdown }} segundos</div>
+                    <div v-if="isCodeBlocked" class="text-center mb-4">
+                        <p class="text-danger mb-2">Código incorrecto. Espere:</p>
+                        <div class="text-2xl font-bold text-danger">{{ countdown }} segundos</div>
                     </div>
                     
                     <button 
                         @click="verifyCode"
                         :disabled="isCodeBlocked || !isExamTime || (hasCompletedExam && isExamTime)"
-                        class="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400">
+                        class="btn btn-primary">
                         Continuar
                     </button>
                     
                     <button 
                         v-if="developmentMode"
                         @click="toggleAdmin"
-                        class="mt-4 px-4 py-1 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                        class="btn btn-outline mt-4">
                         {{ isAdmin ? 'Desactivar Admin' : 'Activar Admin' }}
                     </button>
                 </div>
@@ -132,32 +635,34 @@
 
         <!-- Pantalla de información del usuario -->
         <transition name="fade">
-            <div v-if="currentScreen === 'user-info'" class="bg-white rounded-lg shadow-md p-6 my-10">
-                <h1 class="text-2xl font-bold text-center mb-6 text-blue-600">Verifique su información</h1>
+            <div v-if="currentScreen === 'user-info'" class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Verifique su información</h2>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div>
-                        <label class="block text-gray-700 font-medium mb-1">Cédula:</label>
-                        <div class="p-2 bg-gray-50 rounded border">{{ currentUser.ci }}</div>
+                        <label class="block mb-2 font-medium">Cédula:</label>
+                        <div class="p-3 bg-gray-100 rounded-lg">{{ currentUser.ci }}</div>
                     </div>
                     <div>
-                        <label class="block text-gray-700 font-medium mb-1">Nombre:</label>
-                        <div class="p-2 bg-gray-50 rounded border">{{ currentUser.nombre }}</div>
+                        <label class="block mb-2 font-medium">Nombre:</label>
+                        <div class="p-3 bg-gray-100 rounded-lg">{{ currentUser.nombre }}</div>
                     </div>
                     <div>
-                        <label class="block text-gray-700 font-medium mb-1">Correo:</label>
-                        <div class="p-2 bg-gray-50 rounded border">{{ currentUser.correo }}</div>
+                        <label class="block mb-2 font-medium">Correo:</label>
+                        <div class="p-3 bg-gray-100 rounded-lg">{{ currentUser.correo }}</div>
                     </div>
                     <div>
-                        <label class="block text-gray-700 font-medium mb-1">Código:</label>
-                        <div class="p-2 bg-gray-50 rounded border">{{ currentUser.codigo }}</div>
+                        <label class="block mb-2 font-medium">Código:</label>
+                        <div class="p-3 bg-gray-100 rounded-lg">{{ currentUser.codigo }}</div>
                     </div>
                 </div>
-                <div class="text-center mt-6">
-                    <p class="mb-4">Verifique que esta información es correcta antes de comenzar.</p>
-                    <p class="text-sm text-gray-500 mb-4">Duración: {{ examConfig.duration }} minutos</p>
+                <div class="text-center">
+                    <p class="mb-4">Por favor verifique que esta información es correcta antes de comenzar.</p>
+                    <p class="text-sm text-gray-500 mb-4">Duración del examen: {{ examConfig.duration }} minutos</p>
                     <button 
                         @click="verifyAndStartExam" 
-                        class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        class="btn btn-success">
                         Confirmar y comenzar
                     </button>
                 </div>
@@ -166,92 +671,85 @@
 
         <!-- Pantalla de examen -->
         <transition name="fade">
-            <div v-if="currentScreen === 'exam'" class="bg-white rounded-lg shadow-md p-6 my-10">
+            <div v-if="currentScreen === 'exam'" class="card">
                 <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
                     <div class="mb-4 md:mb-0">
-                        <h1 class="text-2xl font-bold text-blue-600">Examen Interactivo</h1>
+                        <h2 class="text-xl font-bold text-primary">Examen Interactivo</h2>
                         <p class="text-sm text-gray-500">Tiempo restante: <span class="font-bold">{{ formatTime(timeLeft) }}</span></p>
                     </div>
                     <div class="flex space-x-2">
-                        <div class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
+                        <span class="badge badge-primary">
                             Pregunta {{ currentQuestionIndex + 1 }} de {{ selectedQuestions.length }}
-                        </div>
-                        <div class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full">
+                        </span>
+                        <span class="badge badge-secondary">
                             Intento #{{ attemptNumber }}
-                        </div>
+                        </span>
                     </div>
                 </div>
                 
-                <div class="mb-6 p-4 bg-gray-50 rounded-lg border">
-                    <div v-if="examConfig.protectQuestions" class="question-container">
-                        <img :src="currentQuestionImage" class="w-full h-auto mb-2" alt="Pregunta del examen">
+                <div class="question-container">
+                    <div v-if="examConfig.protectQuestions">
+                        <img :src="currentQuestionImage" class="w-full h-auto mb-4 rounded-lg" alt="Pregunta">
                     </div>
-                    <p v-else class="text-lg font-medium">{{ currentQuestion.text }}</p>
+                    <h3 v-else class="question-text">{{ currentQuestion.text }}</h3>
                 </div>
                 
-                <transition-group name="question-transition" tag="div" class="space-y-3">
-                    <div 
-                        v-for="(answer, index) in currentQuestion.answers" 
-                        :key="index"
-                        @click="toggleAnswer(index)"
-                        :class="{
-                            'cursor-pointer p-3 border rounded-lg transition-colors': true,
-                            'selected-answer': selectedAnswers.includes(index) && !showFeedback,
-                            'correct-answer': showFeedback && answer.correct,
-                            'wrong-answer': showFeedback && selectedAnswers.includes(index) && !answer.correct,
-                            'partially-correct': showFeedback && answer.correct && selectedAnswers.includes(index) && !allCorrectAnswersSelected
-                        }">
-                        <div class="flex items-center">
-                            <div class="w-6 h-6 rounded-full border flex items-center justify-center mr-3"
-                                 :class="{
-                                     'border-blue-500': selectedAnswers.includes(index) && !showFeedback,
-                                     'border-green-500': showFeedback && answer.correct,
-                                     'border-red-500': showFeedback && selectedAnswers.includes(index) && !answer.correct,
-                                     'border-yellow-500': showFeedback && answer.correct && selectedAnswers.includes(index) && !allCorrectAnswersSelected
-                                 }">
-                                <span v-if="selectedAnswers.includes(index)">✓</span>
-                                <span v-else>{{ String.fromCharCode(65 + index) }}</span>
+                <div class="answers-container">
+                    <transition-group name="slide-fade">
+                        <div 
+                            v-for="(answer, index) in currentQuestion.answers" 
+                            :key="index"
+                            @click="toggleAnswer(index)"
+                            class="answer-option"
+                            :class="{
+                                'selected': selectedAnswers.includes(index) && !showFeedback,
+                                'correct': showFeedback && answer.correct,
+                                'incorrect': showFeedback && selectedAnswers.includes(index) && !answer.correct,
+                                'partially-correct': showFeedback && answer.correct && selectedAnswers.includes(index) && !allCorrectAnswersSelected
+                            }">
+                            <div class="answer-letter">
+                                {{ String.fromCharCode(65 + index) }}
                             </div>
-                            <span>{{ answer.text }}</span>
+                            <div>{{ answer.text }}</div>
                         </div>
-                    </div>
-                </transition-group>
+                    </transition-group>
+                </div>
                 
-                <div class="mt-6 flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0">
+                <div class="flex flex-col md:flex-row md:justify-between md:items-center mt-6 gap-4">
                     <button 
                         @click="prevQuestion"
                         :disabled="currentQuestionIndex === 0"
-                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50">
+                        class="btn btn-outline">
                         Anterior
                     </button>
                     
                     <div v-if="showFeedback" class="text-center">
-                        <p v-if="answerIsFullyCorrect" class="text-green-600 font-medium">¡Correcto!</p>
-                        <p v-else-if="answerIsPartiallyCorrect" class="text-yellow-600 font-medium">Parcialmente correcto</p>
-                        <p v-else class="text-red-600 font-medium">Incorrecto. Respuestas correctas: {{ correctAnswersText }}</p>
+                        <p v-if="answerIsFullyCorrect" class="text-success font-bold">¡Respuesta correcta!</p>
+                        <p v-else-if="answerIsPartiallyCorrect" class="text-warning font-bold">Parcialmente correcta</p>
+                        <p v-else class="text-danger font-bold">Incorrecto. Respuestas correctas: {{ correctAnswersText }}</p>
                     </div>
                     
                     <button 
                         v-if="!showFeedback && selectedAnswers.length > 0"
                         @click="checkAnswer"
-                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        class="btn btn-primary">
                         Verificar
                     </button>
                     <button 
                         v-if="showFeedback"
                         @click="nextQuestion"
-                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        class="btn btn-primary">
                         {{ isLastQuestion ? 'Finalizar examen' : 'Siguiente' }}
                     </button>
                 </div>
                 
-                <div class="mt-6 bg-gray-100 p-3 rounded-lg">
-                    <div class="w-full bg-gray-300 rounded-full h-2.5">
-                        <div class="bg-blue-600 h-2.5 rounded-full" :style="{ width: `${(currentQuestionIndex / selectedQuestions.length) * 100}%` }"></div>
-                    </div>
-                    <div class="flex justify-between mt-2 text-sm text-gray-600">
+                <div class="mt-6">
+                    <div class="flex justify-between mb-2">
                         <span>Progreso: {{ Math.round((currentQuestionIndex / selectedQuestions.length) * 100) }}%</span>
                         <span>Tiempo: {{ formatTime(elapsedTime) }}</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar" :style="{ width: `${(currentQuestionIndex / selectedQuestions.length) * 100}%` }"></div>
                     </div>
                 </div>
             </div>
@@ -259,30 +757,30 @@
 
         <!-- Pantalla de resultados -->
         <transition name="fade">
-            <div v-if="currentScreen === 'results'" class="bg-white rounded-lg shadow-md p-6 my-10">
+            <div v-if="currentScreen === 'results'" class="card">
                 <div class="text-center mb-8">
-                    <h1 class="text-3xl font-bold text-blue-600 mb-2">Resultados del Examen</h1>
+                    <h2 class="text-2xl font-bold text-primary mb-2">Resultados del Examen</h2>
                     <p class="text-lg">Gracias por completar el examen, {{ currentUser.nombre }}!</p>
                     <p class="text-sm text-gray-500">Intento #{{ attemptNumber }} - {{ new Date().toLocaleString() }}</p>
                 </div>
                 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-blue-50 p-4 rounded-lg text-center">
-                        <div class="text-4xl font-bold text-blue-600">{{ score }}%</div>
-                        <div class="text-gray-600">Puntuación</div>
+                <div class="results-grid">
+                    <div class="result-card">
+                        <div class="result-value text-primary">{{ score }}%</div>
+                        <div class="result-label">Puntuación</div>
                     </div>
-                    <div class="bg-green-50 p-4 rounded-lg text-center">
-                        <div class="text-4xl font-bold text-green-600">{{ correctAnswersCount }}</div>
-                        <div class="text-gray-600">Correctas</div>
+                    <div class="result-card">
+                        <div class="result-value text-success">{{ correctAnswersCount }}</div>
+                        <div class="result-label">Respuestas correctas</div>
                     </div>
-                    <div class="bg-purple-50 p-4 rounded-lg text-center">
-                        <div class="text-4xl font-bold text-purple-600">{{ formatTime(elapsedTime) }}</div>
-                        <div class="text-gray-600">Tiempo</div>
+                    <div class="result-card">
+                        <div class="result-value text-secondary">{{ formatTime(elapsedTime) }}</div>
+                        <div class="result-label">Tiempo empleado</div>
                     </div>
                 </div>
                 
-                <div class="bg-gray-50 p-4 rounded-lg mb-6">
-                    <h2 class="text-xl font-semibold mb-3 text-gray-800">Información del Examen</h2>
+                <div class="bg-gray-50 p-5 rounded-lg mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Información del Examen</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <p class="font-medium">Inicio:</p>
@@ -297,60 +795,60 @@
                             <p>Lat: {{ examLocation.latitude.toFixed(6) }}, Long: {{ examLocation.longitude.toFixed(6) }}</p>
                         </div>
                         <div v-if="locationError">
-                            <p class="font-medium text-red-500">Error:</p>
+                            <p class="font-medium text-danger">Error:</p>
                             <p>{{ locationError }}</p>
                         </div>
                     </div>
                 </div>
                 
                 <div class="mb-8">
-                    <h2 class="text-xl font-semibold mb-4 text-gray-800">Detalle de respuestas</h2>
-                    <div class="space-y-4">
-                        <div v-for="(question, qIndex) in selectedQuestions" :key="qIndex" class="border-b pb-4">
-                            <p class="font-medium mb-2">{{ qIndex + 1 }}. {{ question.text }}</p>
-                            <div class="ml-4">
-                                <p v-for="(answer, aIndex) in question.answers" 
-                                   :key="aIndex"
-                                   :class="{
-                                       'text-green-600 font-medium': answer.correct,
-                                       'text-red-600': !answer.correct && userAnswers[qIndex].includes(aIndex),
-                                       'text-yellow-600': answer.correct && userAnswers[qIndex].includes(aIndex) && !isQuestionFullyCorrect(qIndex)
-                                   }">
-                                   {{ String.fromCharCode(65 + aIndex) }}) {{ answer.text }}
-                                   <span v-if="!answer.correct && userAnswers[qIndex].includes(aIndex)" class="ml-2">← Tu respuesta</span>
-                                   <span v-if="answer.correct && userAnswers[qIndex].includes(aIndex) && !isQuestionFullyCorrect(qIndex)" class="ml-2">← Correcta pero incompleta</span>
-                                </p>
+                    <h3 class="text-lg font-semibold mb-4">Detalle de respuestas</h3>
+                    <div class="space-y-6">
+                        <div v-for="(question, qIndex) in selectedQuestions" :key="qIndex" class="border-b pb-6">
+                            <h4 class="font-medium mb-3">{{ qIndex + 1 }}. {{ question.text }}</h4>
+                            <div class="ml-4 space-y-2">
+                                <div v-for="(answer, aIndex) in question.answers" 
+                                     :key="aIndex"
+                                     class="flex items-start"
+                                     :class="{
+                                         'text-success': answer.correct && isQuestionFullyCorrect(qIndex),
+                                         'text-danger': !answer.correct && userAnswers[qIndex].includes(aIndex),
+                                         'text-warning': answer.correct && userAnswers[qIndex].includes(aIndex) && !isQuestionFullyCorrect(qIndex)
+                                     }">
+                                    <span class="mr-2">{{ String.fromCharCode(65 + aIndex) }})</span>
+                                    <div>
+                                        {{ answer.text }}
+                                        <span v-if="!answer.correct && userAnswers[qIndex].includes(aIndex)" class="text-xs ml-2">← Tu respuesta</span>
+                                        <span v-if="answer.correct && userAnswers[qIndex].includes(aIndex) && !isQuestionFullyCorrect(qIndex)" class="text-xs ml-2">← Correcta pero incompleta</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="flex justify-center">
+                <div class="text-center">
                     <button 
                         @click="downloadResults"
-                        class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
+                        class="btn btn-danger">
                         Descargar PDF
                     </button>
                 </div>
             </div>
         </transition>
 
-        <!-- Notificación de descarga -->
-        <transition name="fade">
-            <div v-if="showDownloadNotification" class="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                <span>PDF descargado correctamente</span>
-            </div>
-        </transition>
+        <!-- Notificación -->
+        <div class="notification" :class="{show: showDownloadNotification}">
+            <svg class="notification-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <span>PDF descargado correctamente</span>
+        </div>
     </div>
 
     <script>
-        const { createApp, ref, computed, onMounted, onUnmounted, watch } = Vue;
+        const { createApp, ref, computed, onMounted, onUnmounted } = Vue;
         const { jsPDF } = window.jspdf;
         
         createApp({
@@ -362,7 +860,7 @@
                 
                 // Configuración del examen
                 const examConfig = ref({
-                    startTime: '10:25',
+                    startTime: '10:40',
                     endTime: '18:00',
                     duration: 30,
                     numQuestions: 15,
@@ -378,10 +876,10 @@
                     { ci: '00000000', nombre: 'Administrador', correo: 'admin@example.com', codigo: 'ADMIN' }
                 ]);
                 
-                // Banco de preguntas (ejemplo con preguntas de múltiples respuestas correctas)
+                // Banco de preguntas
                 const questionBank = ref([
                     {
-                        text: "¿Cuáles son capitales de países?",
+                        text: "¿Cuáles de estas son capitales de países?",
                         answers: [
                             { text: "París", correct: true },
                             { text: "Madrid", correct: true },
@@ -396,6 +894,15 @@
                             { text: "HTML", correct: false },
                             { text: "Python", correct: true },
                             { text: "CSS", correct: false }
+                        ]
+                    },
+                    {
+                        text: "¿Cuáles de estos son planetas del sistema solar?",
+                        answers: [
+                            { text: "Marte", correct: true },
+                            { text: "Venus", correct: true },
+                            { text: "Luna", correct: false },
+                            { text: "Titán", correct: false }
                         ]
                     }
                 ]);
@@ -573,7 +1080,7 @@
                 const getLocation = () => {
                     return new Promise((resolve, reject) => {
                         if (!navigator.geolocation) {
-                            locationError.value = "Geolocalización no soportada";
+                            locationError.value = "Geolocalización no soportada en tu navegador";
                             reject(locationError.value);
                             return;
                         }
@@ -593,16 +1100,16 @@
                                 let errorMessage;
                                 switch(error.code) {
                                     case error.PERMISSION_DENIED:
-                                        errorMessage = "Permiso denegado. Debes compartir tu ubicación.";
+                                        errorMessage = "Permiso denegado. Debes compartir tu ubicación para continuar.";
                                         break;
                                     case error.POSITION_UNAVAILABLE:
                                         errorMessage = "Información de ubicación no disponible.";
                                         break;
                                     case error.TIMEOUT:
-                                        errorMessage = "Tiempo de espera agotado.";
+                                        errorMessage = "Tiempo de espera agotado para obtener la ubicación.";
                                         break;
                                     default:
-                                        errorMessage = "Error desconocido.";
+                                        errorMessage = "Error desconocido al obtener la ubicación.";
                                 }
                                 locationError.value = errorMessage;
                                 reject(errorMessage);
@@ -617,14 +1124,14 @@
                         await getLocation();
                         await startExamAfterLocation();
                     } catch (error) {
-                        console.error("Error de ubicación:", error);
+                        console.error("Error al obtener ubicación:", error);
                     }
                 };
                 
                 const cancelExam = () => {
                     showLocationModal.value = false;
                     currentScreen.value = 'code';
-                    locationError.value = "Examen cancelado: ubicación requerida";
+                    locationError.value = "Examen cancelado: ubicación requerida no proporcionada";
                 };
                 
                 const verifyAndStartExam = async () => {
@@ -673,7 +1180,7 @@
                     tempElement.style.left = '-9999px';
                     tempElement.style.width = '600px';
                     tempElement.style.padding = '1rem';
-                    tempElement.style.backgroundColor = '#f9fafb';
+                    tempElement.style.backgroundColor = '#ffffff';
                     tempElement.style.border = '1px solid #e5e7eb';
                     tempElement.style.borderRadius = '0.5rem';
                     tempElement.style.fontSize = '1.125rem';
@@ -861,7 +1368,7 @@
                     
                     // Configuración inicial
                     doc.setFontSize(20);
-                    doc.setTextColor(40, 53, 147);
+                    doc.setTextColor(67, 97, 238);
                     doc.text('Resultados del Examen', 105, 20, { align: 'center' });
                     
                     // Información del usuario
@@ -875,7 +1382,7 @@
                     
                     // Información del examen
                     doc.setFontSize(14);
-                    doc.setTextColor(40, 53, 147);
+                    doc.setTextColor(67, 97, 238);
                     doc.text('Información del Examen', 20, 100);
                     
                     doc.setFontSize(12);
@@ -892,7 +1399,7 @@
                     
                     // Resumen de resultados
                     doc.setFontSize(14);
-                    doc.setTextColor(40, 53, 147);
+                    doc.setTextColor(67, 97, 238);
                     doc.text('Resumen de Resultados', 20, 150);
                     
                     doc.setFontSize(12);
@@ -902,7 +1409,7 @@
                     
                     // Detalle de respuestas
                     doc.setFontSize(14);
-                    doc.setTextColor(40, 53, 147);
+                    doc.setTextColor(67, 97, 238);
                     doc.text('Detalle de Respuestas', 20, 200);
                     
                     let yPos = 210;
@@ -987,7 +1494,7 @@
                     if (developmentMode) {
                         localStorage.setItem('examConfig', JSON.stringify(examConfig.value));
                     }
-                    alert('Configuración guardada');
+                    alert('Configuración guardada exitosamente');
                 };
                 
                 const formatCountdown = (ms) => {
@@ -1067,6 +1574,11 @@
                         if (e.key === 'F12') {
                             e.preventDefault();
                         }
+                    });
+                    
+                    // Deshabilitar clic derecho
+                    document.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
                     });
                 });
 
