@@ -33,10 +33,54 @@
             height: auto;
             margin-bottom: 1rem;
         }
+        
+        /* Estilos para el modal de ubicación */
+        .location-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .location-modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen" oncontextmenu="return false;">
     <div id="app" class="container mx-auto p-4 max-w-4xl">
+        <!-- Modal de ubicación requerida -->
+        <div v-if="showLocationModal" class="location-modal">
+            <div class="location-modal-content">
+                <h2 class="text-xl font-bold text-red-600 mb-4">Ubicación Requerida</h2>
+                <p class="mb-4">Para continuar con el examen, es necesario compartir tu ubicación. Esto nos ayuda a garantizar la integridad del proceso.</p>
+                <p class="mb-6 text-sm text-gray-600">No almacenaremos tu ubicación después de que finalice el examen.</p>
+                <div v-if="locationError" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 text-left">
+                    <p>Error: {{ locationError }}</p>
+                </div>
+                <button 
+                    @click="requestLocation"
+                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mr-4">
+                    Compartir Ubicación
+                </button>
+                <button 
+                    @click="cancelExam"
+                    class="px-6 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors">
+                    Cancelar Examen
+                </button>
+            </div>
+        </div>
+
         <!-- Pantalla de configuración (solo para administrador) -->
         <transition name="fade">
             <div v-if="showConfig && isAdmin" class="bg-white rounded-lg shadow-md p-6 mt-10 mb-10">
@@ -61,6 +105,13 @@
                     <div class="md:col-span-2">
                         <label class="block text-gray-700 font-medium mb-1">Proteger preguntas como imágenes:</label>
                         <select v-model="examConfig.protectQuestions" class="w-full p-2 border rounded">
+                            <option :value="true">Sí (recomendado)</option>
+                            <option :value="false">No</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-gray-700 font-medium mb-1">Ubicación obligatoria:</label>
+                        <select v-model="examConfig.requireLocation" class="w-full p-2 border rounded">
                             <option :value="true">Sí (recomendado)</option>
                             <option :value="false">No</option>
                         </select>
@@ -149,7 +200,9 @@
                 <div class="text-center mt-6">
                     <p class="mb-4">Por favor verifique que esta información es correcta antes de comenzar el examen.</p>
                     <p class="text-sm text-gray-500 mb-4">Tiempo disponible para el examen: {{ examConfig.duration }} minutos</p>
-                    <button @click="startExam" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    <button 
+                        @click="verifyAndStartExam" 
+                        class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
                         Confirmar y comenzar examen
                     </button>
                 </div>
@@ -342,11 +395,12 @@
                 
                 // Configuración del examen
                 const examConfig = ref({
-                    startTime: '9:31',
+                    startTime: '17:57',
                     endTime: '18:00',
                     duration: 30, // minutos
                     numQuestions: 15,
-                    protectQuestions: true // Nueva opción para proteger preguntas
+                    protectQuestions: true,
+                    requireLocation: true
                 });
                 
                 // Datos de usuarios
@@ -377,7 +431,6 @@
                             { text: "1958", correct: false }
                         ]
                     }
-                    // ... más preguntas
                 ]);
                 
                 // Variables de estado
@@ -408,10 +461,10 @@
                 const lastExamScore = ref(0);
                 const showDownloadNotification = ref(false);
                 const examResults = ref(null);
-                const currentQuestionImage = ref(null); // Para almacenar la imagen de la pregunta actual
-                const questionImages = ref({}); // Cache de imágenes de preguntas
-                
-                // Nuevas variables para geolocalización y tiempos
+                const currentQuestionImage = ref(null);
+                const questionImages = ref({});
+                const showLocationModal = ref(false);
+                const locationRequested = ref(false);
                 const examLocation = ref(null);
                 const examStartTime = ref(null);
                 const examFinishTime = ref(null);
@@ -444,7 +497,6 @@
                     const endTime = new Date();
                     endTime.setHours(endHours, endMins, 0, 0);
                     
-                    // Verificación explícita cuando el contador llega a 0
                     if (timeUntilStart.value <= 0 && timeUntilEnd.value > 0) {
                         return true;
                     }
@@ -454,7 +506,6 @@
 
                 // Métodos
                 const verifyCode = () => {
-                    // Verificación doble del estado del examen
                     if (timeUntilStart.value <= 0) {
                         updateTimeUntilStart();
                         if (!isExamTime.value) {
@@ -469,14 +520,12 @@
                     if (user) {
                         currentUser.value = user;
                         
-                        // Verificar si es admin
                         if (user.codigo === 'ADMIN') {
                             isAdmin.value = true;
                             showConfig.value = true;
                             return;
                         }
                         
-                        // Verificar si ya completó el examen
                         const examCompletedCookie = Cookies.get(`completed_${user.codigo}`);
                         const examResultsCookie = Cookies.get(`results_${user.codigo}`);
                         
@@ -487,15 +536,10 @@
                             return;
                         }
                         
-                        // Verificar intentos previos con cookies
                         const attemptCookie = Cookies.get(`attempt_${user.codigo}`);
                         attemptNumber.value = attemptCookie ? parseInt(attemptCookie) + 1 : 1;
                         
-                        // CORRECCIÓN CLAVE: Forzar la actualización de la pantalla
-                        // y asegurar que no hay watchers que reviertan el cambio
                         currentScreen.value = 'user-info';
-                        
-                        // Limpiar el código ingresado después de la verificación exitosa
                         enteredCode.value = '';
                     } else {
                         blockCodeInput();
@@ -517,11 +561,11 @@
                     }, 1000);
                 };
                 
-                // Método para obtener la ubicación
                 const getLocation = () => {
                     return new Promise((resolve, reject) => {
                         if (!navigator.geolocation) {
-                            reject("Geolocation no está soportado por tu navegador");
+                            locationError.value = "Geolocalización no soportada por tu navegador";
+                            reject(locationError.value);
                             return;
                         }
 
@@ -532,25 +576,89 @@
                                     longitude: position.coords.longitude,
                                     accuracy: position.coords.accuracy
                                 };
+                                locationError.value = null;
+                                showLocationModal.value = false;
                                 resolve(examLocation.value);
                             },
                             (error) => {
-                                locationError.value = error.message;
-                                reject(error.message);
+                                let errorMessage;
+                                switch(error.code) {
+                                    case error.PERMISSION_DENIED:
+                                        errorMessage = "Permiso denegado. Debes compartir tu ubicación para continuar con el examen.";
+                                        break;
+                                    case error.POSITION_UNAVAILABLE:
+                                        errorMessage = "La información de ubicación no está disponible.";
+                                        break;
+                                    case error.TIMEOUT:
+                                        errorMessage = "La solicitud de ubicación ha expirado.";
+                                        break;
+                                    default:
+                                        errorMessage = "Error desconocido al obtener la ubicación.";
+                                }
+                                locationError.value = errorMessage;
+                                reject(errorMessage);
                             },
                             { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                         );
                     });
                 };
                 
-                // Método para convertir texto a imagen
+                const requestLocation = async () => {
+                    locationRequested.value = true;
+                    try {
+                        await getLocation();
+                        await startExamAfterLocation();
+                    } catch (error) {
+                        console.error("Error obteniendo ubicación:", error);
+                    }
+                };
+                
+                const cancelExam = () => {
+                    showLocationModal.value = false;
+                    currentScreen.value = 'code';
+                    locationError.value = "Examen cancelado: ubicación requerida no proporcionada";
+                };
+                
+                const verifyAndStartExam = async () => {
+                    if (examConfig.value.requireLocation) {
+                        showLocationModal.value = true;
+                    } else {
+                        await startExamAfterLocation();
+                    }
+                };
+                
+                const startExamAfterLocation = async () => {
+                    examStartTime.value = new Date();
+                    
+                    const numQuestions = Math.min(examConfig.value.numQuestions, questionBank.value.length);
+                    selectedQuestions.value = shuffleArray([...questionBank.value]).slice(0, numQuestions);
+                    
+                    selectedQuestions.value.forEach(q => {
+                        q.answers = shuffleArray(q.answers);
+                    });
+                    
+                    currentScreen.value = 'exam';
+                    examStartedAt.value = new Date();
+                    
+                    const endTime = new Date(examStartedAt.value);
+                    endTime.setMinutes(endTime.getMinutes() + examConfig.value.duration);
+                    examEndTime.value = endTime;
+                    
+                    startTimer();
+                    userAnswers.value = [];
+                    
+                    if (examConfig.value.protectQuestions) {
+                        await updateCurrentQuestionImage();
+                    }
+                    
+                    Cookies.set(`attempt_${currentUser.value.codigo}`, attemptNumber.value, { expires: 1 });
+                };
+                
                 const textToImage = async (text, questionId) => {
-                    // Si ya tenemos la imagen en caché, la retornamos
                     if (questionImages.value[questionId]) {
                         return questionImages.value[questionId];
                     }
                     
-                    // Crear un elemento temporal para renderizar el texto
                     const tempElement = document.createElement('div');
                     tempElement.style.position = 'absolute';
                     tempElement.style.left = '-9999px';
@@ -567,7 +675,6 @@
                     document.body.appendChild(tempElement);
                     
                     try {
-                        // Usar html2canvas para convertir a imagen
                         const canvas = await html2canvas(tempElement, {
                             width: tempElement.offsetWidth,
                             height: tempElement.offsetHeight,
@@ -577,7 +684,7 @@
                         });
                         
                         const imageData = canvas.toDataURL('image/png');
-                        questionImages.value[questionId] = imageData; // Guardar en caché
+                        questionImages.value[questionId] = imageData;
                         return imageData;
                     } catch (error) {
                         console.error('Error al convertir texto a imagen:', error);
@@ -587,55 +694,15 @@
                     }
                 };
                 
-                // Método para actualizar la imagen de la pregunta actual
                 const updateCurrentQuestionImage = async () => {
                     if (!examConfig.value.protectQuestions) return;
                     
                     const question = currentQuestion.value;
                     if (!question) return;
                     
-                    const questionId = question.text; // Usamos el texto como ID único
+                    const questionId = question.text;
                     const imageData = await textToImage(question.text, questionId);
                     currentQuestionImage.value = imageData;
-                };
-                
-                const startExam = async () => {
-                    try {
-                        await getLocation();
-                    } catch (error) {
-                        console.error("Error obteniendo ubicación:", error);
-                        // Continuar con el examen aunque falle la geolocalización
-                    }
-
-                    examStartTime.value = new Date();
-                    
-                    // Seleccionar preguntas aleatorias
-                    const numQuestions = Math.min(examConfig.value.numQuestions, questionBank.value.length);
-                    selectedQuestions.value = shuffleArray([...questionBank.value]).slice(0, numQuestions);
-                    
-                    // Mezclar respuestas para cada pregunta seleccionada
-                    selectedQuestions.value.forEach(q => {
-                        q.answers = shuffleArray(q.answers);
-                    });
-                    
-                    currentScreen.value = 'exam';
-                    examStartedAt.value = new Date();
-                    
-                    // Calcular hora de finalización
-                    const endTime = new Date(examStartedAt.value);
-                    endTime.setMinutes(endTime.getMinutes() + examConfig.value.duration);
-                    examEndTime.value = endTime;
-                    
-                    startTimer();
-                    userAnswers.value = [];
-                    
-                    // Generar imágenes para las preguntas si está habilitado
-                    if (examConfig.value.protectQuestions) {
-                        await updateCurrentQuestionImage();
-                    }
-                    
-                    // Guardar el número de intento en cookie
-                    Cookies.set(`attempt_${currentUser.value.codigo}`, attemptNumber.value, { expires: 1 });
                 };
                 
                 const startTimer = () => {
@@ -690,7 +757,6 @@
                         finishExam();
                     } else {
                         currentQuestionIndex.value++;
-                        // Actualizar la imagen de la pregunta si está habilitado
                         if (examConfig.value.protectQuestions) {
                             await updateCurrentQuestionImage();
                         }
@@ -702,7 +768,6 @@
                     selectedAnswer.value = null;
                     currentQuestionIndex.value--;
                     
-                    // Actualizar la imagen de la pregunta si está habilitado
                     if (examConfig.value.protectQuestions) {
                         await updateCurrentQuestionImage();
                     }
@@ -771,7 +836,6 @@
                     doc.text(`Intento: ${attemptNumber.value}`, 20, 70);
                     doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 20, 80);
                     
-                    // Nueva sección de información del examen
                     doc.setFontSize(14);
                     doc.setTextColor(40, 53, 147);
                     doc.text('Información del Examen', 20, 100);
@@ -947,13 +1011,11 @@
                     
                     // Deshabilitar atajos de teclado
                     document.addEventListener('keydown', (e) => {
-                        // Bloquear Ctrl+C, Ctrl+A, Ctrl+X, etc.
                         if (e.ctrlKey && (e.key === 'c' || e.key === 'C' || e.key === 'x' || e.key === 'X' || e.key === 'a' || e.key === 'A')) {
                             e.preventDefault();
                             return false;
                         }
                         
-                        // Bloquear F12 para evitar herramientas de desarrollador
                         if (e.key === 'F12') {
                             e.preventDefault();
                             return false;
@@ -1004,8 +1066,12 @@
                     examFinishTime,
                     locationError,
                     currentQuestionImage,
+                    showLocationModal,
                     verifyCode,
-                    startExam,
+                    verifyAndStartExam,
+                    requestLocation,
+                    cancelExam,
+                    startExamAfterLocation,
                     selectAnswer,
                     checkAnswer,
                     nextQuestion,
