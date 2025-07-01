@@ -10,7 +10,7 @@
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
           crossorigin=""/>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
@@ -987,7 +987,7 @@
                 
                 // Configuración del examen
                 const examConfig = ref({
-                    startTime: '15:06',
+                    startTime: '16:19',
                     endTime: '18:00',
                     duration: 30,
                     numQuestions: 15,
@@ -1467,57 +1467,25 @@
                     });
                 };
                 
-                const captureLeafletMap = async () => {
-                    if (!leafletMap.value) return null;
-                    
-                    const mapContainer = document.createElement('div');
-                    mapContainer.style.width = '600px';
-                    mapContainer.style.height = '200px';
-                    mapContainer.style.position = 'absolute';
-                    mapContainer.style.left = '-9999px';
-                    
-                    const mapImg = document.createElement('div');
-                    mapImg.id = 'temp-leaflet-map';
-                    mapImg.style.width = '100%';
-                    mapImg.style.height = '100%';
-                    
-                    mapContainer.appendChild(mapImg);
-                    document.body.appendChild(mapContainer);
-                    
-                    // Crear un mapa temporal para captura
-                    const tempMap = L.map('temp-leaflet-map').setView(
-                        [examLocation.value.latitude, examLocation.value.longitude], 
-                        15
-                    );
-                    
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    }).addTo(tempMap);
-                    
-                    L.marker([examLocation.value.latitude, examLocation.value.longitude])
-                        .addTo(tempMap)
-                        .bindPopup('Ubicación del examen');
-                    
-                    // Esperar a que el mapa se cargue
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                const captureResultsForPDF = async () => {
+                    const resultsContainer = document.querySelector('#app .card');
+                    if (!resultsContainer) return null;
                     
                     try {
-                        const canvas = await html2canvas(mapContainer, {
-                            width: 600,
-                            height: 200,
-                            scale: 1,
+                        const canvas = await html2canvas(resultsContainer, {
+                            scale: 2,
                             logging: false,
-                            useCORS: true
+                            useCORS: true,
+                            scrollX: 0,
+                            scrollY: 0,
+                            windowWidth: resultsContainer.scrollWidth,
+                            windowHeight: resultsContainer.scrollHeight
                         });
                         
-                        const imageData = canvas.toDataURL('image/png');
-                        return imageData;
+                        return canvas.toDataURL('image/png');
                     } catch (error) {
-                        console.error('Error al capturar mapa Leaflet:', error);
+                        console.error('Error al capturar resultados:', error);
                         return null;
-                    } finally {
-                        document.body.removeChild(mapContainer);
-                        tempMap.remove();
                     }
                 };
                 
@@ -1553,10 +1521,8 @@
                     // Inicializar mapa Leaflet
                     initLeafletMap();
                     
-                    // Prepara la imagen del mapa para el PDF
-                    if (examLocation.value) {
-                        mapImageData.value = await captureLeafletMap();
-                    }
+                    // Esperar a que se renderice todo
+                    await new Promise(resolve => setTimeout(resolve, 500));
                 };
                 
                 const formatDateTime = (date) => {
@@ -1573,127 +1539,30 @@
                 
                 const generatePDF = async () => {
                     const { jsPDF } = window.jspdf;
+                    
+                    // Capturar la pantalla de resultados como imagen
+                    const resultsImage = await captureResultsForPDF();
+                    if (!resultsImage) {
+                        alert('Error al generar el PDF. Por favor intente nuevamente.');
+                        return;
+                    }
+                    
+                    // Crear PDF
                     const doc = new jsPDF({
                         orientation: 'portrait',
                         unit: 'mm',
                         format: 'a4'
                     });
                     
-                    // Configuración inicial
-                    doc.setFontSize(20);
-                    doc.setTextColor(94, 53, 177);
-                    doc.text('Resultados del Examen', 105, 20, { align: 'center' });
+                    // Configurar márgenes
+                    const pageWidth = doc.internal.pageSize.getWidth();
+                    const pageHeight = doc.internal.pageSize.getHeight();
+                    const margin = 10;
                     
-                    // Logo o encabezado
-                    doc.setFontSize(12);
-                    doc.setTextColor(100, 100, 100);
-                    doc.text('Certificado de Evaluación', 105, 30, { align: 'center' });
+                    // Agregar imagen de resultados al PDF
+                    doc.addImage(resultsImage, 'PNG', margin, margin, pageWidth - margin * 2, 0);
                     
-                    // Línea decorativa
-                    doc.setDrawColor(94, 53, 177);
-                    doc.setLineWidth(0.5);
-                    doc.line(20, 35, 190, 35);
-                    
-                    // Información del usuario
-                    doc.setFontSize(12);
-                    doc.setTextColor(0, 0, 0);
-                    doc.text(`Nombre: ${currentUser.value.nombre}`, 20, 45);
-                    doc.text(`Cédula: ${currentUser.value.ci}`, 20, 52);
-                    doc.text(`Código: ${currentUser.value.codigo}`, 20, 59);
-                    doc.text(`Intento: ${attemptNumber.value}`, 20, 66);
-                    doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 20, 73);
-                    
-                    // Información del examen
-                    doc.setFontSize(14);
-                    doc.setTextColor(94, 53, 177);
-                    doc.text('Información del Examen', 20, 85);
-                    
-                    doc.setFontSize(12);
-                    doc.text(`Hora de inicio: ${formatDateTime(examStartTime.value)}`, 20, 92);
-                    doc.text(`Hora de finalización: ${formatDateTime(examFinishTime.value)}`, 20, 99);
-                    
-                    if (examLocation.value) {
-                        doc.text(`Ubicación: Lat ${examLocation.value.latitude.toFixed(6)}, Long ${examLocation.value.longitude.toFixed(6)}`, 20, 106);
-                    } else if (locationError.value) {
-                        doc.setTextColor(255, 0, 0);
-                        doc.text(`Error de ubicación: ${locationError.value}`, 20, 106);
-                        doc.setTextColor(0, 0, 0);
-                    }
-                    
-                    // Resumen de resultados
-                    doc.setFontSize(14);
-                    doc.setTextColor(94, 53, 177);
-                    doc.text('Resumen de Resultados', 20, 120);
-                    
-                    doc.setFontSize(12);
-                    doc.text(`Puntuación: ${score.value}/100`, 20, 127);
-                    doc.text(`Respuestas correctas: ${correctAnswersCount.value} de ${selectedQuestions.value.length}`, 20, 134);
-                    doc.text(`Tiempo empleado: ${formatTime(elapsedTime.value)}`, 20, 141);
-                    
-                    // Línea decorativa
-                    doc.setDrawColor(94, 53, 177);
-                    doc.setLineWidth(0.5);
-                    doc.line(20, 146, 190, 146);
-                    
-                    // Mapa de ubicación (si está disponible)
-                    if (mapImageData.value) {
-                        try {
-                            // Agregar imagen del mapa al PDF
-                            doc.addImage(mapImageData.value, 'PNG', 20, 150, 170, 50);
-                            doc.text('Ubicación aproximada del examen', 20, 205);
-                        } catch (error) {
-                            console.error('Error al agregar mapa al PDF:', error);
-                        }
-                    }
-                    
-                    // Detalle de respuestas (nueva página)
-                    doc.addPage();
-                    doc.setFontSize(14);
-                    doc.setTextColor(94, 53, 177);
-                    doc.text('Detalle de Respuestas', 20, 20);
-                    
-                    let yPos = 30;
-                    selectedQuestions.value.forEach((q, qIndex) => {
-                        if (yPos > 250) {
-                            doc.addPage();
-                            yPos = 20;
-                        }
-                        
-                        doc.setFontSize(10);
-                        doc.setTextColor(0, 0, 0);
-                        doc.text(`${qIndex + 1}. ${q.text}`, 20, yPos);
-                        yPos += 7;
-                        
-                        q.answers.forEach((a, aIndex) => {
-                            const isCorrect = a.correct;
-                            const isSelected = userAnswers.value[qIndex].includes(aIndex);
-                            const isFullyCorrect = isQuestionFullyCorrect(qIndex);
-                            
-                            if (isCorrect && isSelected && isFullyCorrect) {
-                                doc.setTextColor(0, 128, 0); // Verde - correcta y seleccionada
-                            } else if (isCorrect && isSelected) {
-                                doc.setTextColor(210, 150, 0); // Amarillo - correcta pero incompleta
-                            } else if (isCorrect) {
-                                doc.setTextColor(0, 128, 0); // Verde - correcta no seleccionada
-                            } else if (isSelected) {
-                                doc.setTextColor(255, 0, 0); // Rojo - incorrecta seleccionada
-                            } else {
-                                doc.setTextColor(0, 0, 0); // Negro - normal
-                            }
-                            
-                            let answerText = `${String.fromCharCode(65 + aIndex)}) ${a.text}`;
-                            doc.text(answerText, 25, yPos);
-                            yPos += 7;
-                        });
-                        
-                        yPos += 5;
-                    });
-                    
-                    // Pie de página
-                    doc.setFontSize(10);
-                    doc.setTextColor(100, 100, 100);
-                    doc.text('Documento generado automáticamente - Sistema de Examen Interactivo', 105, 287, { align: 'center' });
-                    
+                    // Guardar PDF
                     const filename = `Resultado_Examen_${currentUser.value.nombre.replace(' ', '_')}_Intento_${attemptNumber.value}.pdf`;
                     doc.save(filename);
                     
