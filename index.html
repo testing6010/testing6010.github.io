@@ -4,86 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Examen Interactivo</title>
+    <!-- Usando Tailwind CSS desde npm (recomendado para producción) -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-    <style>
-        .fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }
-        .fade-enter-from, .fade-leave-to { opacity: 0; }
-        .countdown { font-family: 'Arial', sans-serif; font-size: 1.5rem; color: #ef4444; font-weight: bold; }
-        .question-transition { transition: all 0.3s ease; }
-        .correct-answer { background-color: #bbf7d0 !important; border-color: #22c55e !important; }
-        .wrong-answer { background-color: #fecaca !important; border-color: #ef4444 !important; }
-        .selected-answer { background-color: #dbeafe !important; border-color: #3b82f6 !important; }
-        .exam-countdown { font-family: monospace; font-size: 1.2rem; color: #3b82f6; font-weight: bold; }
-        
-        /* Estilos para deshabilitar selección */
-        body {
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
-        
-        /* Estilo para las preguntas como imágenes */
-        .question-image {
-            max-width: 100%;
-            height: auto;
-            margin-bottom: 1rem;
-        }
-        
-        /* Estilos para el modal de ubicación */
-        .location-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .location-modal-content {
-            background-color: white;
-            padding: 2rem;
-            border-radius: 0.5rem;
-            max-width: 500px;
-            width: 90%;
-            text-align: center;
-        }
-    </style>
 </head>
 <body class="bg-gray-100 min-h-screen" oncontextmenu="return false;">
     <div id="app" class="container mx-auto p-4 max-w-4xl">
         <!-- Modal de ubicación requerida -->
-        <div v-if="showLocationModal" class="location-modal">
-            <div class="location-modal-content">
+        <div v-if="showLocationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-6 max-w-md w-full">
                 <h2 class="text-xl font-bold text-red-600 mb-4">Ubicación Requerida</h2>
                 <p class="mb-4">Para continuar con el examen, es necesario compartir tu ubicación. Esto nos ayuda a garantizar la integridad del proceso.</p>
                 <p class="mb-6 text-sm text-gray-600">No almacenaremos tu ubicación después de que finalice el examen.</p>
                 <div v-if="locationError" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 text-left">
                     <p>Error: {{ locationError }}</p>
                 </div>
-                <button 
-                    @click="requestLocation"
-                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mr-4">
-                    Compartir Ubicación
-                </button>
-                <button 
-                    @click="cancelExam"
-                    class="px-6 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors">
-                    Cancelar Examen
-                </button>
+                <div class="flex justify-center space-x-4">
+                    <button 
+                        @click="requestLocation"
+                        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Compartir Ubicación
+                    </button>
+                    <button 
+                        @click="cancelExam"
+                        class="px-6 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors">
+                        Cancelar Examen
+                    </button>
+                </div>
             </div>
         </div>
 
         <!-- Pantalla de configuración (solo para administrador) -->
         <transition name="fade">
-            <div v-if="showConfig && isAdmin" class="bg-white rounded-lg shadow-md p-6 mt-10 mb-10">
+            <div v-if="showConfig && isAdmin" class="bg-white rounded-lg shadow-md p-6 my-10">
                 <h1 class="text-2xl font-bold text-center mb-6 text-blue-600">Configuración del Examen</h1>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div>
@@ -95,24 +50,24 @@
                         <input v-model="examConfig.endTime" type="time" class="w-full p-2 border rounded">
                     </div>
                     <div>
-                        <label class="block text-gray-700 font-medium mb-1">Duración máxima (minutos):</label>
+                        <label class="block text-gray-700 font-medium mb-1">Duración (minutos):</label>
                         <input v-model="examConfig.duration" type="number" min="1" class="w-full p-2 border rounded">
                     </div>
                     <div>
                         <label class="block text-gray-700 font-medium mb-1">Número de preguntas:</label>
                         <input v-model="examConfig.numQuestions" type="number" min="5" max="50" class="w-full p-2 border rounded">
                     </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-gray-700 font-medium mb-1">Proteger preguntas como imágenes:</label>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-1">Proteger preguntas:</label>
                         <select v-model="examConfig.protectQuestions" class="w-full p-2 border rounded">
-                            <option :value="true">Sí (recomendado)</option>
+                            <option :value="true">Sí</option>
                             <option :value="false">No</option>
                         </select>
                     </div>
-                    <div class="md:col-span-2">
+                    <div>
                         <label class="block text-gray-700 font-medium mb-1">Ubicación obligatoria:</label>
                         <select v-model="examConfig.requireLocation" class="w-full p-2 border rounded">
-                            <option :value="true">Sí (recomendado)</option>
+                            <option :value="true">Sí</option>
                             <option :value="false">No</option>
                         </select>
                     </div>
@@ -127,20 +82,20 @@
 
         <!-- Pantalla de ingreso de código -->
         <transition name="fade">
-            <div v-if="currentScreen === 'code'" class="bg-white rounded-lg shadow-md p-6 mt-10">
+            <div v-if="currentScreen === 'code'" class="bg-white rounded-lg shadow-md p-6 my-10">
                 <h1 class="text-2xl font-bold text-center mb-6 text-blue-600">Ingrese su código de acceso</h1>
                 
                 <div v-if="!isExamTime" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
-                    <p v-if="timeUntilStart > 0">El examen comenzará en: <span class="exam-countdown">{{ formatCountdown(timeUntilStart) }}</span></p>
-                    <p v-else-if="timeUntilEnd <= 0">El examen ha finalizado. El próximo examen estará disponible mañana a las {{ examConfig.startTime }}.</p>
+                    <p v-if="timeUntilStart > 0">El examen comenzará en: <span class="font-mono font-bold text-blue-600">{{ formatCountdown(timeUntilStart) }}</span></p>
+                    <p v-else-if="timeUntilEnd <= 0">El examen ha finalizado. Próximo examen: {{ examConfig.startTime }}</p>
                     <p v-else>Horario permitido: {{ examConfig.startTime }} - {{ examConfig.endTime }}</p>
                 </div>
                 
                 <div v-if="hasCompletedExam && isExamTime" class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4">
-                    <p class="font-bold">¡Ya has completado el examen!</p>
-                    <p>Tu calificación fue: <span class="font-bold">{{ lastExamScore }}%</span></p>
+                    <p class="font-bold">¡Ya completaste el examen!</p>
+                    <p>Calificación: <span class="font-bold">{{ lastExamScore }}%</span></p>
                     <button @click="downloadPreviousExam" class="mt-2 px-4 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
-                        Descargar resultados nuevamente
+                        Descargar resultados
                     </button>
                 </div>
                 
@@ -155,7 +110,7 @@
                     
                     <div v-if="isCodeBlocked" class="mt-4 text-center">
                         <p class="text-red-500 mb-2">Código incorrecto. Espere:</p>
-                        <div class="countdown">{{ countdown }} segundos</div>
+                        <div class="font-mono text-xl text-red-600">{{ countdown }} segundos</div>
                     </div>
                     
                     <button 
@@ -177,7 +132,7 @@
 
         <!-- Pantalla de información del usuario -->
         <transition name="fade">
-            <div v-if="currentScreen === 'user-info'" class="bg-white rounded-lg shadow-md p-6 mt-10">
+            <div v-if="currentScreen === 'user-info'" class="bg-white rounded-lg shadow-md p-6 my-10">
                 <h1 class="text-2xl font-bold text-center mb-6 text-blue-600">Verifique su información</h1>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div>
@@ -198,12 +153,12 @@
                     </div>
                 </div>
                 <div class="text-center mt-6">
-                    <p class="mb-4">Por favor verifique que esta información es correcta antes de comenzar el examen.</p>
-                    <p class="text-sm text-gray-500 mb-4">Tiempo disponible para el examen: {{ examConfig.duration }} minutos</p>
+                    <p class="mb-4">Verifique que esta información es correcta antes de comenzar.</p>
+                    <p class="text-sm text-gray-500 mb-4">Duración: {{ examConfig.duration }} minutos</p>
                     <button 
                         @click="verifyAndStartExam" 
                         class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                        Confirmar y comenzar examen
+                        Confirmar y comenzar
                     </button>
                 </div>
             </div>
@@ -211,13 +166,13 @@
 
         <!-- Pantalla de examen -->
         <transition name="fade">
-            <div v-if="currentScreen === 'exam'" class="bg-white rounded-lg shadow-md p-6 mt-10">
-                <div class="flex justify-between items-center mb-6">
-                    <div>
+            <div v-if="currentScreen === 'exam'" class="bg-white rounded-lg shadow-md p-6 my-10">
+                <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
+                    <div class="mb-4 md:mb-0">
                         <h1 class="text-2xl font-bold text-blue-600">Examen Interactivo</h1>
                         <p class="text-sm text-gray-500">Tiempo restante: <span class="font-bold">{{ formatTime(timeLeft) }}</span></p>
                     </div>
-                    <div class="flex items-center space-x-2">
+                    <div class="flex space-x-2">
                         <div class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
                             Pregunta {{ currentQuestionIndex + 1 }} de {{ selectedQuestions.length }}
                         </div>
@@ -226,50 +181,58 @@
                         </div>
                     </div>
                 </div>
+                
                 <div class="mb-6 p-4 bg-gray-50 rounded-lg border">
-                    <!-- Mostrar pregunta como imagen si está habilitado -->
                     <div v-if="examConfig.protectQuestions" class="question-container">
-                        <img :src="currentQuestionImage" class="question-image" alt="Pregunta del examen">
+                        <img :src="currentQuestionImage" class="w-full h-auto mb-2" alt="Pregunta del examen">
                     </div>
                     <p v-else class="text-lg font-medium">{{ currentQuestion.text }}</p>
                 </div>
+                
                 <transition-group name="question-transition" tag="div" class="space-y-3">
                     <div 
                         v-for="(answer, index) in currentQuestion.answers" 
                         :key="index"
-                        @click="selectAnswer(index)"
+                        @click="toggleAnswer(index)"
                         :class="{
                             'cursor-pointer p-3 border rounded-lg transition-colors': true,
-                            'selected-answer': selectedAnswer === index && !showFeedback,
+                            'selected-answer': selectedAnswers.includes(index) && !showFeedback,
                             'correct-answer': showFeedback && answer.correct,
-                            'wrong-answer': showFeedback && selectedAnswer === index && !answer.correct
+                            'wrong-answer': showFeedback && selectedAnswers.includes(index) && !answer.correct,
+                            'partially-correct': showFeedback && answer.correct && selectedAnswers.includes(index) && !allCorrectAnswersSelected
                         }">
                         <div class="flex items-center">
                             <div class="w-6 h-6 rounded-full border flex items-center justify-center mr-3"
                                  :class="{
-                                     'border-blue-500': selectedAnswer === index && !showFeedback,
+                                     'border-blue-500': selectedAnswers.includes(index) && !showFeedback,
                                      'border-green-500': showFeedback && answer.correct,
-                                     'border-red-500': showFeedback && selectedAnswer === index && !answer.correct
+                                     'border-red-500': showFeedback && selectedAnswers.includes(index) && !answer.correct,
+                                     'border-yellow-500': showFeedback && answer.correct && selectedAnswers.includes(index) && !allCorrectAnswersSelected
                                  }">
-                                {{ String.fromCharCode(65 + index) }}
+                                <span v-if="selectedAnswers.includes(index)">✓</span>
+                                <span v-else>{{ String.fromCharCode(65 + index) }}</span>
                             </div>
                             <span>{{ answer.text }}</span>
                         </div>
                     </div>
                 </transition-group>
-                <div class="mt-6 flex justify-between">
+                
+                <div class="mt-6 flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0">
                     <button 
                         @click="prevQuestion"
                         :disabled="currentQuestionIndex === 0"
                         class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50">
                         Anterior
                     </button>
+                    
                     <div v-if="showFeedback" class="text-center">
-                        <p v-if="answerIsCorrect" class="text-green-600 font-medium">¡Correcto!</p>
-                        <p v-else class="text-red-600 font-medium">Incorrecto. La respuesta correcta es: {{ correctAnswerText }}</p>
+                        <p v-if="answerIsFullyCorrect" class="text-green-600 font-medium">¡Correcto!</p>
+                        <p v-else-if="answerIsPartiallyCorrect" class="text-yellow-600 font-medium">Parcialmente correcto</p>
+                        <p v-else class="text-red-600 font-medium">Incorrecto. Respuestas correctas: {{ correctAnswersText }}</p>
                     </div>
+                    
                     <button 
-                        v-if="!showFeedback && selectedAnswer !== null"
+                        v-if="!showFeedback && selectedAnswers.length > 0"
                         @click="checkAnswer"
                         class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                         Verificar
@@ -281,13 +244,14 @@
                         {{ isLastQuestion ? 'Finalizar examen' : 'Siguiente' }}
                     </button>
                 </div>
+                
                 <div class="mt-6 bg-gray-100 p-3 rounded-lg">
                     <div class="w-full bg-gray-300 rounded-full h-2.5">
                         <div class="bg-blue-600 h-2.5 rounded-full" :style="{ width: `${(currentQuestionIndex / selectedQuestions.length) * 100}%` }"></div>
                     </div>
                     <div class="flex justify-between mt-2 text-sm text-gray-600">
                         <span>Progreso: {{ Math.round((currentQuestionIndex / selectedQuestions.length) * 100) }}%</span>
-                        <span>Tiempo transcurrido: {{ formatTime(elapsedTime) }}</span>
+                        <span>Tiempo: {{ formatTime(elapsedTime) }}</span>
                     </div>
                 </div>
             </div>
@@ -295,37 +259,37 @@
 
         <!-- Pantalla de resultados -->
         <transition name="fade">
-            <div v-if="currentScreen === 'results'" class="bg-white rounded-lg shadow-md p-6 mt-10">
+            <div v-if="currentScreen === 'results'" class="bg-white rounded-lg shadow-md p-6 my-10">
                 <div class="text-center mb-8">
                     <h1 class="text-3xl font-bold text-blue-600 mb-2">Resultados del Examen</h1>
                     <p class="text-lg">Gracias por completar el examen, {{ currentUser.nombre }}!</p>
                     <p class="text-sm text-gray-500">Intento #{{ attemptNumber }} - {{ new Date().toLocaleString() }}</p>
                 </div>
+                
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div class="bg-blue-50 p-4 rounded-lg text-center">
-                        <div class="text-4xl font-bold text-blue-600">{{ score }}</div>
+                        <div class="text-4xl font-bold text-blue-600">{{ score }}%</div>
                         <div class="text-gray-600">Puntuación</div>
                     </div>
                     <div class="bg-green-50 p-4 rounded-lg text-center">
-                        <div class="text-4xl font-bold text-green-600">{{ correctAnswers }}</div>
-                        <div class="text-gray-600">Respuestas correctas</div>
+                        <div class="text-4xl font-bold text-green-600">{{ correctAnswersCount }}</div>
+                        <div class="text-gray-600">Correctas</div>
                     </div>
                     <div class="bg-purple-50 p-4 rounded-lg text-center">
                         <div class="text-4xl font-bold text-purple-600">{{ formatTime(elapsedTime) }}</div>
-                        <div class="text-gray-600">Tiempo empleado</div>
+                        <div class="text-gray-600">Tiempo</div>
                     </div>
                 </div>
                 
-                <!-- Nueva sección de información del examen -->
                 <div class="bg-gray-50 p-4 rounded-lg mb-6">
                     <h2 class="text-xl font-semibold mb-3 text-gray-800">Información del Examen</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <p class="font-medium">Hora de inicio:</p>
+                            <p class="font-medium">Inicio:</p>
                             <p>{{ formatDateTime(examStartTime) }}</p>
                         </div>
                         <div>
-                            <p class="font-medium">Hora de finalización:</p>
+                            <p class="font-medium">Finalización:</p>
                             <p>{{ formatDateTime(examFinishTime) }}</p>
                         </div>
                         <div v-if="examLocation">
@@ -333,7 +297,7 @@
                             <p>Lat: {{ examLocation.latitude.toFixed(6) }}, Long: {{ examLocation.longitude.toFixed(6) }}</p>
                         </div>
                         <div v-if="locationError">
-                            <p class="font-medium text-red-500">Error de ubicación:</p>
+                            <p class="font-medium text-red-500">Error:</p>
                             <p>{{ locationError }}</p>
                         </div>
                     </div>
@@ -349,15 +313,18 @@
                                    :key="aIndex"
                                    :class="{
                                        'text-green-600 font-medium': answer.correct,
-                                       'text-red-600': !answer.correct && userAnswers[qIndex] === aIndex
+                                       'text-red-600': !answer.correct && userAnswers[qIndex].includes(aIndex),
+                                       'text-yellow-600': answer.correct && userAnswers[qIndex].includes(aIndex) && !isQuestionFullyCorrect(qIndex)
                                    }">
-                                   {{ String.fromCharCode(65 + aIndex) + ') ' + answer.text }}
-                                   <span v-if="!answer.correct && userAnswers[qIndex] === aIndex" class="ml-2">← Tu respuesta</span>
+                                   {{ String.fromCharCode(65 + aIndex) }}) {{ answer.text }}
+                                   <span v-if="!answer.correct && userAnswers[qIndex].includes(aIndex)" class="ml-2">← Tu respuesta</span>
+                                   <span v-if="answer.correct && userAnswers[qIndex].includes(aIndex) && !isQuestionFullyCorrect(qIndex)" class="ml-2">← Correcta pero incompleta</span>
                                 </p>
                             </div>
                         </div>
                     </div>
                 </div>
+                
                 <div class="flex justify-center">
                     <button 
                         @click="downloadResults"
@@ -388,16 +355,16 @@
         
         createApp({
             setup() {
-                // Modo desarrollo (para testing local)
+                // Modo desarrollo
                 const developmentMode = window.location.href.startsWith('file://') || 
                                       window.location.hostname === 'localhost' || 
                                       window.location.hostname === '127.0.0.1';
                 
                 // Configuración del examen
                 const examConfig = ref({
-                    startTime: '09:58',
+                    startTime: '10:25',
                     endTime: '18:00',
-                    duration: 30, // minutos
+                    duration: 30,
                     numQuestions: 15,
                     protectQuestions: true,
                     requireLocation: true
@@ -411,24 +378,24 @@
                     { ci: '00000000', nombre: 'Administrador', correo: 'admin@example.com', codigo: 'ADMIN' }
                 ]);
                 
-                // Banco completo de preguntas
+                // Banco de preguntas (ejemplo con preguntas de múltiples respuestas correctas)
                 const questionBank = ref([
                     {
-                        text: "¿Cuál es la capital de Francia?",
+                        text: "¿Cuáles son capitales de países?",
                         answers: [
-                            { text: "Madrid", correct: false },
                             { text: "París", correct: true },
-                            { text: "Berlín", correct: false },
-                            { text: "Roma", correct: false }
+                            { text: "Madrid", correct: true },
+                            { text: "Berlín", correct: true },
+                            { text: "Milán", correct: false }
                         ]
                     },
                     {
-                        text: "¿En qué año llegó el hombre a la Luna?",
+                        text: "Seleccione los lenguajes de programación:",
                         answers: [
-                            { text: "1965", correct: false },
-                            { text: "1969", correct: true },
-                            { text: "1972", correct: false },
-                            { text: "1958", correct: false }
+                            { text: "JavaScript", correct: true },
+                            { text: "HTML", correct: false },
+                            { text: "Python", correct: true },
+                            { text: "CSS", correct: false }
                         ]
                     }
                 ]);
@@ -441,17 +408,14 @@
                 const currentUser = ref(null);
                 const selectedQuestions = ref([]);
                 const currentQuestionIndex = ref(0);
-                const selectedAnswer = ref(null);
+                const selectedAnswers = ref([]);
                 const showFeedback = ref(false);
-                const answerIsCorrect = ref(false);
+                const answerIsFullyCorrect = ref(false);
+                const answerIsPartiallyCorrect = ref(false);
                 const userAnswers = ref([]);
                 const examStartedAt = ref(null);
                 const elapsedTime = ref(0);
                 const timerInterval = ref(null);
-                const examCompleted = ref(false);
-                const attemptNumber = ref(1);
-                const isAdmin = ref(false);
-                const showConfig = ref(false);
                 const examEndTime = ref(null);
                 const timeLeft = ref(0);
                 const timeUpdateInterval = ref(null);
@@ -464,26 +428,61 @@
                 const currentQuestionImage = ref(null);
                 const questionImages = ref({});
                 const showLocationModal = ref(false);
-                const locationRequested = ref(false);
                 const examLocation = ref(null);
                 const examStartTime = ref(null);
                 const examFinishTime = ref(null);
                 const locationError = ref(null);
+                const attemptNumber = ref(1);
+                const isAdmin = ref(false);
+                const showConfig = ref(false);
 
                 // Computed properties
                 const currentQuestion = computed(() => selectedQuestions.value[currentQuestionIndex.value]);
                 const isLastQuestion = computed(() => currentQuestionIndex.value === selectedQuestions.value.length - 1);
-                const correctAnswerText = computed(() => {
-                    const correctIndex = currentQuestion.value.answers.findIndex(a => a.correct);
-                    return String.fromCharCode(65 + correctIndex) + ") " + currentQuestion.value.answers[correctIndex].text;
+                const allCorrectAnswersSelected = computed(() => {
+                    if (!currentQuestion.value) return false;
+                    const correctIndices = currentQuestion.value.answers
+                        .map((answer, index) => answer.correct ? index : -1)
+                        .filter(index => index !== -1);
+                    return correctIndices.every(index => selectedAnswers.value.includes(index)) && 
+                           selectedAnswers.value.every(index => currentQuestion.value.answers[index].correct);
                 });
-                const correctAnswers = computed(() => {
-                    return userAnswers.value.reduce((acc, answerIdx, qIdx) => {
-                        return acc + (selectedQuestions.value[qIdx].answers[answerIdx]?.correct ? 1 : 0);
+                const correctAnswersText = computed(() => {
+                    if (!currentQuestion.value) return '';
+                    return currentQuestion.value.answers
+                        .map((answer, index) => answer.correct ? String.fromCharCode(65 + index) : '')
+                        .filter(x => x)
+                        .join(', ');
+                });
+                const correctAnswersCount = computed(() => {
+                    return userAnswers.value.reduce((acc, answerIndices, qIdx) => {
+                        const question = selectedQuestions.value[qIdx];
+                        const correctIndices = question.answers
+                            .map((answer, idx) => answer.correct ? idx : -1)
+                            .filter(idx => idx !== -1);
+                        
+                        // Respuesta completamente correcta
+                        if (arraysEqual(new Set(answerIndices), new Set(correctIndices))) {
+                            return acc + 1;
+                        }
+                        
+                        // Respuesta parcialmente correcta (mitad de punto)
+                        const correctSelected = answerIndices.filter(idx => question.answers[idx].correct).length;
+                        const totalCorrect = correctIndices.length;
+                        const incorrectSelected = answerIndices.filter(idx => !question.answers[idx].correct).length;
+                        
+                        if (correctSelected > 0 && incorrectSelected === 0) {
+                            return acc + (correctSelected / totalCorrect);
+                        }
+                        
+                        return acc;
                     }, 0);
                 });
-                const score = computed(() => Math.round((correctAnswers.value / selectedQuestions.value.length) * 100));
-                
+                const score = computed(() => {
+                    const total = selectedQuestions.value.length;
+                    if (total === 0) return 0;
+                    return Math.round((correctAnswersCount.value / total) * 100);
+                });
                 const isExamTime = computed(() => {
                     if (developmentMode && isAdmin.value) return true;
                     
@@ -505,15 +504,25 @@
                 });
 
                 // Métodos
-                const verifyCode = () => {
-                    if (timeUntilStart.value <= 0) {
-                        updateTimeUntilStart();
-                        if (!isExamTime.value) {
-                            console.log("El examen aún no está disponible según isExamTime");
-                            return;
-                        }
+                const arraysEqual = (set1, set2) => {
+                    if (set1.size !== set2.size) return false;
+                    for (const item of set1) {
+                        if (!set2.has(item)) return false;
                     }
+                    return true;
+                };
+                
+                const isQuestionFullyCorrect = (qIndex) => {
+                    const question = selectedQuestions.value[qIndex];
+                    const userAnswer = userAnswers.value[qIndex];
+                    const correctIndices = question.answers
+                        .map((answer, idx) => answer.correct ? idx : -1)
+                        .filter(idx => idx !== -1);
                     
+                    return arraysEqual(new Set(userAnswer), new Set(correctIndices));
+                };
+                
+                const verifyCode = () => {
                     if (isCodeBlocked.value) return;
                     
                     const user = users.value.find(u => u.codigo === enteredCode.value);
@@ -564,7 +573,7 @@
                 const getLocation = () => {
                     return new Promise((resolve, reject) => {
                         if (!navigator.geolocation) {
-                            locationError.value = "Geolocalización no soportada por tu navegador";
+                            locationError.value = "Geolocalización no soportada";
                             reject(locationError.value);
                             return;
                         }
@@ -584,16 +593,16 @@
                                 let errorMessage;
                                 switch(error.code) {
                                     case error.PERMISSION_DENIED:
-                                        errorMessage = "Permiso denegado. Debes compartir tu ubicación para continuar con el examen.";
+                                        errorMessage = "Permiso denegado. Debes compartir tu ubicación.";
                                         break;
                                     case error.POSITION_UNAVAILABLE:
-                                        errorMessage = "La información de ubicación no está disponible.";
+                                        errorMessage = "Información de ubicación no disponible.";
                                         break;
                                     case error.TIMEOUT:
-                                        errorMessage = "La solicitud de ubicación ha expirado.";
+                                        errorMessage = "Tiempo de espera agotado.";
                                         break;
                                     default:
-                                        errorMessage = "Error desconocido al obtener la ubicación.";
+                                        errorMessage = "Error desconocido.";
                                 }
                                 locationError.value = errorMessage;
                                 reject(errorMessage);
@@ -604,19 +613,18 @@
                 };
                 
                 const requestLocation = async () => {
-                    locationRequested.value = true;
                     try {
                         await getLocation();
                         await startExamAfterLocation();
                     } catch (error) {
-                        console.error("Error obteniendo ubicación:", error);
+                        console.error("Error de ubicación:", error);
                     }
                 };
                 
                 const cancelExam = () => {
                     showLocationModal.value = false;
                     currentScreen.value = 'code';
-                    locationError.value = "Examen cancelado: ubicación requerida no proporcionada";
+                    locationError.value = "Examen cancelado: ubicación requerida";
                 };
                 
                 const verifyAndStartExam = async () => {
@@ -646,6 +654,7 @@
                     
                     startTimer();
                     userAnswers.value = [];
+                    selectedAnswers.value = [];
                     
                     if (examConfig.value.protectQuestions) {
                         await updateCurrentQuestionImage();
@@ -705,6 +714,75 @@
                     currentQuestionImage.value = imageData;
                 };
                 
+                const toggleAnswer = (index) => {
+                    if (showFeedback.value) return;
+                    
+                    if (selectedAnswers.value.includes(index)) {
+                        selectedAnswers.value = selectedAnswers.value.filter(i => i !== index);
+                    } else {
+                        selectedAnswers.value = [...selectedAnswers.value, index];
+                    }
+                };
+                
+                const checkAnswer = () => {
+                    if (selectedAnswers.value.length === 0) return;
+                    
+                    showFeedback.value = true;
+                    
+                    const correctIndices = currentQuestion.value.answers
+                        .map((answer, index) => answer.correct ? index : -1)
+                        .filter(index => index !== -1);
+                    
+                    // Verificar si todas las respuestas seleccionadas son correctas y se seleccionaron todas las correctas
+                    const allSelectedCorrect = selectedAnswers.value.every(index => 
+                        currentQuestion.value.answers[index].correct);
+                    const allCorrectSelected = correctIndices.every(index => 
+                        selectedAnswers.value.includes(index));
+                    
+                    answerIsFullyCorrect.value = allSelectedCorrect && allCorrectSelected;
+                    answerIsPartiallyCorrect.value = allSelectedCorrect && !allCorrectSelected;
+                    
+                    // Guardar respuestas del usuario
+                    if (userAnswers.value.length <= currentQuestionIndex.value) {
+                        userAnswers.value.push([...selectedAnswers.value]);
+                    } else {
+                        userAnswers.value[currentQuestionIndex.value] = [...selectedAnswers.value];
+                    }
+                };
+                
+                const nextQuestion = async () => {
+                    showFeedback.value = false;
+                    selectedAnswers.value = [];
+                    answerIsFullyCorrect.value = false;
+                    answerIsPartiallyCorrect.value = false;
+                    
+                    if (isLastQuestion.value) {
+                        finishExam();
+                    } else {
+                        currentQuestionIndex.value++;
+                        if (examConfig.value.protectQuestions) {
+                            await updateCurrentQuestionImage();
+                        }
+                    }
+                };
+                
+                const prevQuestion = async () => {
+                    showFeedback.value = false;
+                    selectedAnswers.value = [];
+                    answerIsFullyCorrect.value = false;
+                    answerIsPartiallyCorrect.value = false;
+                    currentQuestionIndex.value--;
+                    
+                    if (examConfig.value.protectQuestions) {
+                        await updateCurrentQuestionImage();
+                    }
+                    
+                    // Cargar respuestas previas del usuario
+                    if (userAnswers.value[currentQuestionIndex.value]) {
+                        selectedAnswers.value = [...userAnswers.value[currentQuestionIndex.value]];
+                    }
+                };
+                
                 const startTimer = () => {
                     elapsedTime.value = 0;
                     updateTimeLeft();
@@ -731,53 +809,10 @@
                     }
                 };
                 
-                const selectAnswer = (index) => {
-                    if (showFeedback.value) return;
-                    selectedAnswer.value = index;
-                };
-                
-                const checkAnswer = () => {
-                    if (selectedAnswer.value === null) return;
-                    
-                    showFeedback.value = true;
-                    answerIsCorrect.value = currentQuestion.value.answers[selectedAnswer.value].correct;
-                    
-                    if (userAnswers.value.length <= currentQuestionIndex.value) {
-                        userAnswers.value.push(selectedAnswer.value);
-                    } else {
-                        userAnswers.value[currentQuestionIndex.value] = selectedAnswer.value;
-                    }
-                };
-                
-                const nextQuestion = async () => {
-                    showFeedback.value = false;
-                    selectedAnswer.value = null;
-                    
-                    if (isLastQuestion.value) {
-                        finishExam();
-                    } else {
-                        currentQuestionIndex.value++;
-                        if (examConfig.value.protectQuestions) {
-                            await updateCurrentQuestionImage();
-                        }
-                    }
-                };
-                
-                const prevQuestion = async () => {
-                    showFeedback.value = false;
-                    selectedAnswer.value = null;
-                    currentQuestionIndex.value--;
-                    
-                    if (examConfig.value.protectQuestions) {
-                        await updateCurrentQuestionImage();
-                    }
-                };
-                
                 const finishExam = () => {
                     examFinishTime.value = new Date();
                     stopTimer();
                     currentScreen.value = 'results';
-                    examCompleted.value = true;
                     lastExamScore.value = score.value;
                     
                     examResults.value = {
@@ -787,7 +822,7 @@
                         correo: currentUser.value.correo,
                         attempt: attemptNumber.value,
                         score: score.value,
-                        correctAnswers: correctAnswers.value,
+                        correctAnswers: correctAnswersCount.value,
                         totalQuestions: selectedQuestions.value.length,
                         time: elapsedTime.value,
                         date: new Date().toISOString(),
@@ -824,10 +859,12 @@
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF();
                     
+                    // Configuración inicial
                     doc.setFontSize(20);
                     doc.setTextColor(40, 53, 147);
                     doc.text('Resultados del Examen', 105, 20, { align: 'center' });
                     
+                    // Información del usuario
                     doc.setFontSize(12);
                     doc.setTextColor(0, 0, 0);
                     doc.text(`Nombre: ${currentUser.value.nombre}`, 20, 40);
@@ -836,12 +873,12 @@
                     doc.text(`Intento: ${attemptNumber.value}`, 20, 70);
                     doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 20, 80);
                     
+                    // Información del examen
                     doc.setFontSize(14);
                     doc.setTextColor(40, 53, 147);
                     doc.text('Información del Examen', 20, 100);
                     
                     doc.setFontSize(12);
-                    doc.setTextColor(0, 0, 0);
                     doc.text(`Hora de inicio: ${formatDateTime(examStartTime.value)}`, 20, 110);
                     doc.text(`Hora de finalización: ${formatDateTime(examFinishTime.value)}`, 20, 120);
                     
@@ -853,16 +890,17 @@
                         doc.setTextColor(0, 0, 0);
                     }
                     
+                    // Resumen de resultados
                     doc.setFontSize(14);
                     doc.setTextColor(40, 53, 147);
                     doc.text('Resumen de Resultados', 20, 150);
                     
                     doc.setFontSize(12);
-                    doc.setTextColor(0, 0, 0);
                     doc.text(`Puntuación: ${score.value}/100`, 20, 160);
-                    doc.text(`Respuestas correctas: ${correctAnswers.value} de ${selectedQuestions.value.length}`, 20, 170);
+                    doc.text(`Respuestas correctas: ${correctAnswersCount.value} de ${selectedQuestions.value.length}`, 20, 170);
                     doc.text(`Tiempo empleado: ${formatTime(elapsedTime.value)}`, 20, 180);
                     
+                    // Detalle de respuestas
                     doc.setFontSize(14);
                     doc.setTextColor(40, 53, 147);
                     doc.text('Detalle de Respuestas', 20, 200);
@@ -880,16 +918,23 @@
                         yPos += 7;
                         
                         q.answers.forEach((a, aIndex) => {
-                            let answerText = `${String.fromCharCode(65 + aIndex)}) ${a.text}`;
+                            const isCorrect = a.correct;
+                            const isSelected = userAnswers.value[qIndex].includes(aIndex);
+                            const isFullyCorrect = isQuestionFullyCorrect(qIndex);
                             
-                            if (a.correct) {
-                                doc.setTextColor(0, 128, 0);
-                            } else if (userAnswers.value[qIndex] === aIndex && !a.correct) {
-                                doc.setTextColor(255, 0, 0);
+                            if (isCorrect && isSelected && isFullyCorrect) {
+                                doc.setTextColor(0, 128, 0); // Verde - correcta y seleccionada
+                            } else if (isCorrect && isSelected) {
+                                doc.setTextColor(210, 150, 0); // Amarillo - correcta pero incompleta
+                            } else if (isCorrect) {
+                                doc.setTextColor(0, 128, 0); // Verde - correcta no seleccionada
+                            } else if (isSelected) {
+                                doc.setTextColor(255, 0, 0); // Rojo - incorrecta seleccionada
                             } else {
-                                doc.setTextColor(0, 0, 0);
+                                doc.setTextColor(0, 0, 0); // Negro - normal
                             }
                             
+                            let answerText = `${String.fromCharCode(65 + aIndex)}) ${a.text}`;
                             doc.text(answerText, 25, yPos);
                             yPos += 7;
                         });
@@ -939,7 +984,10 @@
                 
                 const saveConfig = () => {
                     showConfig.value = false;
-                    alert('Configuración guardada (en un sistema real, esto se guardaría en el servidor)');
+                    if (developmentMode) {
+                        localStorage.setItem('examConfig', JSON.stringify(examConfig.value));
+                    }
+                    alert('Configuración guardada');
                 };
                 
                 const formatCountdown = (ms) => {
@@ -1011,14 +1059,13 @@
                     
                     // Deshabilitar atajos de teclado
                     document.addEventListener('keydown', (e) => {
-                        if (e.ctrlKey && (e.key === 'c' || e.key === 'C' || e.key === 'x' || e.key === 'X' || e.key === 'a' || e.key === 'A')) {
+                        // Bloquear Ctrl+C, Ctrl+A, etc.
+                        if (e.ctrlKey && ['c', 'C', 'x', 'X', 'a', 'A'].includes(e.key)) {
                             e.preventDefault();
-                            return false;
                         }
-                        
+                        // Bloquear F12
                         if (e.key === 'F12') {
                             e.preventDefault();
-                            return false;
                         }
                     });
                 });
@@ -1039,9 +1086,10 @@
                     currentUser,
                     selectedQuestions,
                     currentQuestionIndex,
-                    selectedAnswer,
+                    selectedAnswers,
                     showFeedback,
-                    answerIsCorrect,
+                    answerIsFullyCorrect,
+                    answerIsPartiallyCorrect,
                     userAnswers,
                     elapsedTime,
                     attemptNumber,
@@ -1057,8 +1105,8 @@
                     developmentMode,
                     currentQuestion,
                     isLastQuestion,
-                    correctAnswerText,
-                    correctAnswers,
+                    correctAnswersText,
+                    correctAnswersCount,
                     score,
                     isExamTime,
                     examLocation,
@@ -1072,7 +1120,7 @@
                     requestLocation,
                     cancelExam,
                     startExamAfterLocation,
-                    selectAnswer,
+                    toggleAnswer,
                     checkAnswer,
                     nextQuestion,
                     prevQuestion,
@@ -1082,7 +1130,8 @@
                     formatCountdown,
                     formatDateTime,
                     toggleAdmin,
-                    saveConfig
+                    saveConfig,
+                    isQuestionFullyCorrect
                 };
             }
         }).mount('#app');
