@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Examen Interactivo</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
@@ -588,11 +592,12 @@
         /* Mapa de ubicación */
         .map-container {
             width: 100%;
-            height: 200px;
+            height: 300px;
             margin: 20px 0;
             border-radius: var(--border-radius);
             overflow: hidden;
             box-shadow: var(--shadow);
+            position: relative;
         }
 
         .map-placeholder {
@@ -902,11 +907,11 @@
                             </div>
                         </div>
                         
-                        <!-- Mapa de ubicación -->
+                        <!-- Mapa de ubicación con Leaflet -->
                         <div v-if="examLocation" class="mt-4">
                             <h4 class="font-medium mb-2">Ubicación aproximada:</h4>
                             <div class="map-container">
-                                <img :src="getStaticMapUrl()" alt="Ubicación del examen" class="w-full h-full object-cover">
+                                <div id="leaflet-map" style="width: 100%; height: 100%;"></div>
                             </div>
                             <p class="text-sm text-gray-500 mt-2">Esta ubicación se incluirá en el certificado</p>
                         </div>
@@ -964,8 +969,13 @@
         </div>
     </div>
 
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+
     <script>
-        const { createApp, ref, computed, onMounted, onUnmounted } = Vue;
+        const { createApp, ref, computed, onMounted, onUnmounted, nextTick } = Vue;
         const { jsPDF } = window.jspdf;
         
         createApp({
@@ -977,7 +987,7 @@
                 
                 // Configuración del examen
                 const examConfig = ref({
-                    startTime: '12:28',
+                    startTime: '15:06',
                     endTime: '18:00',
                     duration: 30,
                     numQuestions: 15,
@@ -1060,6 +1070,8 @@
                 const isAdmin = ref(false);
                 const showConfig = ref(false);
                 const mapImageData = ref(null);
+                const leafletMap = ref(null);
+                const leafletMarker = ref(null);
 
                 // Computed properties
                 const currentQuestion = computed(() => selectedQuestions.value[currentQuestionIndex.value]);
@@ -1417,7 +1429,99 @@
                     }
                 };
                 
-                const finishExam = () => {
+                const initLeafletMap = () => {
+                    if (!examLocation.value) return;
+                    
+                    // Esperar a que el DOM se actualice
+                    nextTick(() => {
+                        const mapElement = document.getElementById('leaflet-map');
+                        if (!mapElement) return;
+                        
+                        // Limpiar mapa existente si hay uno
+                        if (leafletMap.value) {
+                            leafletMap.value.remove();
+                        }
+                        
+                        // Crear nuevo mapa
+                        leafletMap.value = L.map('leaflet-map').setView(
+                            [examLocation.value.latitude, examLocation.value.longitude], 
+                            15
+                        );
+                        
+                        // Añadir capa de OpenStreetMap
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        }).addTo(leafletMap.value);
+                        
+                        // Añadir marcador
+                        if (leafletMarker.value) {
+                            leafletMarker.value.remove();
+                        }
+                        
+                        leafletMarker.value = L.marker([examLocation.value.latitude, examLocation.value.longitude])
+                            .addTo(leafletMap.value)
+                            .bindPopup('Ubicación del examen');
+                        
+                        // Ajustar el mapa al contenedor
+                        leafletMap.value.invalidateSize();
+                    });
+                };
+                
+                const captureLeafletMap = async () => {
+                    if (!leafletMap.value) return null;
+                    
+                    const mapContainer = document.createElement('div');
+                    mapContainer.style.width = '600px';
+                    mapContainer.style.height = '200px';
+                    mapContainer.style.position = 'absolute';
+                    mapContainer.style.left = '-9999px';
+                    
+                    const mapImg = document.createElement('div');
+                    mapImg.id = 'temp-leaflet-map';
+                    mapImg.style.width = '100%';
+                    mapImg.style.height = '100%';
+                    
+                    mapContainer.appendChild(mapImg);
+                    document.body.appendChild(mapContainer);
+                    
+                    // Crear un mapa temporal para captura
+                    const tempMap = L.map('temp-leaflet-map').setView(
+                        [examLocation.value.latitude, examLocation.value.longitude], 
+                        15
+                    );
+                    
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    }).addTo(tempMap);
+                    
+                    L.marker([examLocation.value.latitude, examLocation.value.longitude])
+                        .addTo(tempMap)
+                        .bindPopup('Ubicación del examen');
+                    
+                    // Esperar a que el mapa se cargue
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    try {
+                        const canvas = await html2canvas(mapContainer, {
+                            width: 600,
+                            height: 200,
+                            scale: 1,
+                            logging: false,
+                            useCORS: true
+                        });
+                        
+                        const imageData = canvas.toDataURL('image/png');
+                        return imageData;
+                    } catch (error) {
+                        console.error('Error al capturar mapa Leaflet:', error);
+                        return null;
+                    } finally {
+                        document.body.removeChild(mapContainer);
+                        tempMap.remove();
+                    }
+                };
+                
+                const finishExam = async () => {
                     examFinishTime.value = new Date();
                     stopTimer();
                     currentScreen.value = 'results';
@@ -1446,9 +1550,12 @@
                     
                     hasCompletedExam.value = true;
                     
+                    // Inicializar mapa Leaflet
+                    initLeafletMap();
+                    
                     // Prepara la imagen del mapa para el PDF
                     if (examLocation.value) {
-                        prepareMapForPDF();
+                        mapImageData.value = await captureLeafletMap();
                     }
                 };
                 
@@ -1462,47 +1569,6 @@
                         minute: '2-digit',
                         second: '2-digit'
                     });
-                };
-                
-                const getStaticMapUrl = () => {
-                    if (!examLocation.value) return '';
-                    const { latitude, longitude } = examLocation.value;
-                    // API key de ejemplo - reemplaza con tu propia API key de Google Maps
-                    const apiKey = 'AIzaSyD9BxeKK6QJmYx8QJ4v3Xq9V7y6QK6Q6Q6';
-                    return `https://maps.googleapis.com/maps/api/staticmap?center=${latitude},${longitude}&zoom=15&size=600x200&maptype=roadmap&markers=color:red%7C${latitude},${longitude}&key=${apiKey}`;
-                };
-                
-                const prepareMapForPDF = async () => {
-                    try {
-                        const mapContainer = document.createElement('div');
-                        mapContainer.style.width = '600px';
-                        mapContainer.style.height = '200px';
-                        mapContainer.style.position = 'absolute';
-                        mapContainer.style.left = '-9999px';
-                        
-                        const mapImg = document.createElement('img');
-                        mapImg.src = getStaticMapUrl();
-                        mapImg.style.width = '100%';
-                        mapImg.style.height = '100%';
-                        mapImg.style.objectFit = 'cover';
-                        
-                        mapContainer.appendChild(mapImg);
-                        document.body.appendChild(mapContainer);
-                        
-                        const canvas = await html2canvas(mapContainer, {
-                            width: 600,
-                            height: 200,
-                            scale: 1,
-                            logging: false,
-                            useCORS: true
-                        });
-                        
-                        mapImageData.value = canvas.toDataURL('image/png');
-                        document.body.removeChild(mapContainer);
-                    } catch (error) {
-                        console.error('Error al preparar mapa para PDF:', error);
-                        mapImageData.value = null;
-                    }
                 };
                 
                 const generatePDF = async () => {
@@ -1767,6 +1833,9 @@
                     if (timeUpdateInterval.value) {
                         clearInterval(timeUpdateInterval.value);
                     }
+                    if (leafletMap.value) {
+                        leafletMap.value.remove();
+                    }
                 });
 
                 return {
@@ -1821,8 +1890,7 @@
                     formatDateTime,
                     toggleAdmin,
                     saveConfig,
-                    isQuestionFullyCorrect,
-                    getStaticMapUrl
+                    isQuestionFullyCorrect
                 };
             }
         }).mount('#app');
