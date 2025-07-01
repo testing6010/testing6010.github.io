@@ -1,4 +1,3 @@
-el siguiente codigo funciona relativamente bien, pero tiene problemas  ya que lo que muestra se ve en casi el 100% del ancho y se ve feo que ocupe casi todo el espacio adicionalmente cuando genera un pdf no se ve elegante quiero que se ve elegante porque las personas deben imprimir ese pdf ya que es requisito para demostrar su conocimiento adicionalmente hay uno valores de latitus y longitud quisiera que ademas de sos se muestre el lugar donde se dio el examen agragando una imagen de esa ubicacion o el mapa donde dio el examen corrige lo mecionado pero primero analiza bien el codigo posteriormente recien realiza esas implementaciones cuando termines todo necesito el codigo completo repito completo no me des solo partes del codigo :
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -50,12 +49,24 @@ el siguiente codigo funciona relativamente bien, pero tiene problemas  ya que lo
             -moz-user-select: none;
             -ms-user-select: none;
             user-select: none;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
         }
 
         .container {
             max-width: 800px;
+            width: 100%;
             margin: 0 auto;
             padding: 20px;
+        }
+
+        /* Contenedor principal más compacto */
+        .main-container {
+            max-width: 700px;
+            margin: 0 auto;
+            width: 100%;
         }
 
         /* Transiciones */
@@ -76,6 +87,7 @@ el siguiente codigo funciona relativamente bien, pero tiene problemas  ya que lo
             box-shadow: var(--shadow);
             padding: 25px;
             margin-bottom: 20px;
+            width: 100%;
         }
 
         .card-header {
@@ -573,6 +585,26 @@ el siguiente codigo funciona relativamente bien, pero tiene problemas  ya que lo
             font-size: 1.5rem;
         }
 
+        /* Mapa de ubicación */
+        .map-container {
+            width: 100%;
+            height: 200px;
+            margin: 20px 0;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .map-placeholder {
+            width: 100%;
+            height: 100%;
+            background-color: var(--light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray);
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .card {
@@ -595,324 +627,339 @@ el siguiente codigo funciona relativamente bien, pero tiene problemas  ya que lo
     </style>
 </head>
 <body>
-    <div id="app">
-        <!-- Modal de ubicación -->
-        <div class="modal" :class="{show: showLocationModal}">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 class="modal-title">Ubicación Requerida</h3>
-                </div>
-                <div class="modal-body">
-                    <p>Para continuar con el examen, necesitamos acceder a tu ubicación. Esto nos ayuda a garantizar la integridad del proceso.</p>
-                    <div v-if="locationError" class="alert alert-danger mt-3">
-                        {{ locationError }}
+    <div class="main-container">
+        <div id="app">
+            <!-- Modal de ubicación -->
+            <div class="modal" :class="{show: showLocationModal}">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Ubicación Requerida</h3>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button @click="cancelExam" class="btn btn-outline">Cancelar</button>
-                    <button @click="requestLocation" class="btn btn-primary">Compartir Ubicación</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Pantalla de configuración -->
-        <transition name="fade">
-            <div v-if="showConfig && isAdmin" class="card">
-                <div class="card-header">
-                    <h2 class="card-title">Configuración del Examen</h2>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div>
-                        <label class="block mb-2 font-medium">Hora de inicio:</label>
-                        <input v-model="examConfig.startTime" type="time" class="form-control">
-                    </div>
-                    <div>
-                        <label class="block mb-2 font-medium">Hora de fin:</label>
-                        <input v-model="examConfig.endTime" type="time" class="form-control">
-                    </div>
-                    <div>
-                        <label class="block mb-2 font-medium">Duración (minutos):</label>
-                        <input v-model="examConfig.duration" type="number" min="1" class="form-control">
-                    </div>
-                    <div>
-                        <label class="block mb-2 font-medium">Número de preguntas:</label>
-                        <input v-model="examConfig.numQuestions" type="number" min="5" max="50" class="form-control">
-                    </div>
-                    <div>
-                        <label class="block mb-2 font-medium">Proteger preguntas:</label>
-                        <select v-model="examConfig.protectQuestions" class="form-control">
-                            <option :value="true">Sí</option>
-                            <option :value="false">No</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block mb-2 font-medium">Ubicación obligatoria:</label>
-                        <select v-model="examConfig.requireLocation" class="form-control">
-                            <option :value="true">Sí</option>
-                            <option :value="false">No</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="text-center">
-                    <button @click="saveConfig" class="btn btn-success">Guardar Configuración</button>
-                </div>
-            </div>
-        </transition>
-
-        <!-- Pantalla de ingreso de código -->
-        <transition name="fade">
-            <div v-if="currentScreen === 'code'" class="card">
-                <div class="card-header">
-                    <h2 class="card-title">Ingrese su código de acceso</h2>
-                </div>
-                
-                <div v-if="!isExamTime" class="alert alert-warning">
-                    <p v-if="timeUntilStart > 0">El examen comenzará en: <strong class="text-primary">{{ formatCountdown(timeUntilStart) }}</strong></p>
-                    <p v-else-if="timeUntilEnd <= 0">El examen ha finalizado. Próximo examen: {{ examConfig.startTime }}</p>
-                    <p v-else>Horario permitido: {{ examConfig.startTime }} - {{ examConfig.endTime }}</p>
-                </div>
-                
-                <div v-if="hasCompletedExam && isExamTime" class="alert alert-info">
-                    <p class="font-bold">¡Ya completaste el examen!</p>
-                    <p>Tu calificación: <strong>{{ lastExamScore }}%</strong></p>
-                    <button @click="downloadPreviousExam" class="btn btn-sm btn-info mt-2">
-                        Descargar resultados
-                    </button>
-                </div>
-                
-                <div class="flex flex-col items-center">
-                    <input 
-                        v-model="enteredCode" 
-                        @keyup.enter="verifyCode"
-                        :disabled="isCodeBlocked || !isExamTime || (hasCompletedExam && isExamTime)"
-                        type="text" 
-                        class="form-control mb-4 text-center"
-                        placeholder="Ingrese su código">
-                    
-                    <div v-if="isCodeBlocked" class="text-center mb-4">
-                        <p class="text-danger mb-2">Código incorrecto. Espere:</p>
-                        <div class="text-2xl font-bold text-danger">{{ countdown }} segundos</div>
-                    </div>
-                    
-                    <button 
-                        @click="verifyCode"
-                        :disabled="isCodeBlocked || !isExamTime || (hasCompletedExam && isExamTime)"
-                        class="btn btn-primary">
-                        Continuar
-                    </button>
-                    
-                    <button 
-                        v-if="developmentMode"
-                        @click="toggleAdmin"
-                        class="btn btn-outline mt-4">
-                        {{ isAdmin ? 'Desactivar Admin' : 'Activar Admin' }}
-                    </button>
-                </div>
-            </div>
-        </transition>
-
-        <!-- Pantalla de información del usuario -->
-        <transition name="fade">
-            <div v-if="currentScreen === 'user-info'" class="card">
-                <div class="card-header">
-                    <h2 class="card-title">Verifique su información</h2>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div>
-                        <label class="block mb-2 font-medium">Cédula:</label>
-                        <div class="p-3 bg-gray-100 rounded-lg">{{ currentUser.ci }}</div>
-                    </div>
-                    <div>
-                        <label class="block mb-2 font-medium">Nombre:</label>
-                        <div class="p-3 bg-gray-100 rounded-lg">{{ currentUser.nombre }}</div>
-                    </div>
-                    <div>
-                        <label class="block mb-2 font-medium">Correo:</label>
-                        <div class="p-3 bg-gray-100 rounded-lg">{{ currentUser.correo }}</div>
-                    </div>
-                    <div>
-                        <label class="block mb-2 font-medium">Código:</label>
-                        <div class="p-3 bg-gray-100 rounded-lg">{{ currentUser.codigo }}</div>
-                    </div>
-                </div>
-                <div class="text-center">
-                    <p class="mb-4">Por favor verifique que esta información es correcta antes de comenzar.</p>
-                    <p class="text-sm text-gray-500 mb-4">Duración del examen: {{ examConfig.duration }} minutos</p>
-                    <button 
-                        @click="verifyAndStartExam" 
-                        class="btn btn-success">
-                        Confirmar y comenzar
-                    </button>
-                </div>
-            </div>
-        </transition>
-
-        <!-- Pantalla de examen -->
-        <transition name="fade">
-            <div v-if="currentScreen === 'exam'" class="card">
-                <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
-                    <div class="mb-4 md:mb-0">
-                        <h2 class="text-xl font-bold text-primary">Examen Interactivo</h2>
-                        <p class="text-sm text-gray-500">Tiempo restante: <span class="font-bold">{{ formatTime(timeLeft) }}</span></p>
-                    </div>
-                    <div class="flex space-x-2">
-                        <span class="badge badge-primary">
-                            Pregunta {{ currentQuestionIndex + 1 }} de {{ selectedQuestions.length }}
-                        </span>
-                        <span class="badge badge-secondary">
-                            Intento #{{ attemptNumber }}
-                        </span>
-                    </div>
-                </div>
-                
-                <div class="question-container">
-                    <div v-if="examConfig.protectQuestions">
-                        <img :src="currentQuestionImage" class="w-full h-auto mb-4 rounded-lg" alt="Pregunta">
-                    </div>
-                    <h3 v-else class="question-text">{{ currentQuestion.text }}</h3>
-                </div>
-                
-                <div class="answers-container">
-                    <div 
-                        v-for="(answer, index) in currentQuestion.answers" 
-                        :key="index"
-                        @click="toggleAnswer(index)"
-                        class="answer-option"
-                        :class="{
-                            'selected': selectedAnswers.includes(index) && !showFeedback,
-                            'correct': showFeedback && answer.correct,
-                            'incorrect': showFeedback && selectedAnswers.includes(index) && !answer.correct,
-                            'partially-correct': showFeedback && answer.correct && selectedAnswers.includes(index) && !allCorrectAnswersSelected
-                        }">
-                        <div class="answer-letter">
-                            {{ String.fromCharCode(65 + index) }}
+                    <div class="modal-body">
+                        <p>Para continuar con el examen, necesitamos acceder a tu ubicación. Esto nos ayuda a garantizar la integridad del proceso.</p>
+                        <div v-if="locationError" class="alert alert-danger mt-3">
+                            {{ locationError }}
                         </div>
-                        <div>{{ answer.text }}</div>
                     </div>
-                </div>
-                
-                <div class="flex flex-col md:flex-row md:justify-center md:items-center mt-6 gap-4">
-                    <div v-if="showFeedback" class="text-center">
-                        <p v-if="answerIsFullyCorrect" class="text-success font-bold">¡Respuesta correcta!</p>
-                        <p v-else-if="answerIsPartiallyCorrect" class="text-warning font-bold">Parcialmente correcta</p>
-                        <p v-else class="text-danger font-bold">Incorrecto. Respuestas correctas: {{ correctAnswersText }}</p>
-                    </div>
-                    
-                    <button 
-                        v-if="!showFeedback && selectedAnswers.length > 0"
-                        @click="checkAnswer"
-                        class="btn btn-primary">
-                        Verificar
-                    </button>
-                    <button 
-                        v-if="showFeedback"
-                        @click="nextQuestion"
-                        class="btn btn-primary">
-                        {{ isLastQuestion ? 'Finalizar examen' : 'Siguiente' }}
-                    </button>
-                </div>
-                
-                <div class="mt-6">
-                    <div class="flex justify-between mb-2 text-sm">
-                        <span>Progreso: {{ Math.round((currentQuestionIndex / selectedQuestions.length) * 100) }}%</span>
-                        <span>Tiempo: {{ formatTime(elapsedTime) }}</span>
-                    </div>
-                    <div class="progress">
-                        <div class="progress-bar" :style="{ width: `${(currentQuestionIndex / selectedQuestions.length) * 100}%` }"></div>
+                    <div class="modal-footer">
+                        <button @click="cancelExam" class="btn btn-outline">Cancelar</button>
+                        <button @click="requestLocation" class="btn btn-primary">Compartir Ubicación</button>
                     </div>
                 </div>
             </div>
-        </transition>
 
-        <!-- Pantalla de resultados -->
-        <transition name="fade">
-            <div v-if="currentScreen === 'results'" class="card">
-                <div class="text-center mb-8">
-                    <h2 class="text-2xl font-bold text-primary mb-2">Resultados del Examen</h2>
-                    <p class="text-lg">Gracias por completar el examen, {{ currentUser.nombre }}!</p>
-                    <p class="text-sm text-gray-500">Intento #{{ attemptNumber }} - {{ new Date().toLocaleString() }}</p>
-                </div>
-                
-                <div class="results-grid">
-                    <div class="result-card">
-                        <div class="result-value text-primary">{{ score }}%</div>
-                        <div class="result-label">Puntuación</div>
+            <!-- Pantalla de configuración -->
+            <transition name="fade">
+                <div v-if="showConfig && isAdmin" class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Configuración del Examen</h2>
                     </div>
-                    <div class="result-card">
-                        <div class="result-value text-success">{{ correctAnswersCount }}</div>
-                        <div class="result-label">Respuestas correctas</div>
-                    </div>
-                    <div class="result-card">
-                        <div class="result-value text-secondary">{{ formatTime(elapsedTime) }}</div>
-                        <div class="result-label">Tiempo empleado</div>
-                    </div>
-                </div>
-                
-                <div class="bg-gray-50 p-5 rounded-lg mb-6">
-                    <h3 class="text-lg font-semibold mb-4">Información del Examen</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         <div>
-                            <p class="font-medium">Inicio:</p>
-                            <p>{{ formatDateTime(examStartTime) }}</p>
+                            <label class="block mb-2 font-medium">Hora de inicio:</label>
+                            <input v-model="examConfig.startTime" type="time" class="form-control">
                         </div>
                         <div>
-                            <p class="font-medium">Finalización:</p>
-                            <p>{{ formatDateTime(examFinishTime) }}</p>
+                            <label class="block mb-2 font-medium">Hora de fin:</label>
+                            <input v-model="examConfig.endTime" type="time" class="form-control">
                         </div>
-                        <div v-if="examLocation">
-                            <p class="font-medium">Ubicación:</p>
-                            <p>Lat: {{ examLocation.latitude.toFixed(6) }}, Long: {{ examLocation.longitude.toFixed(6) }}</p>
+                        <div>
+                            <label class="block mb-2 font-medium">Duración (minutos):</label>
+                            <input v-model="examConfig.duration" type="number" min="1" class="form-control">
                         </div>
-                        <div v-if="locationError">
-                            <p class="font-medium text-danger">Error:</p>
-                            <p>{{ locationError }}</p>
+                        <div>
+                            <label class="block mb-2 font-medium">Número de preguntas:</label>
+                            <input v-model="examConfig.numQuestions" type="number" min="5" max="50" class="form-control">
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-medium">Proteger preguntas:</label>
+                            <select v-model="examConfig.protectQuestions" class="form-control">
+                                <option :value="true">Sí</option>
+                                <option :value="false">No</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-medium">Ubicación obligatoria:</label>
+                            <select v-model="examConfig.requireLocation" class="form-control">
+                                <option :value="true">Sí</option>
+                                <option :value="false">No</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <button @click="saveConfig" class="btn btn-success">Guardar Configuración</button>
+                    </div>
+                </div>
+            </transition>
+
+            <!-- Pantalla de ingreso de código -->
+            <transition name="fade">
+                <div v-if="currentScreen === 'code'" class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Ingrese su código de acceso</h2>
+                    </div>
+                    
+                    <div v-if="!isExamTime" class="alert alert-warning">
+                        <p v-if="timeUntilStart > 0">El examen comenzará en: <strong class="text-primary">{{ formatCountdown(timeUntilStart) }}</strong></p>
+                        <p v-else-if="timeUntilEnd <= 0">El examen ha finalizado. Próximo examen: {{ examConfig.startTime }}</p>
+                        <p v-else>Horario permitido: {{ examConfig.startTime }} - {{ examConfig.endTime }}</p>
+                    </div>
+                    
+                    <div v-if="hasCompletedExam && isExamTime" class="alert alert-info">
+                        <p class="font-bold">¡Ya completaste el examen!</p>
+                        <p>Tu calificación: <strong>{{ lastExamScore }}%</strong></p>
+                        <button @click="downloadPreviousExam" class="btn btn-sm btn-info mt-2">
+                            Descargar resultados
+                        </button>
+                    </div>
+                    
+                    <div class="flex flex-col items-center">
+                        <input 
+                            v-model="enteredCode" 
+                            @keyup.enter="verifyCode"
+                            :disabled="isCodeBlocked || !isExamTime || (hasCompletedExam && isExamTime)"
+                            type="text" 
+                            class="form-control mb-4 text-center"
+                            placeholder="Ingrese su código">
+                        
+                        <div v-if="isCodeBlocked" class="text-center mb-4">
+                            <p class="text-danger mb-2">Código incorrecto. Espere:</p>
+                            <div class="text-2xl font-bold text-danger">{{ countdown }} segundos</div>
+                        </div>
+                        
+                        <button 
+                            @click="verifyCode"
+                            :disabled="isCodeBlocked || !isExamTime || (hasCompletedExam && isExamTime)"
+                            class="btn btn-primary">
+                            Continuar
+                        </button>
+                        
+                        <button 
+                            v-if="developmentMode"
+                            @click="toggleAdmin"
+                            class="btn btn-outline mt-4">
+                            {{ isAdmin ? 'Desactivar Admin' : 'Activar Admin' }}
+                        </button>
+                    </div>
+                </div>
+            </transition>
+
+            <!-- Pantalla de información del usuario -->
+            <transition name="fade">
+                <div v-if="currentScreen === 'user-info'" class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Verifique su información</h2>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block mb-2 font-medium">Cédula:</label>
+                            <div class="p-3 bg-gray-100 rounded-lg">{{ currentUser.ci }}</div>
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-medium">Nombre:</label>
+                            <div class="p-3 bg-gray-100 rounded-lg">{{ currentUser.nombre }}</div>
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-medium">Correo:</label>
+                            <div class="p-3 bg-gray-100 rounded-lg">{{ currentUser.correo }}</div>
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-medium">Código:</label>
+                            <div class="p-3 bg-gray-100 rounded-lg">{{ currentUser.codigo }}</div>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <p class="mb-4">Por favor verifique que esta información es correcta antes de comenzar.</p>
+                        <p class="text-sm text-gray-500 mb-4">Duración del examen: {{ examConfig.duration }} minutos</p>
+                        <button 
+                            @click="verifyAndStartExam" 
+                            class="btn btn-success">
+                            Confirmar y comenzar
+                        </button>
+                    </div>
+                </div>
+            </transition>
+
+            <!-- Pantalla de examen -->
+            <transition name="fade">
+                <div v-if="currentScreen === 'exam'" class="card">
+                    <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
+                        <div class="mb-4 md:mb-0">
+                            <h2 class="text-xl font-bold text-primary">Examen Interactivo</h2>
+                            <p class="text-sm text-gray-500">Tiempo restante: <span class="font-bold">{{ formatTime(timeLeft) }}</span></p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <span class="badge badge-primary">
+                                Pregunta {{ currentQuestionIndex + 1 }} de {{ selectedQuestions.length }}
+                            </span>
+                            <span class="badge badge-secondary">
+                                Intento #{{ attemptNumber }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="question-container">
+                        <div v-if="examConfig.protectQuestions">
+                            <img :src="currentQuestionImage" class="w-full h-auto mb-4 rounded-lg" alt="Pregunta">
+                        </div>
+                        <h3 v-else class="question-text">{{ currentQuestion.text }}</h3>
+                    </div>
+                    
+                    <div class="answers-container">
+                        <div 
+                            v-for="(answer, index) in currentQuestion.answers" 
+                            :key="index"
+                            @click="toggleAnswer(index)"
+                            class="answer-option"
+                            :class="{
+                                'selected': selectedAnswers.includes(index) && !showFeedback,
+                                'correct': showFeedback && answer.correct,
+                                'incorrect': showFeedback && selectedAnswers.includes(index) && !answer.correct,
+                                'partially-correct': showFeedback && answer.correct && selectedAnswers.includes(index) && !allCorrectAnswersSelected
+                            }">
+                            <div class="answer-letter">
+                                {{ String.fromCharCode(65 + index) }}
+                            </div>
+                            <div>{{ answer.text }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col md:flex-row md:justify-center md:items-center mt-6 gap-4">
+                        <div v-if="showFeedback" class="text-center">
+                            <p v-if="answerIsFullyCorrect" class="text-success font-bold">¡Respuesta correcta!</p>
+                            <p v-else-if="answerIsPartiallyCorrect" class="text-warning font-bold">Parcialmente correcta</p>
+                            <p v-else class="text-danger font-bold">Incorrecto. Respuestas correctas: {{ correctAnswersText }}</p>
+                        </div>
+                        
+                        <button 
+                            v-if="!showFeedback && selectedAnswers.length > 0"
+                            @click="checkAnswer"
+                            class="btn btn-primary">
+                            Verificar
+                        </button>
+                        <button 
+                            v-if="showFeedback"
+                            @click="nextQuestion"
+                            class="btn btn-primary">
+                            {{ isLastQuestion ? 'Finalizar examen' : 'Siguiente' }}
+                        </button>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <div class="flex justify-between mb-2 text-sm">
+                            <span>Progreso: {{ Math.round((currentQuestionIndex / selectedQuestions.length) * 100) }}%</span>
+                            <span>Tiempo: {{ formatTime(elapsedTime) }}</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar" :style="{ width: `${(currentQuestionIndex / selectedQuestions.length) * 100}%` }"></div>
                         </div>
                     </div>
                 </div>
-                
-                <div class="mb-8">
-                    <h3 class="text-lg font-semibold mb-4">Detalle de respuestas</h3>
-                    <div class="space-y-6">
-                        <div v-for="(question, qIndex) in selectedQuestions" :key="qIndex" class="border-b pb-6">
-                            <h4 class="font-medium mb-3">{{ qIndex + 1 }}. {{ question.text }}</h4>
-                            <div class="ml-4 space-y-2">
-                                <div v-for="(answer, aIndex) in question.answers" 
-                                     :key="aIndex"
-                                     class="flex items-start"
-                                     :class="{
-                                         'text-success': answer.correct && isQuestionFullyCorrect(qIndex),
-                                         'text-danger': !answer.correct && userAnswers[qIndex].includes(aIndex),
-                                         'text-warning': answer.correct && userAnswers[qIndex].includes(aIndex) && !isQuestionFullyCorrect(qIndex)
-                                     }">
-                                    <span class="mr-2">{{ String.fromCharCode(65 + aIndex) }})</span>
-                                    <div>
-                                        {{ answer.text }}
-                                        <span v-if="!answer.correct && userAnswers[qIndex].includes(aIndex)" class="text-xs ml-2">← Tu respuesta</span>
-                                        <span v-if="answer.correct && userAnswers[qIndex].includes(aIndex) && !isQuestionFullyCorrect(qIndex)" class="text-xs ml-2">← Correcta pero incompleta</span>
+            </transition>
+
+            <!-- Pantalla de resultados -->
+            <transition name="fade">
+                <div v-if="currentScreen === 'results'" class="card">
+                    <div class="text-center mb-8">
+                        <h2 class="text-2xl font-bold text-primary mb-2">Resultados del Examen</h2>
+                        <p class="text-lg">Gracias por completar el examen, {{ currentUser.nombre }}!</p>
+                        <p class="text-sm text-gray-500">Intento #{{ attemptNumber }} - {{ new Date().toLocaleString() }}</p>
+                    </div>
+                    
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <div class="result-value text-primary">{{ score }}%</div>
+                            <div class="result-label">Puntuación</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-value text-success">{{ correctAnswersCount }}</div>
+                            <div class="result-label">Respuestas correctas</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-value text-secondary">{{ formatTime(elapsedTime) }}</div>
+                            <div class="result-label">Tiempo empleado</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-5 rounded-lg mb-6">
+                        <h3 class="text-lg font-semibold mb-4">Información del Examen</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p class="font-medium">Inicio:</p>
+                                <p>{{ formatDateTime(examStartTime) }}</p>
+                            </div>
+                            <div>
+                                <p class="font-medium">Finalización:</p>
+                                <p>{{ formatDateTime(examFinishTime) }}</p>
+                            </div>
+                            <div v-if="examLocation">
+                                <p class="font-medium">Ubicación:</p>
+                                <p>Lat: {{ examLocation.latitude.toFixed(6) }}, Long: {{ examLocation.longitude.toFixed(6) }}</p>
+                            </div>
+                            <div v-if="locationError">
+                                <p class="font-medium text-danger">Error:</p>
+                                <p>{{ locationError }}</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Mapa de ubicación -->
+                        <div v-if="examLocation" class="mt-4">
+                            <h4 class="font-medium mb-2">Ubicación aproximada:</h4>
+                            <div class="map-container">
+                                <img :src="getStaticMapUrl()" alt="Ubicación del examen" class="w-full h-full object-cover">
+                            </div>
+                        </div>
+                        <div v-else-if="locationError" class="map-container">
+                            <div class="map-placeholder">
+                                <p>No se pudo obtener la ubicación</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold mb-4">Detalle de respuestas</h3>
+                        <div class="space-y-6">
+                            <div v-for="(question, qIndex) in selectedQuestions" :key="qIndex" class="border-b pb-6">
+                                <h4 class="font-medium mb-3">{{ qIndex + 1 }}. {{ question.text }}</h4>
+                                <div class="ml-4 space-y-2">
+                                    <div v-for="(answer, aIndex) in question.answers" 
+                                         :key="aIndex"
+                                         class="flex items-start"
+                                         :class="{
+                                             'text-success': answer.correct && isQuestionFullyCorrect(qIndex),
+                                             'text-danger': !answer.correct && userAnswers[qIndex].includes(aIndex),
+                                             'text-warning': answer.correct && userAnswers[qIndex].includes(aIndex) && !isQuestionFullyCorrect(qIndex)
+                                         }">
+                                        <span class="mr-2">{{ String.fromCharCode(65 + aIndex) }})</span>
+                                        <div>
+                                            {{ answer.text }}
+                                            <span v-if="!answer.correct && userAnswers[qIndex].includes(aIndex)" class="text-xs ml-2">← Tu respuesta</span>
+                                            <span v-if="answer.correct && userAnswers[qIndex].includes(aIndex) && !isQuestionFullyCorrect(qIndex)" class="text-xs ml-2">← Correcta pero incompleta</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+                    
+                    <div class="text-center">
+                        <button 
+                            @click="downloadResults"
+                            class="btn btn-danger">
+                            Descargar PDF
+                        </button>
+                    </div>
                 </div>
-                
-                <div class="text-center">
-                    <button 
-                        @click="downloadResults"
-                        class="btn btn-danger">
-                        Descargar PDF
-                    </button>
-                </div>
-            </div>
-        </transition>
+            </transition>
 
-        <!-- Notificación -->
-        <div class="notification" :class="{show: showDownloadNotification}">
-            <svg class="notification-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-            </svg>
-            <span>PDF descargado correctamente</span>
+            <!-- Notificación -->
+            <div class="notification" :class="{show: showDownloadNotification}">
+                <svg class="notification-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <span>PDF descargado correctamente</span>
+            </div>
         </div>
     </div>
 
@@ -929,7 +976,7 @@ el siguiente codigo funciona relativamente bien, pero tiene problemas  ya que lo
                 
                 // Configuración del examen
                 const examConfig = ref({
-                    startTime: '12:01',
+                    startTime: '12:08',
                     endTime: '18:00',
                     duration: 30,
                     numQuestions: 15,
@@ -1414,57 +1461,96 @@ el siguiente codigo funciona relativamente bien, pero tiene problemas  ya que lo
                     });
                 };
                 
+                const getStaticMapUrl = () => {
+                    if (!examLocation.value) return '';
+                    const { latitude, longitude } = examLocation.value;
+                    const apiKey = 'AIzaSyD9BxeKK6QJmYx8QJ4v3Xq9V7y6QK6Q6Q6'; // Reemplaza con tu API key de Google Maps
+                    return `https://maps.googleapis.com/maps/api/staticmap?center=${latitude},${longitude}&zoom=15&size=600x200&maptype=roadmap&markers=color:red%7C${latitude},${longitude}&key=${apiKey}`;
+                };
+                
                 const generatePDF = () => {
                     const { jsPDF } = window.jspdf;
-                    const doc = new jsPDF();
+                    const doc = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: 'a4'
+                    });
                     
                     // Configuración inicial
                     doc.setFontSize(20);
                     doc.setTextColor(94, 53, 177);
                     doc.text('Resultados del Examen', 105, 20, { align: 'center' });
                     
+                    // Logo o encabezado
+                    doc.setFontSize(12);
+                    doc.setTextColor(100, 100, 100);
+                    doc.text('Certificado de Evaluación', 105, 30, { align: 'center' });
+                    
+                    // Línea decorativa
+                    doc.setDrawColor(94, 53, 177);
+                    doc.setLineWidth(0.5);
+                    doc.line(20, 35, 190, 35);
+                    
                     // Información del usuario
                     doc.setFontSize(12);
                     doc.setTextColor(0, 0, 0);
-                    doc.text(`Nombre: ${currentUser.value.nombre}`, 20, 40);
-                    doc.text(`Cédula: ${currentUser.value.ci}`, 20, 50);
-                    doc.text(`Código: ${currentUser.value.codigo}`, 20, 60);
-                    doc.text(`Intento: ${attemptNumber.value}`, 20, 70);
-                    doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 20, 80);
+                    doc.text(`Nombre: ${currentUser.value.nombre}`, 20, 45);
+                    doc.text(`Cédula: ${currentUser.value.ci}`, 20, 52);
+                    doc.text(`Código: ${currentUser.value.codigo}`, 20, 59);
+                    doc.text(`Intento: ${attemptNumber.value}`, 20, 66);
+                    doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 20, 73);
                     
                     // Información del examen
                     doc.setFontSize(14);
                     doc.setTextColor(94, 53, 177);
-                    doc.text('Información del Examen', 20, 100);
+                    doc.text('Información del Examen', 20, 85);
                     
                     doc.setFontSize(12);
-                    doc.text(`Hora de inicio: ${formatDateTime(examStartTime.value)}`, 20, 110);
-                    doc.text(`Hora de finalización: ${formatDateTime(examFinishTime.value)}`, 20, 120);
+                    doc.text(`Hora de inicio: ${formatDateTime(examStartTime.value)}`, 20, 92);
+                    doc.text(`Hora de finalización: ${formatDateTime(examFinishTime.value)}`, 20, 99);
                     
                     if (examLocation.value) {
-                        doc.text(`Ubicación: Lat ${examLocation.value.latitude.toFixed(6)}, Long ${examLocation.value.longitude.toFixed(6)}`, 20, 130);
+                        doc.text(`Ubicación: Lat ${examLocation.value.latitude.toFixed(6)}, Long ${examLocation.value.longitude.toFixed(6)}`, 20, 106);
                     } else if (locationError.value) {
                         doc.setTextColor(255, 0, 0);
-                        doc.text(`Error de ubicación: ${locationError.value}`, 20, 130);
+                        doc.text(`Error de ubicación: ${locationError.value}`, 20, 106);
                         doc.setTextColor(0, 0, 0);
                     }
                     
                     // Resumen de resultados
                     doc.setFontSize(14);
                     doc.setTextColor(94, 53, 177);
-                    doc.text('Resumen de Resultados', 20, 150);
+                    doc.text('Resumen de Resultados', 20, 120);
                     
                     doc.setFontSize(12);
-                    doc.text(`Puntuación: ${score.value}/100`, 20, 160);
-                    doc.text(`Respuestas correctas: ${correctAnswersCount.value} de ${selectedQuestions.value.length}`, 20, 170);
-                    doc.text(`Tiempo empleado: ${formatTime(elapsedTime.value)}`, 20, 180);
+                    doc.text(`Puntuación: ${score.value}/100`, 20, 127);
+                    doc.text(`Respuestas correctas: ${correctAnswersCount.value} de ${selectedQuestions.value.length}`, 20, 134);
+                    doc.text(`Tiempo empleado: ${formatTime(elapsedTime.value)}`, 20, 141);
                     
-                    // Detalle de respuestas
+                    // Línea decorativa
+                    doc.setDrawColor(94, 53, 177);
+                    doc.setLineWidth(0.5);
+                    doc.line(20, 146, 190, 146);
+                    
+                    // Mapa de ubicación (si está disponible)
+                    if (examLocation.value) {
+                        try {
+                            // Agregar imagen del mapa estático
+                            const mapUrl = getStaticMapUrl();
+                            doc.addImage(mapUrl, 'JPEG', 20, 150, 170, 50);
+                            doc.text('Ubicación aproximada del examen', 20, 205);
+                        } catch (error) {
+                            console.error('Error al agregar mapa al PDF:', error);
+                        }
+                    }
+                    
+                    // Detalle de respuestas (nueva página)
+                    doc.addPage();
                     doc.setFontSize(14);
                     doc.setTextColor(94, 53, 177);
-                    doc.text('Detalle de Respuestas', 20, 200);
+                    doc.text('Detalle de Respuestas', 20, 20);
                     
-                    let yPos = 210;
+                    let yPos = 30;
                     selectedQuestions.value.forEach((q, qIndex) => {
                         if (yPos > 250) {
                             doc.addPage();
@@ -1500,6 +1586,11 @@ el siguiente codigo funciona relativamente bien, pero tiene problemas  ya que lo
                         
                         yPos += 5;
                     });
+                    
+                    // Pie de página
+                    doc.setFontSize(10);
+                    doc.setTextColor(100, 100, 100);
+                    doc.text('Documento generado automáticamente - Sistema de Examen Interactivo', 105, 287, { align: 'center' });
                     
                     const filename = `Resultado_Examen_${currentUser.value.nombre.replace(' ', '_')}_Intento_${attemptNumber.value}.pdf`;
                     doc.save(filename);
@@ -1694,7 +1785,8 @@ el siguiente codigo funciona relativamente bien, pero tiene problemas  ya que lo
                     formatDateTime,
                     toggleAdmin,
                     saveConfig,
-                    isQuestionFullyCorrect
+                    isQuestionFullyCorrect,
+                    getStaticMapUrl
                 };
             }
         }).mount('#app');
