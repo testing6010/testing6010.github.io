@@ -988,7 +988,7 @@
                 const examConfig = ref({
                     startTime: '11:26',
                     endTime: '18:00',
-                    duration: 30,
+                    duration: 1,
                     numQuestions: 3,
                     protectQuestions: true,
                     requireLocation: true
@@ -1125,10 +1125,9 @@
                         const incorrectSelected = answerIndices.filter(idx => !question.answers[idx].correct).length;
                         
                         if (correctSelected > 0 && incorrectSelected === 0) {
-                            return acc + (correctSelected / totalCorrect);
+                            return acc + (correctSelected / totalCorrect).toFixed(1);
                         }
-                        acc+=0.0000000001
-                        return acc.toFixed(1);
+                        return acc;
                     }, 0);
                 });
                 const score = computed(() => {
