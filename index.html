@@ -1107,7 +1107,7 @@
                         const incorrectSelected = answerIndices.filter(idx => !question.answers[idx].correct).length;
                         
                         if (correctSelected > 0 && incorrectSelected === 0) {
-                            return acc + (correctSelected / totalCorrect).toFixed(1);
+                            return acc + correctSelected / totalCorrect;
                         }
                         return acc;
                     }, 0);
