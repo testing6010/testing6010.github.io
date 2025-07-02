@@ -988,7 +988,7 @@
                 const examConfig = ref({
                     startTime: '11:26',
                     endTime: '18:00',
-                    duration: 3,
+                    duration: 1,
                     numQuestions: 10,
                     protectQuestions: true,
                     requireLocation: true
@@ -996,26 +996,10 @@
                 
                 // Datos de usuarios
                 const users = ref([
-                    { ci: '06755282', primerApellido: 'CHOQUE', segundoApellido: 'MOLINA', nombres: 'ANAHI', correo: 'anahi.choquemolina@gmail.com', codigoRegistro: 'TED-CBB-6BF6CB' },
-                    { ci: '14813623', primerApellido: 'GALARZA', segundoApellido: 'GONZALES', nombres: 'NORMA', correo: 'ngalarzagonzled@gmail.com', codigoRegistro: 'TED-CBB-CDA1E6' },
-                    { ci: '08059175', primerApellido: 'SIERRA', segundoApellido: 'SILES', nombres: 'DAYNEE', correo: 'ddaynne20@gmail.com', codigoRegistro: 'TED-CBB-3AA9F0' },
-                    { ci: '02564837', primerApellido: 'MENDOZA', segundoApellido: 'TORRES', nombres: 'LUIS ORLANDO', correo: 'luis.mendoza@example.com', codigoRegistro: 'TED-CBB-9B4D21' },
-                    { ci: '01678954', primerApellido: 'PATRON', segundoApellido: 'GUEVARA', nombres: 'KAREN PAOLA', correo: 'k.patronguevara@example.com', codigoRegistro: 'TED-CBB-A1C3E7' },
-                    { ci: '01475236', primerApellido: 'VARGAS', segundoApellido: 'ROJAS', nombres: 'CARLOS EDUARDO', correo: 'carlos.vargas@example.com', codigoRegistro: 'TED-CBB-2F6B8D' },
-                    { ci: '02135897', primerApellido: 'QUIROZ', segundoApellido: 'VALENCIA', nombres: 'MARIANA', correo: 'm.quirozvalencia@example.com', codigoRegistro: 'TED-CBB-7E2A4C' },
-                    { ci: '03091475', primerApellido: 'ZAMBRANA', segundoApellido: 'LLANOS', nombres: 'JORGE LUIS', correo: 'jorge.zambrana@example.com', codigoRegistro: 'TED-CBB-4D5F91' },
-                    { ci: '00741258', primerApellido: 'LEIVA', segundoApellido: 'MENDEZ', nombres: 'PAOLA ISABEL', correo: 'p.leiva@example.com', codigoRegistro: 'TED-CBB-8C3D20' },
-                    { ci: '01928374', primerApellido: 'PEREZ', segundoApellido: 'MAMANI', nombres: 'EDUARDO ANTONIO', correo: 'eduardo.perez@example.com', codigoRegistro: 'TED-CBB-1A9B3F' },
-                    { ci: '01234567', primerApellido: 'RODRIGUEZ', segundoApellido: 'SUAREZ', nombres: 'MICHELLE', correo: 'm.rodriguez@example.com', codigoRegistro: 'TED-CBB-B2E4D6' },
-                    { ci: '06897531', primerApellido: 'CHOQUEHUMAÑA', segundoApellido: 'HUALLCA', nombres: 'ANA KARINA', correo: 'ana.choque@example.com', codigoRegistro: 'TED-CBB-5F3E2B' },
-                    { ci: '05432109', primerApellido: 'PICO', segundoApellido: 'APARICIO', nombres: 'RAMIRO JAVIER', correo: 'r.pico@example.com', codigoRegistro: 'TED-CBB-9E7C4A' },
-                    { ci: '02246813', primerApellido: 'ESTRADA', segundoApellido: 'CALLE', nombres: 'LETICIA', correo: 'leticia.estrada@example.com', codigoRegistro: 'TED-CBB-3C8A7D' },
-                    { ci: '03579124', primerApellido: 'MAMANI', segundoApellido: 'CORONEL', nombres: 'GABRIELA', correo: 'g.mamani@example.com', codigoRegistro: 'TED-CBB-6D1B5E' },
-                    { ci: '04125689', primerApellido: 'MENDOZA', segundoApellido: 'QUIROZ', nombres: 'MARCO ANTONIO', correo: 'marco.mendoza@example.com', codigoRegistro: 'TED-CBB-2E9F3C' },
-                    { ci: '02938475', primerApellido: 'ROSALES', segundoApellido: 'MORALES', nombres: 'GLORIA INES', correo: 'g.rosales@example.com', codigoRegistro: 'TED-CBB-8A4B1F' },
-                    { ci: '03715928', primerApellido: 'SALAZAR', segundoApellido: 'ORTEGA', nombres: 'LEONARDO', correo: 'l.salazarortega@example.com', codigoRegistro: 'TED-CBB-4F7C2E' },
-                    { ci: '01827364', primerApellido: 'HUANCA', segundoApellido: 'SANTOS', nombres: 'VERONICA', correo: 'veronica.huanca@example.com', codigoRegistro: 'TED-CBB-1C5D8B' },
-                    { ci: '03928475', primerApellido: 'CHOQUE', segundoApellido: 'CURI', nombres: 'ROBERTO', correo: 'r.choquecuri@example.com', codigoRegistro: 'TED-CBB-7B2A9D' },
+                    { ci: '12345678', nombre: 'Juan Pérez', correo: 'juan@example.com', codigo: 'ABC123' },
+                    { ci: '87654321', nombre: 'María García', correo: 'maria@example.com', codigo: 'DEF456' },
+                    { ci: '45678912', nombre: 'Carlos López', correo: 'carlos@example.com', codigo: 'GHI789' },
+                    { ci: '00000000', nombre: 'Administrador', correo: 'admin@example.com', codigo: 'ADMIN' }
                 ]);
                 
                 // Banco de preguntas
