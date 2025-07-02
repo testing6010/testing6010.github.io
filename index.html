@@ -1672,6 +1672,9 @@
                         leafletMap.value.dragging.disable()
                         leafletMap.value.scrollWheelZoom.disable()
                         leafletMap.value.keyboard.disable()
+                        leafletMap.value.touchZoom.disable();
+                        leafletMap.value.doubleClickZoom.disable();
+                        leafletMap.value.scrollWheelZoom.disable();
                         // Añadir capa de OpenStreetMap
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
