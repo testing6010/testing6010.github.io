@@ -996,39 +996,263 @@
                 
                 // Datos de usuarios
                 const users = ref([
-                    { ci: '12345678', nombre: 'Juan Pérez', correo: 'juan@example.com', codigo: 'ABC123' },
-                    { ci: '87654321', nombre: 'María García', correo: 'maria@example.com', codigo: 'DEF456' },
-                    { ci: '45678912', nombre: 'Carlos López', correo: 'carlos@example.com', codigo: 'GHI789' },
-                    { ci: '00000000', nombre: 'Administrador', correo: 'admin@example.com', codigo: 'ADMIN' }
+                    { ci: '6755282', nombre: 'CHOQUE MOLINA ANAHI', correo: 'anahi.choquemolina@gmail.com', codigo: 'TED-CBB-6BF6CB' },
+                    { ci: '14813623', nombre: 'GALARZA GONZALES NORMA', correo: 'ngalarzagonzled@gmail.com', codigo: 'TED-CBB-CDA1E6' },
+                    { ci: '8059175', nombre: 'SIERRA SILES DAYNEE', correo: 'ddaynne20@gmail.com', codigo: 'TED-CBB-3AA9F0' },
+                    { ci: '9435860', nombre: 'COPA FLORES JHAMIL RODRIGO', correo: 'copaj2215@gmail.com', codigo: 'TED-CBB-073295' },
+                    { ci: '6330316', nombre: 'TUMIRI CHOQUE YESENIA LISETH', correo: 'yestumiri@gmail.com', codigo: 'TED-CBB-070379' },
+                    { ci: '9329708', nombre: 'GARCIA RICALDEZ JUAN LUIS', correo: 'luisitolgr.lgr@gmail.com', codigo: 'TED-CBB-77D1CE' },
+                    { ci: '9503325', nombre: 'TANGARA GARCIA THELMA', correo: 'thelmatangara14832@gmail.com', codigo: 'TED-CBB-B6B5B7' },
+                    { ci: '14221745', nombre: 'RODRIGUEZ RODRIGUEZ NICOL ALEJANDRA', correo: 'rodrigueznicolalejandra514@gmail.com', codigo: 'TED-CBB-3EFC98' },
+                    { ci: '8798063', nombre: 'ALEGRE VALLEJOS RUTH CELINA', correo: 'ruthyalegrexz96@gmail.com', codigo: 'TED-CBB-6D5B58' },
+                    { ci: '8706228', nombre: 'GUZMAN VASQUEZ MONICA', correo: 'monica28092001@gmail.com', codigo: 'TED-CBB-3A4D5F' },
+                    { ci: '9387689', nombre: 'HERBAS FRANCO JHOEL DIEGO', correo: 'herbasfrancojhoeldiego@gmail.com', codigo: 'TED-CBB-1433A0' },
+                    { ci: '7915859', nombre: 'HUANCA VILLARROEL DIEGO', correo: 'dh8161391@gmail.com', codigo: 'TED-CBB-14FDEF' },
+                    { ci: '6558771', nombre: 'CALCINA ALANES FREDDY', correo: 'calcinaf5@gmail.com', codigo: 'TED-CBB-655829' },
+                    { ci: '8344314', nombre: 'UGALDE SANCHEZ CARLOS EDWIN', correo: 'ugaldesanchezc@gmail.com', codigo: 'TED-CBB-5382A7' },
+                    { ci: '9182736', nombre: 'PEREZ RIVERA MARIA ELENA', correo: 'mariaelena.perezr@gmail.com', codigo: 'TED-CBB-21ABCD' },
+                    { ci: '8765432', nombre: 'LOPEZ CAYO JUAN CARLOS', correo: 'juancarlos.lopezcayo@gmail.com', codigo: 'TED-CBB-9F8E7D' },
+                    { ci: '8123456', nombre: 'RAMOS QUIROGA LUCIA', correo: 'lucia.ramosq@gmail.com', codigo: 'TED-CBB-A1B2C3' },
+                    { ci: '7234561', nombre: 'GUTIERREZ ALVAREZ ROSA', correo: 'rosa.gutierrezal@gmail.com', codigo: 'TED-CBB-4D5E6F' },
+                    { ci: '6345217', nombre: 'MAMANI CHOQUE PEDRO', correo: 'pedro.mamanichoque@gmail.com', codigo: 'TED-CBB-7A8B9C' },
+                    { ci: '5463728', nombre: 'QUISPE SANCHEZ ANA ISABEL', correo: 'anaisabel.quispe@gmail.com', codigo: 'TED-CBB-0C1D2E' },
+                    { ci: '7654321', nombre: 'TORRES FLORES MARIO', correo: 'mario.torresflores@gmail.com', codigo: 'TED-CBB-3F4G5H' },
+                    { ci: '6543219', nombre: 'SUAREZ VILLCA LUIS', correo: 'luis.suarezvillca@gmail.com', codigo: 'TED-CBB-6I7J8K' },
+                    { ci: '5432167', nombre: 'ESCOBAR CARPIO DOLORES', correo: 'dolores.escobarcarpio@gmail.com', codigo: 'TED-CBB-9L0M1N' },
+                    { ci: '4321654', nombre: 'BLANCO MAMANI JUANA', correo: 'juana.blancomamani@gmail.com', codigo: 'TED-CBB-2O3P4Q' },
+                    { ci: '3216547', nombre: 'ORTEGA SALAZAR FRANCISCO', correo: 'francisco.ortegasalazar@gmail.com', codigo: 'TED-CBB-5R6S7T' },
+                    { ci: '2135468', nombre: 'SOTO MEZA JORDI', correo: 'jordi.sotomeza@gmail.com', codigo: 'TED-CBB-8U9V0W' },
+                    { ci: '1357924', nombre: 'MELGAR VARGAS MARTHA', correo: 'martha.melgarvargas@gmail.com', codigo: 'TED-CBB-1X2Y3Z' },
+                    { ci: '2468135', nombre: 'HERRERA VERA MARIA', correo: 'maria.herreravera@gmail.com', codigo: 'TED-CBB-4A5B6C' },
+                    { ci: '3579246', nombre: 'CASTRO LOPEZ JAVIER', correo: 'javier.castrolopez@gmail.com', codigo: 'TED-CBB-7D8E9F' },
+                    { ci: '4681357', nombre: 'NAVARRO GOMEZ PATRICIA', correo: 'patricia.navarrogomez@gmail.com', codigo: 'TED-CBB-0G1H2I' },
+                    { ci: '5792468', nombre: 'FERNANDEZ RIOS ESTEBAN', correo: 'esteban.fernandezrios@gmail.com', codigo: 'TED-CBB-3J4K5L' },
+                    { ci: '6803579', nombre: 'PEDRAZA DIAZ LAURA', correo: 'laura.pedrazadiaz@gmail.com', codigo: 'TED-CBB-6M7N8O' },
+                    { ci: '7914680', nombre: 'VALENCIA REYES OSCAR', correo: 'oscar.valenciareyes@gmail.com', codigo: 'TED-CBB-9P0Q1R' },
+                    { ci: '8025791', nombre: 'LOPEZ MORALES GUSTAVO', correo: 'gustavo.lopezmorales@gmail.com', codigo: 'TED-CBB-2S3T4U' },
+                    { ci: '9136802', nombre: 'ARELLANO RIVERA SILVIA', correo: 'silvia.arellanorivera@gmail.com', codigo: 'TED-CBB-5V6W7X' },
+                    { ci: '0247913', nombre: 'QUISPE QUISPE RAQUEL', correo: 'raquel.quispequispe@gmail.com', codigo: 'TED-CBB-8Y9Z0A' },
+                    { ci: '1358024', nombre: 'MALDONADO ALVAREZ CARLOS', correo: 'carlos.maldonadoalvarez@gmail.com', codigo: 'TED-CBB-1B2C3D' },
+                    { ci: '2469135', nombre: 'ROJAS VILLCA LILIANA', correo: 'liliana.rojasvillca@gmail.com', codigo: 'TED-CBB-4E5F6G' },
+                    { ci: '3570246', nombre: 'SANCHEZ LOPEZ LUIS', correo: 'luis.sanchezlopez@gmail.com', codigo: 'TED-CBB-7H8I9J' },
+                    { ci: '4681359', nombre: 'MARTINEZ GALLARDO EVA', correo: 'eva.martinezgallardo@gmail.com', codigo: 'TED-CBB-0K1L2M' },
+                    { ci: '5792460', nombre: 'RAMIREZ MEDINA HECTOR', correo: 'hector.ramirezmedina@gmail.com', codigo: 'TED-CBB-3N4O5P' },
+                    { ci: '6803571', nombre: 'GARCIA PEREZ ROSA', correo: 'rosa.garciaperez@gmail.com', codigo: 'TED-CBB-6Q7R8S' },
+                    { ci: '7914682', nombre: 'VARGAS ROMERO MARIA', correo: 'maria.vargasromero@gmail.com', codigo: 'TED-CBB-9T0U1V' },
+                    { ci: '8025793', nombre: 'SALINAS FIGUEROA JAVIER', correo: 'javier.salinasfigu@gmail.com', codigo: 'TED-CBB-2W3X4Y' },
+                    { ci: '9136805', nombre: 'ALVAREZ MAMANI JORGE', correo: 'jorge.alvarezmamani@gmail.com', codigo: 'TED-CBB-5Z6A7B' },
+                    { ci: '0247915', nombre: 'TORO PAREDES LAURA', correo: 'laura.toroparedes@gmail.com', codigo: 'TED-CBB-8C9D0E' },
+                    { ci: '1358026', nombre: 'MELENDEZ LOAYZA CARLOS', correo: 'carlos.melendeztio@gmail.com', codigo: 'TED-CBB-1F2G3H' },
+                    { ci: '2469137', nombre: 'JIMENEZ LOPEZ MARIA', correo: 'maria.jimenezlopez@gmail.com', codigo: 'TED-CBB-4I5J6K' },
+                    { ci: '3570248', nombre: 'RODRIGUEZ RAMOS ANA', correo: 'ana.rodriguezramos@gmail.com', codigo: 'TED-CBB-7L8M9N' },
+                    { ci: '4681351', nombre: 'CORTEZ PEREZ VLADIMIR', correo: 'vladimir.cortezperez@gmail.com', codigo: 'TED-CBB-0O1P2Q' },
+                    { ci: '5792462', nombre: 'ORTIZ ROMERO LUIS', correo: 'luis.ortizromero@gmail.com', codigo: 'TED-CBB-3R4S5T' },
+                    { ci: '6803573', nombre: 'MAMANI UGALDE JULIA', correo: 'julia.mamaniugalde@gmail.com', codigo: 'TED-CBB-6U7V8W' },
+                    { ci: '7914684', nombre: 'SORIA GARCIA CARLOS', correo: 'carlos.soriagarcia@gmail.com', codigo: 'TED-CBB-9X0Y1Z' },
+                    { ci: '8025795', nombre: 'DIAZ QUISPE ISABEL', correo: 'isabel.diazquispe@gmail.com', codigo: 'TED-CBB-2A3B4C' },
+                    { ci: '9136807', nombre: 'PEREZ MAMANI JOSE', correo: 'jose.perezmamani@gmail.com', codigo: 'TED-CBB-5D6E7F' },
+                    { ci: '0247917', nombre: 'HUARACHI GUTIERREZ LUZ', correo: 'luz.huarachiguti@gmail.com', codigo: 'TED-CBB-8G9H0I' },
+                    { ci: '1358028', nombre: 'MONTES LOPEZ DIEGO', correo: 'diego.monteslopez@gmail.com', codigo: 'TED-CBB-1J2K3L' },
+                    { ci: '2469139', nombre: 'ALDANA VARGAS MARCOS', correo: 'marcos.aldanav@gmail.com', codigo: 'TED-CBB-4M5N6O' },
+                    { ci: '3570250', nombre: 'FLORES MAMANI ANA', correo: 'ana.floresmamani@gmail.com', codigo: 'TED-CBB-7P8Q9R' },
+                    { ci: '4681352', nombre: 'MELLADO SANCHEZ JULIETA', correo: 'julieta.mellados@gmail.com', codigo: 'TED-CBB-0S1T2U' },
+                    { ci: '5792464', nombre: 'MEDINA LOPEZ ERICK', correo: 'erick.medinalopez@gmail.com', codigo: 'TED-CBB-3V4W5X' },
+                    { ci: '6803575', nombre: 'QUISPE CORDOVA BEATRIZ', correo: 'beatriz.quispecordova@gmail.com', codigo: 'TED-CBB-6Y7Z8A' },
+                    { ci: '7914686', nombre: 'PAREDES MOLINA JORGE', correo: 'jorge.paredesmolina@gmail.com', codigo: 'TED-CBB-9B0C1D' },
+                    { ci: '8025797', nombre: 'ALVAREZ QUISPE PAULA', correo: 'paula.alvarezquispe@gmail.com', codigo: 'TED-CBB-2E3F4G' },
+                    { ci: '9136809', nombre: 'UGALDE MORALES KEVIN', correo: 'kevin.ugaldemorales@gmail.com', codigo: 'TED-CBB-5H6I7J' },
+                    { ci: '0247919', nombre: 'CHUQUI MOLINA ROSA', correo: 'rosa.chuquimolina@gmail.com', codigo: 'TED-CBB-8K9L0M' },
+                    { ci: '1358030', nombre: 'MEDINA FLORES MARIO', correo: 'mario.medinaflores@gmail.com', codigo: 'TED-CBB-1N2O3P' },
+                    { ci: '2469141', nombre: 'GUTIERREZ MAMANI ANDREA', correo: 'andrea.gutierrezmamani@gmail.com', codigo: 'TED-CBB-4Q5R6S' },
+                    { ci: '3570252', nombre: 'MORENO LOPEZ EDUARDO', correo: 'eduardo.morenolopez@gmail.com', codigo: 'TED-CBB-7T8U9V' },
+                    { ci: '4681354', nombre: 'HERNANDEZ SANCHEZ MARTHA', correo: 'martha.hernandezsanchez@gmail.com', codigo: 'TED-CBB-0W1X2Y' },
+                    { ci: '5792466', nombre: 'VARGAS PAREDES LUCIA', correo: 'lucia.vargasparedes@gmail.com', codigo: 'TED-CBB-3Z4A5B' },
+                    { ci: '6803577', nombre: 'CHOQUE LOPEZ CARLOS', correo: 'carlos.choquelopez@gmail.com', codigo: 'TED-CBB-6C7D8E' },
+                    { ci: '7914688', nombre: 'MAMANI SALAZAR ESTEBAN', correo: 'esteban.mamanisalazar@gmail.com', codigo: 'TED-CBB-9F0G1H' },
+                    { ci: '8025799', nombre: 'CARPIO GONZALES MARIO', correo: 'mario.carpiogonzales@gmail.com', codigo: 'TED-CBB-2I3J4K' },
+                    { ci: '9136811', nombre: 'LOPEZ MOLINA JUANA', correo: 'juana.lopezmolina@gmail.com', codigo: 'TED-CBB-5L6M7N' },
                 ]);
                 
                 // Banco de preguntas
                 const questionBank = ref([
                     {
-                        text: "¿Cuáles de estas son capitales de países?",
+                        text: "¿Cuál es el objeto principal de la Ley Nº 026?",
                         answers: [
-                            { text: "París", correct: true },
-                            { text: "Madrid", correct: true },
-                            { text: "Berlín", correct: true },
-                            { text: "Milán", correct: false }
+                        { text: "Regular el sistema tributario", correct: false },
+                        { text: "Regular el Régimen Electoral para la Democracia Intercultural", correct: true },
+                        { text: "Regular la función judicial", correct: false },
+                        { text: "Regular la administración pública", correct: false }
                         ]
                     },
                     {
-                        text: "Seleccione los lenguajes de programación:",
+                        text: "¿Cuál de estos NO es un principio de la democracia intercultural según el artículo 2?",
                         answers: [
-                            { text: "JavaScript", correct: true },
-                            { text: "HTML", correct: false },
-                            { text: "Python", correct: true },
-                            { text: "CSS", correct: false }
+                        { text: "Soberanía Popular", correct: false },
+                        { text: "Plurinacionalidad", correct: false },
+                        { text: "Competitividad", correct: true },
+                        { text: "Interculturalidad", correct: false }
                         ]
                     },
                     {
-                        text: "¿Cuáles de estos son planetas del sistema solar?",
+                        text: "La paridad y alternancia de género en las listas de candidatas y candidatos se aplica, según el artículo 11, para:",
                         answers: [
-                            { text: "Marte", correct: true },
-                            { text: "Venus", correct: true },
-                            { text: "Luna", correct: false },
-                            { text: "Titán", correct: false }
+                        { text: "Elección de alcaldes únicamente", correct: false },
+                        { text: "Todas las listas de candidaturas titulares y suplentes", correct: true },
+                        { text: "Solo para la Asamblea Constituyente", correct: false },
+                        { text: "Solo para las elecciones municipales", correct: false }
+                        ]
+                    },
+                    {
+                        text: "¿Qué porcentaje mínimo del padrón nacional se requiere para una iniciativa popular de referendo nacional?",
+                        answers: [
+                        { text: "10%", correct: false },
+                        { text: "15%", correct: false },
+                        { text: "20%", correct: true },
+                        { text: "25%", correct: false }
+                        ]
+                    },
+                    {
+                        text: "¿Cuál es el quórum de votos válidos para que un referendo sea vinculante?",
+                        answers: [
+                        { text: "40% del padrón", correct: false },
+                        { text: "50% más 1 de los votantes de la circunscripción", correct: true },
+                        { text: "60% de los votos válidos", correct: false },
+                        { text: "30% más 1 del padrón", correct: false }
+                        ]
+                    },
+                    {
+                        text: "La revocatoria de mandato procede:",
+                        answers: [
+                        { text: "Solo por iniciativa estatal", correct: false },
+                        { text: "Por iniciativa popular", correct: true },
+                        { text: "Por iniciativa del Órgano Judicial", correct: false },
+                        { text: "Por decretos municipales", correct: false }
+                        ]
+                    },
+                    {
+                        text: "Para autoridades municipales, el porcentaje de firmas para revocatoria es:",
+                        answers: [
+                        { text: "20%", correct: false },
+                        { text: "25%", correct: false },
+                        { text: "30%", correct: true },
+                        { text: "35%", correct: false }
+                        ]
+                    },
+                    {
+                        text: "¿Qué mecanismos integran la democracia directa y participativa?",
+                        answers: [
+                        { text: "Referendo, iniciativa legislativa ciudadana, cabildo y asamblea", correct: true },
+                        { text: "Solo referendo", correct: false },
+                        { text: "Sufragio universal", correct: false },
+                        { text: "Elección de autoridades", correct: false }
+                        ]
+                    },
+                    {
+                        text: "El voto en Bolivia es:",
+                        answers: [
+                        { text: "Libre, obligatorio y secreto", correct: true },
+                        { text: "Oportuno, limitado y secreto", correct: false },
+                        { text: "Libre, voluntario y público", correct: false },
+                        { text: "Obligatorio, directo y público", correct: false }
+                        ]
+                    },
+                    {
+                        text: "¿Quién verifica la constitucionalidad de las preguntas de referendo?",
+                        answers: [
+                        { text: "El Tribunal Supremo Electoral", correct: false },
+                        { text: "La Asamblea Legislativa Plurinacional", correct: false },
+                        { text: "El Tribunal Constitucional Plurinacional", correct: true },
+                        { text: "La Presidencia del Estado", correct: false }
+                        ]
+                    },
+                    {
+                        text: "La consulta previa se convoca obligatoriamente antes de:",
+                        answers: [
+                        { text: "Proyectos de ley", correct: false },
+                        { text: "Decisiones sobre explotación de recursos naturales", correct: true },
+                        { text: "Elecciones judiciales", correct: false },
+                        { text: "Convocatoria de cabildos", correct: false }
+                        ]
+                    },
+                    {
+                        text: "El plazo máximo de verificación de firmas para revocatoria es:",
+                        answers: [
+                        { text: "30 días", correct: false },
+                        { text: "60 días", correct: true },
+                        { text: "90 días", correct: false },
+                        { text: "120 días", correct: false }
+                        ]
+                    },
+                    {
+                        text: "En la elección de Presidente, si nadie alcanza 50 % de votos, se convoca a:",
+                        answers: [
+                        { text: "Asamblea Constituyente", correct: false },
+                        { text: "Segunda vuelta entre dos más votados", correct: true },
+                        { text: "Referendo", correct: false },
+                        { text: "Reconteo de votos", correct: false }
+                        ]
+                    },
+                    {
+                        text: "El sistema de asignación de escaños para el Senado utiliza:",
+                        answers: [
+                        { text: "Cocientes mayores (método D’Hondt)", correct: true },
+                        { text: "Voto preferencial", correct: false },
+                        { text: "Sistema de mayoría simple", correct: false },
+                        { text: "Lista cerrada sin divisor", correct: false }
+                        ]
+                    },
+                    {
+                        text: "Para ser electora o elector se necesita:",
+                        answers: [
+                        { text: "Tener 16 años cumplidos", correct: false },
+                        { text: "Ser residente legal en Bolivia", correct: false },
+                        { text: "Estar registrada en el padrón y habilitada para votar", correct: true },
+                        { text: "Pagar una tasa electoral", correct: false }
+                        ]
+                    },
+                    {
+                        text: "Las asambleas y cabildos son:",
+                        answers: [
+                        { text: "Vinculantes", correct: false },
+                        { text: "No vinculantes pero de carácter deliberativo", correct: true },
+                        { text: "Solo para la consulta previa", correct: false },
+                        { text: "Exclusivos de comunidades indígenas", correct: false }
+                        ]
+                    },
+                    {
+                        text: "El Servicio Intercultural de Fortalecimiento Democrático (SIFDE) depende de:",
+                        answers: [
+                        { text: "Ministerio de Culturas", correct: false },
+                        { text: "Órgano Judicial", correct: false },
+                        { text: "Órgano Electoral Plurinacional", correct: true },
+                        { text: "Presidencia del Estado", correct: false }
+                        ]
+                    },
+                    {
+                        text: "¿Cuál de estas materias NO puede someterse a referendo?",
+                        answers: [
+                        { text: "Reforma constitucional", correct: false },
+                        { text: "Seguridad interna", correct: true },
+                        { text: "Autonomías municipales", correct: false },
+                        { text: "Tratados internacionales", correct: false }
+                        ]
+                    },
+                    {
+                        text: "El mandato del Presidente y Vicepresidente es de:",
+                        answers: [
+                        { text: "4 años", correct: false },
+                        { text: "5 años", correct: true },
+                        { text: "6 años", correct: false },
+                        { text: "3 años", correct: false }
+                        ]
+                    },
+                    {
+                        text: "El escrutinio de votos es:",
+                        answers: [
+                        { text: "Confidencial y voluntario", correct: false },
+                        { text: "Público y definitivo", correct: true },
+                        { text: "Secreto y repetible", correct: false },
+                        { text: "Anónimo y parcial", correct: false }
                         ]
                     }
                 ]);
