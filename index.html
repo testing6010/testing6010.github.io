@@ -988,67 +988,219 @@
                 const examConfig = ref({
                     startTime: '11:26',
                     endTime: '18:00',
-                    duration: 1,
-                    numQuestions: 3,
+                    duration: 3,
+                    numQuestions: 10,
                     protectQuestions: true,
                     requireLocation: true
                 });
                 
                 // Datos de usuarios
                 const users = ref([
-                    { ci: '12345678', nombre: 'Juan Pérez', correo: 'juan@example.com', codigo: 'ABC123' },
-                    { ci: '87654321', nombre: 'María García', correo: 'maria@example.com', codigo: 'DEF456' },
-                    { ci: '45678912', nombre: 'Carlos López', correo: 'carlos@example.com', codigo: 'GHI789' },
-                    { ci: '00000000', nombre: 'Administrador', correo: 'admin@example.com', codigo: 'ADMIN' }
+                    { ci: '06755282', primerApellido: 'CHOQUE', segundoApellido: 'MOLINA', nombres: 'ANAHI', correo: 'anahi.choquemolina@gmail.com', codigoRegistro: 'TED-CBB-6BF6CB' },
+                    { ci: '14813623', primerApellido: 'GALARZA', segundoApellido: 'GONZALES', nombres: 'NORMA', correo: 'ngalarzagonzled@gmail.com', codigoRegistro: 'TED-CBB-CDA1E6' },
+                    { ci: '08059175', primerApellido: 'SIERRA', segundoApellido: 'SILES', nombres: 'DAYNEE', correo: 'ddaynne20@gmail.com', codigoRegistro: 'TED-CBB-3AA9F0' },
+                    { ci: '02564837', primerApellido: 'MENDOZA', segundoApellido: 'TORRES', nombres: 'LUIS ORLANDO', correo: 'luis.mendoza@example.com', codigoRegistro: 'TED-CBB-9B4D21' },
+                    { ci: '01678954', primerApellido: 'PATRON', segundoApellido: 'GUEVARA', nombres: 'KAREN PAOLA', correo: 'k.patronguevara@example.com', codigoRegistro: 'TED-CBB-A1C3E7' },
+                    { ci: '01475236', primerApellido: 'VARGAS', segundoApellido: 'ROJAS', nombres: 'CARLOS EDUARDO', correo: 'carlos.vargas@example.com', codigoRegistro: 'TED-CBB-2F6B8D' },
+                    { ci: '02135897', primerApellido: 'QUIROZ', segundoApellido: 'VALENCIA', nombres: 'MARIANA', correo: 'm.quirozvalencia@example.com', codigoRegistro: 'TED-CBB-7E2A4C' },
+                    { ci: '03091475', primerApellido: 'ZAMBRANA', segundoApellido: 'LLANOS', nombres: 'JORGE LUIS', correo: 'jorge.zambrana@example.com', codigoRegistro: 'TED-CBB-4D5F91' },
+                    { ci: '00741258', primerApellido: 'LEIVA', segundoApellido: 'MENDEZ', nombres: 'PAOLA ISABEL', correo: 'p.leiva@example.com', codigoRegistro: 'TED-CBB-8C3D20' },
+                    { ci: '01928374', primerApellido: 'PEREZ', segundoApellido: 'MAMANI', nombres: 'EDUARDO ANTONIO', correo: 'eduardo.perez@example.com', codigoRegistro: 'TED-CBB-1A9B3F' },
+                    { ci: '01234567', primerApellido: 'RODRIGUEZ', segundoApellido: 'SUAREZ', nombres: 'MICHELLE', correo: 'm.rodriguez@example.com', codigoRegistro: 'TED-CBB-B2E4D6' },
+                    { ci: '06897531', primerApellido: 'CHOQUEHUMAÑA', segundoApellido: 'HUALLCA', nombres: 'ANA KARINA', correo: 'ana.choque@example.com', codigoRegistro: 'TED-CBB-5F3E2B' },
+                    { ci: '05432109', primerApellido: 'PICO', segundoApellido: 'APARICIO', nombres: 'RAMIRO JAVIER', correo: 'r.pico@example.com', codigoRegistro: 'TED-CBB-9E7C4A' },
+                    { ci: '02246813', primerApellido: 'ESTRADA', segundoApellido: 'CALLE', nombres: 'LETICIA', correo: 'leticia.estrada@example.com', codigoRegistro: 'TED-CBB-3C8A7D' },
+                    { ci: '03579124', primerApellido: 'MAMANI', segundoApellido: 'CORONEL', nombres: 'GABRIELA', correo: 'g.mamani@example.com', codigoRegistro: 'TED-CBB-6D1B5E' },
+                    { ci: '04125689', primerApellido: 'MENDOZA', segundoApellido: 'QUIROZ', nombres: 'MARCO ANTONIO', correo: 'marco.mendoza@example.com', codigoRegistro: 'TED-CBB-2E9F3C' },
+                    { ci: '02938475', primerApellido: 'ROSALES', segundoApellido: 'MORALES', nombres: 'GLORIA INES', correo: 'g.rosales@example.com', codigoRegistro: 'TED-CBB-8A4B1F' },
+                    { ci: '03715928', primerApellido: 'SALAZAR', segundoApellido: 'ORTEGA', nombres: 'LEONARDO', correo: 'l.salazarortega@example.com', codigoRegistro: 'TED-CBB-4F7C2E' },
+                    { ci: '01827364', primerApellido: 'HUANCA', segundoApellido: 'SANTOS', nombres: 'VERONICA', correo: 'veronica.huanca@example.com', codigoRegistro: 'TED-CBB-1C5D8B' },
+                    { ci: '03928475', primerApellido: 'CHOQUE', segundoApellido: 'CURI', nombres: 'ROBERTO', correo: 'r.choquecuri@example.com', codigoRegistro: 'TED-CBB-7B2A9D' },
                 ]);
                 
                 // Banco de preguntas
                 const questionBank = ref([
                     {
-                        text: "¿Cuáles de estas son capitales de países 1?",
+                        text: "¿Cuál es el objeto principal de la Ley Nº 026?",
                         answers: [
-                            { text: "París", correct: true },
-                            { text: "Madrid", correct: true },
-                            { text: "Berlín", correct: true },
-                            { text: "Milán", correct: false }
+                        { text: "Regular el sistema tributario", correct: false },
+                        { text: "Regular el Régimen Electoral para la Democracia Intercultural", correct: true },
+                        { text: "Regular la función judicial", correct: false },
+                        { text: "Regular la administración pública", correct: false }
                         ]
                     },
                     {
-                        text: "¿Cuáles de estas son capitales de países 2?",
+                        text: "¿Cuál de estos NO es un principio de la democracia intercultural según el artículo 2?",
                         answers: [
-                            { text: "París", correct: true },
-                            { text: "Madrid", correct: true },
-                            { text: "Berlín", correct: true },
-                            { text: "Milán", correct: false }
+                        { text: "Soberanía Popular", correct: false },
+                        { text: "Plurinacionalidad", correct: false },
+                        { text: "Competitividad", correct: true },
+                        { text: "Interculturalidad", correct: false }
                         ]
                     },
                     {
-                        text: "¿Cuáles de estas son capitales de países 3?",
+                        text: "La paridad y alternancia de género en las listas de candidatas y candidatos se aplica, según el artículo 11, para:",
                         answers: [
-                            { text: "París", correct: true },
-                            { text: "Madrid", correct: true },
-                            { text: "Berlín", correct: true },
-                            { text: "Milán", correct: false }
+                        { text: "Elección de alcaldes únicamente", correct: false },
+                        { text: "Todas las listas de candidaturas titulares y suplentes", correct: true },
+                        { text: "Solo para la Asamblea Constituyente", correct: false },
+                        { text: "Solo para las elecciones municipales", correct: false }
                         ]
                     },
                     {
-                        text: "Seleccione los lenguajes de programación:",
+                        text: "¿Qué porcentaje mínimo del padrón nacional se requiere para una iniciativa popular de referendo nacional?",
                         answers: [
-                            { text: "JavaScript", correct: true },
-                            { text: "HTML", correct: false },
-                            { text: "Python", correct: true },
-                            { text: "CSS", correct: false }
+                        { text: "10%", correct: false },
+                        { text: "15%", correct: false },
+                        { text: "20%", correct: true },
+                        { text: "25%", correct: false }
                         ]
                     },
                     {
-                        text: "¿Cuáles de estos son planetas del sistema solar 4?",
+                        text: "¿Cuál es el quórum de votos válidos para que un referendo sea vinculante?",
                         answers: [
-                            { text: "Marte", correct: true },
-                            { text: "Venus", correct: true },
-                            { text: "Luna", correct: false },
-                            { text: "Titán", correct: false }
+                        { text: "40% del padrón", correct: false },
+                        { text: "50% más 1 de los votantes de la circunscripción", correct: true },
+                        { text: "60% de los votos válidos", correct: false },
+                        { text: "30% más 1 del padrón", correct: false }
                         ]
-                    }
+                    },
+                    {
+                        text: "La revocatoria de mandato procede:",
+                        answers: [
+                        { text: "Solo por iniciativa estatal", correct: false },
+                        { text: "Por iniciativa popular", correct: true },
+                        { text: "Por iniciativa del Órgano Judicial", correct: false },
+                        { text: "Por decretos municipales", correct: false }
+                        ]
+                    },
+                    {
+                        text: "Para autoridades municipales, el porcentaje de firmas para revocatoria es:",
+                        answers: [
+                        { text: "20%", correct: false },
+                        { text: "25%", correct: false },
+                        { text: "30%", correct: true },
+                        { text: "35%", correct: false }
+                        ]
+                    },
+                    {
+                        text: "¿Qué mecanismos integran la democracia directa y participativa?",
+                        answers: [
+                        { text: "Referendo, iniciativa legislativa ciudadana, cabildo y asamblea", correct: true },
+                        { text: "Solo referendo", correct: false },
+                        { text: "Sufragio universal", correct: false },
+                        { text: "Elección de autoridades", correct: false }
+                        ]
+                    },
+                    {
+                        text: "El voto en Bolivia es:",
+                        answers: [
+                        { text: "Libre, obligatorio y secreto", correct: true },
+                        { text: "Oportuno, limitado y secreto", correct: false },
+                        { text: "Libre, voluntario y público", correct: false },
+                        { text: "Obligatorio, directo y público", correct: false }
+                        ]
+                    },
+                    {
+                        text: "¿Quién verifica la constitucionalidad de las preguntas de referendo?",
+                        answers: [
+                        { text: "El Tribunal Supremo Electoral", correct: false },
+                        { text: "La Asamblea Legislativa Plurinacional", correct: false },
+                        { text: "El Tribunal Constitucional Plurinacional", correct: true },
+                        { text: "La Presidencia del Estado", correct: false }
+                        ]
+                    },
+                    {
+                        text: "La consulta previa se convoca obligatoriamente antes de:",
+                        answers: [
+                        { text: "Proyectos de ley", correct: false },
+                        { text: "Decisiones sobre explotación de recursos naturales", correct: true },
+                        { text: "Elecciones judiciales", correct: false },
+                        { text: "Convocatoria de cabildos", correct: false }
+                        ]
+                    },
+                    {
+                        text: "El plazo máximo de verificación de firmas para revocatoria es:",
+                        answers: [
+                        { text: "30 días", correct: false },
+                        { text: "60 días", correct: true },
+                        { text: "90 días", correct: false },
+                        { text: "120 días", correct: false }
+                        ]
+                    },
+                    {
+                        text: "En la elección de Presidente, si nadie alcanza 50 % de votos, se convoca a:",
+                        answers: [
+                        { text: "Asamblea Constituyente", correct: false },
+                        { text: "Segunda vuelta entre dos más votados", correct: true },
+                        { text: "Referendo", correct: false },
+                        { text: "Reconteo de votos", correct: false }
+                        ]
+                    },
+                    {
+                        text: "El sistema de asignación de escaños para el Senado utiliza:",
+                        answers: [
+                        { text: "Cocientes mayores (método D’Hondt)", correct: true },
+                        { text: "Voto preferencial", correct: false },
+                        { text: "Sistema de mayoría simple", correct: false },
+                        { text: "Lista cerrada sin divisor", correct: false }
+                        ]
+                    },
+                    {
+                        text: "Para ser electora o elector se necesita:",
+                        answers: [
+                        { text: "Tener 16 años cumplidos", correct: false },
+                        { text: "Ser residente legal en Bolivia", correct: false },
+                        { text: "Estar registrada en el padrón y habilitada para votar", correct: true },
+                        { text: "Pagar una tasa electoral", correct: false }
+                        ]
+                    },
+                    {
+                        text: "Las asambleas y cabildos son:",
+                        answers: [
+                        { text: "Vinculantes", correct: false },
+                        { text: "No vinculantes pero de carácter deliberativo", correct: true },
+                        { text: "Solo para la consulta previa", correct: false },
+                        { text: "Exclusivos de comunidades indígenas", correct: false }
+                        ]
+                    },
+                    {
+                        text: "El Servicio Intercultural de Fortalecimiento Democrático (SIFDE) depende de:",
+                        answers: [
+                        { text: "Ministerio de Culturas", correct: false },
+                        { text: "Órgano Judicial", correct: false },
+                        { text: "Órgano Electoral Plurinacional", correct: true },
+                        { text: "Presidencia del Estado", correct: false }
+                        ]
+                    },
+                    {
+                        text: "¿Cuál de estas materias NO puede someterse a referendo?",
+                        answers: [
+                        { text: "Reforma constitucional", correct: false },
+                        { text: "Seguridad interna", correct: true },
+                        { text: "Autonomías municipales", correct: false },
+                        { text: "Tratados internacionales", correct: false }
+                        ]
+                    },
+                    {
+                        text: "El mandato del Presidente y Vicepresidente es de:",
+                        answers: [
+                        { text: "4 años", correct: false },
+                        { text: "5 años", correct: true },
+                        { text: "6 años", correct: false },
+                        { text: "3 años", correct: false }
+                        ]
+                    },
+                    {
+                        text: "El escrutinio de votos es:",
+                        answers: [
+                        { text: "Confidencial y voluntario", correct: false },
+                        { text: "Público y definitivo", correct: true },
+                        { text: "Secreto y repetible", correct: false },
+                        { text: "Anónimo y parcial", correct: false }
+                        ]
+                    },
+
                 ]);
                 
                 // Variables de estado
