@@ -919,10 +919,10 @@
                                 <p class="font-medium">Finalización:</p>
                                 <p>{{ formatDateTime(examFinishTime) }}</p>
                             </div>
-                            <div v-if="examLocation">
+                            <!-- <div v-if="examLocation">
                                 <p class="font-medium">Ubicación:</p>
                                 <p>Lat: {{ examLocation.latitude.toFixed(6) }}, Long: {{ examLocation.longitude.toFixed(6) }}</p>
-                            </div>
+                            </div> -->
                             <div v-if="locationError">
                                 <p class="font-medium text-danger">Error:</p>
                                 <p>{{ locationError }}</p>
