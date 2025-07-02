@@ -1526,7 +1526,7 @@
                     // Crear una línea con los tres resultados
                     const resultsLine = [
                         `Puntuación: ${score.value}%`,
-                        `Correctas: ${correctAnswersCount.value}/${selectedQuestions.value.length}`,
+                        `Correctas: (${correctAnswersCount.value}/${selectedQuestions.value.length}).toFixed(1)`,
                         `Tiempo: ${formatTime(elapsedTime.value)}`
                     ];
                     
