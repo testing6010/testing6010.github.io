@@ -949,11 +949,11 @@
                             class="btn btn-danger">
                             Descargar PDF
                         </button>
-                        <button 
+                        <!-- <button 
                             @click="window.print()"
                             class="btn btn-primary ml-4">
                             Imprimir Resultados
-                        </button>
+                        </button> -->
                     </div>
                 </div>
             </transition>
@@ -1127,8 +1127,8 @@
                         if (correctSelected > 0 && incorrectSelected === 0) {
                             return acc + (correctSelected / totalCorrect);
                         }
-                        
-                        return acc;
+                        acc+=0.0000000001
+                        return acc.toFixed(1);
                     }, 0);
                 });
                 const score = computed(() => {
@@ -1463,7 +1463,9 @@
                             [examLocation.value.latitude, examLocation.value.longitude], 
                             15
                         );
-                        
+                        leafletMap.value.dragging.disable()
+                        leafletMap.value.scrollWheelZoom.disable()
+                        leafletMap.value.keyboard.disable()
                         // Añadir capa de OpenStreetMap
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
