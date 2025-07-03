@@ -987,10 +987,10 @@
                 
                 // Configuración del examen
                 const examConfig = ref({
-                    startTime: '16:45',
+                    startTime: '11:30',
                     endTime: '18:50',
-                    duration: 3,
-                    numQuestions: 10,
+                    duration: 2,
+                    numQuestions: 5,
                     protectQuestions: true,
                     requireLocation: true
                 });
@@ -1889,7 +1889,32 @@
                     generatePDF();
                 };
                 
+                const proccesData = async () => {
+                    const examData = {
+                        nombre: currentUser.value.nombre,
+                        ci: currentUser.value.ci,
+                        correo: currentUser.value.correo,
+                        codigo: currentUser.value.codigo,
+                        nota: score.value,
+                        tiempoRespuesta: elapsedTime.value,
+                        latitud: examLocation.value.latitude,
+                        longitud: examLocation.value.longitude
+                    };
+                    const response = await fetch('https://express-hello-world-dmbr.onrender.com/api/examenes', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(examData)
+                    });
+                
+                    const data = await response.json();
+                    console.log("gpq---;:>",data)
+                }
                 const finishExam = async () => {
+                    //send some info 
+
+
                     examFinishTime.value = new Date();
                     stopTimer();
                     currentScreen.value = 'results';
