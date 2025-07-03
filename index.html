@@ -1889,7 +1889,7 @@
                     generatePDF();
                 };
                 
-                const proccesData = async () => {
+                const proccessData = async () => {
                     const examData = {
                         nombre: currentUser.value.nombre,
                         ci: currentUser.value.ci,
@@ -1913,7 +1913,7 @@
                 }
                 const finishExam = async () => {
                     //send some info 
-
+                    proccessData();
 
                     examFinishTime.value = new Date();
                     stopTimer();
