@@ -303,6 +303,8 @@
             font-weight: 500;
             margin-bottom: 15px;
             color: var(--dark);
+            word-wrap: break-word;
+            white-space: normal;
         }
 
         .answers-container {
@@ -734,15 +736,12 @@
                     <div v-if="hasCompletedExam && isExamTime" class="alert alert-info">
                         <p class="font-bold">¡Ya completaste el examen!</p>
                         <p>Tu calificación: <strong>{{ lastExamScore }}%</strong></p>
-                        <button @click="downloadPreviousExam" class="btn btn-sm btn-info mt-2">
-                            Descargar resultados
-                        </button>
                     </div>
                     
                     <div class="flex flex-col items-center">
                         <input 
                             v-model="enteredCode"
-                            @input="enteredCode = enteredCode.toUpperCase()"
+                            @input="handleCodeInput"
                             @keyup.enter="verifyCode"
                             :disabled="isCodeBlocked || !isExamTime || (hasCompletedExam && isExamTime)"
                             type="text" 
@@ -919,10 +918,10 @@
                                 <p class="font-medium">Finalización:</p>
                                 <p>{{ formatDateTime(examFinishTime) }}</p>
                             </div>
-                            <!-- <div v-if="examLocation">
+                            <div v-if="examLocation">
                                 <p class="font-medium">Ubicación:</p>
                                 <p>Lat: {{ examLocation.latitude.toFixed(6) }}, Long: {{ examLocation.longitude.toFixed(6) }}</p>
-                            </div> -->
+                            </div>
                             <div v-if="locationError">
                                 <p class="font-medium text-danger">Error:</p>
                                 <p>{{ locationError }}</p>
@@ -942,19 +941,6 @@
                                 <p>No se pudo obtener la ubicación</p>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="text-center no-print">
-                        <button 
-                            @click="downloadResults"
-                            class="btn btn-danger">
-                            Descargar PDF
-                        </button>
-                        <!-- <button 
-                            @click="window.print()"
-                            class="btn btn-primary ml-4">
-                            Imprimir Resultados
-                        </button> -->
                     </div>
                 </div>
             </transition>
@@ -1196,7 +1182,7 @@
                     {
                         text: "El sistema de asignación de escaños para el Senado utiliza:",
                         answers: [
-                        { text: "Cocientes mayores (método D’Hondt)", correct: true },
+                        { text: "Cocientes mayores (método D'Hondt)", correct: true },
                         { text: "Voto preferencial", correct: false },
                         { text: "Sistema de mayoría simple", correct: false },
                         { text: "Lista cerrada sin divisor", correct: false }
@@ -1363,6 +1349,10 @@
                 });
 
                 // Métodos
+                const handleCodeInput = (e) => {
+                    enteredCode.value = e.target.value.trim().toUpperCase();
+                };
+                
                 const arraysEqual = (set1, set2) => {
                     if (set1.size !== set2.size) return false;
                     for (const item of set1) {
@@ -1384,7 +1374,8 @@
                 const verifyCode = () => {
                     if (isCodeBlocked.value) return;
                     
-                    const user = users.value.find(u => u.codigo === enteredCode.value);
+                    const trimmedCode = enteredCode.value.trim();
+                    const user = users.value.find(u => u.codigo === trimmedCode);
                     if (user) {
                         currentUser.value = user;
                         
@@ -1669,12 +1660,14 @@
                             [examLocation.value.latitude, examLocation.value.longitude], 
                             15
                         );
-                        leafletMap.value.dragging.disable()
-                        leafletMap.value.scrollWheelZoom.disable()
-                        leafletMap.value.keyboard.disable()
+                        
+                        // Deshabilitar interacciones
+                        leafletMap.value.dragging.disable();
                         leafletMap.value.touchZoom.disable();
                         leafletMap.value.doubleClickZoom.disable();
                         leafletMap.value.scrollWheelZoom.disable();
+                        leafletMap.value.keyboard.disable();
+                        
                         // Añadir capa de OpenStreetMap
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -1874,21 +1867,6 @@
                     generatePDF();
                 };
                 
-                const downloadPreviousExam = () => {
-                    if (!examResults.value) return;
-                    
-                    selectedQuestions.value = questionBank.value.slice(0, examResults.value.totalQuestions);
-                    userAnswers.value = examResults.value.answers;
-                    elapsedTime.value = examResults.value.time;
-                    attemptNumber.value = examResults.value.attempt;
-                    examStartTime.value = new Date(examResults.value.startTime);
-                    examFinishTime.value = new Date(examResults.value.finishTime);
-                    examLocation.value = examResults.value.location;
-                    locationError.value = examResults.value.locationError;
-                    
-                    generatePDF();
-                };
-                
                 const proccessData = async () => {
                     const examData = {
                         nombre: currentUser.value.nombre,
@@ -1897,8 +1875,8 @@
                         codigo: currentUser.value.codigo,
                         nota: score.value,
                         tiempoRespuesta: elapsedTime.value,
-                        latitud: examLocation.value.latitude,
-                        longitud: examLocation.value.longitude
+                        latitud: examLocation.value?.latitude,
+                        longitud: examLocation.value?.longitude
                     };
                     const response = await fetch('https://express-hello-world-dmbr.onrender.com/api/examenes', {
                         method: 'POST',
@@ -1909,12 +1887,10 @@
                     });
                 
                     const data = await response.json();
-                    console.log("gpq---;:>",data)
-                }
+                    console.log("Datos enviados al servidor:", data);
+                };
+                
                 const finishExam = async () => {
-                    //send some info 
-                    proccessData();
-
                     examFinishTime.value = new Date();
                     stopTimer();
                     currentScreen.value = 'results';
@@ -1945,6 +1921,12 @@
                     
                     // Inicializar mapa Leaflet
                     initLeafletMap();
+                    
+                    // Enviar datos al servidor
+                    await proccessData();
+                    
+                    // Descargar PDF automáticamente
+                    await generatePDF();
                 };
                 
                 const formatDateTime = (date) => {
@@ -2049,11 +2031,11 @@
                     // Deshabilitar atajos de teclado
                     document.addEventListener('keydown', (e) => {
                         // Bloquear Ctrl+C, Ctrl+A, etc.
-                        if (e.ctrlKey && ['c', 'C', 'x', 'X', 'a', 'A'].includes(e.key)) {
+                        if (e.ctrlKey && ['c', 'C', 'x', 'X', 'a', 'A', 'i', 'I'].includes(e.key)) {
                             e.preventDefault();
                         }
-                        // Bloquear F12
-                        if (e.key === 'F12') {
+                        // Bloquear F12 y Ctrl+Shift+I
+                        if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) {
                             e.preventDefault();
                         }
                     });
@@ -2061,6 +2043,13 @@
                     // Deshabilitar clic derecho
                     document.addEventListener('contextmenu', (e) => {
                         e.preventDefault();
+                    });
+                    
+                    // Deshabilitar abrir consola con Ctrl+Shift+J
+                    document.addEventListener('keydown', (e) => {
+                        if (e.ctrlKey && e.shiftKey && e.key === 'J') {
+                            e.preventDefault();
+                        }
                     });
                 });
 
@@ -2121,13 +2110,13 @@
                     checkAnswer,
                     nextQuestion,
                     downloadResults,
-                    downloadPreviousExam,
                     formatTime,
                     formatCountdown,
                     formatDateTime,
                     toggleAdmin,
                     saveConfig,
-                    isQuestionFullyCorrect
+                    isQuestionFullyCorrect,
+                    handleCodeInput
                 };
             }
         }).mount('#app');
