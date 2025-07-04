@@ -842,7 +842,7 @@
                             class="form-control mb-4 text-center"
                             placeholder="Ingrese su código"
                             ref="codeInput"
-                            inputmode="numeric"
+                            inputmode="text"
                             autocomplete="off"
                             autocorrect="off"
                             spellcheck="false"
@@ -1345,6 +1345,7 @@
                 // Método para forzar el teclado en móviles
                 const showKeyboard = () => {
                     if (hiddenInput.value) {
+                        hiddenInput.value.type = 'text';
                         hiddenInput.value.focus();
                         setTimeout(() => {
                             if (codeInput.value) {
