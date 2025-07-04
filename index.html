@@ -962,7 +962,7 @@
                             <div class="result-label">Respuestas correctas</div>
                         </div>
                         <div class="result-card">
-                            <div class="result-value text-secondary">{{ formatTime(elapsedTime) }}</div>
+                            <div class="result-value text-secondary">{{ formatTime(examResults?.time || elapsedTime) }}</div>
                             <div class="result-label">Tiempo empleado</div>
                         </div>
                     </div>
@@ -1922,8 +1922,13 @@
                 };
                 
                 const finishExam = async () => {
-                    examFinishTime.value = new Date();
+                    // Detener el temporizador primero
                     stopTimer();
+                    
+                    // Guardar el tiempo final exacto
+                    const finalElapsedTime = elapsedTime.value;
+
+                    examFinishTime.value = new Date();
                     currentScreen.value = 'results';
                     lastExamScore.value = score.value;
                     
