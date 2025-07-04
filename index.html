@@ -643,11 +643,33 @@
                 -webkit-tap-highlight-color: rgba(0,0,0,0);
                 touch-action: manipulation;
                 font-size: 16px; /* Evita el zoom automático en iOS */
+                min-height: 44px; /* Tamaño mínimo para áreas táctiles */
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                appearance: none;
             }
             
             /* Asegurar que el teclado se muestre correctamente */
             input, textarea {
                 font-size: 16px;
+            }
+            
+            /* Solución para el problema del teclado */
+            input[type="text"] {
+                caret-color: transparent; /* Evita el parpadeo del cursor que puede causar problemas */
+            }
+            
+            .form-control:focus {
+                -webkit-user-select: text;
+                user-select: text;
+                caret-color: auto; /* Restaura el cursor cuando está enfocado */
+            }
+            
+            /* Botón alternativo para mostrar teclado */
+            .show-keyboard-btn {
+                margin-top: 10px;
+                padding: 8px 12px;
+                font-size: 0.9rem;
             }
         }
 
@@ -686,7 +708,7 @@
             }
         }
         
-        /* Notificación de descarga */
+        /* Notificación de descarga automática */
         .download-notification {
             position: fixed;
             top: 20px;
@@ -711,11 +733,24 @@
         .download-notification-icon {
             margin-right: 8px;
         }
+        
+        /* Clase para forzar el teclado */
+        .force-keyboard {
+            position: fixed;
+            top: -100px;
+            left: -100px;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+        }
     </style>
 </head>
 <body>
     <div class="main-container">
         <div id="app">
+            <!-- Campo oculto para forzar el teclado -->
+            <input type="text" class="force-keyboard" ref="hiddenInput">
+            
             <!-- Modal de ubicación -->
             <div class="modal" :class="{show: showLocationModal}">
                 <div class="modal-content">
@@ -806,7 +841,12 @@
                             type="text" 
                             class="form-control mb-4 text-center"
                             placeholder="Ingrese su código"
-                            ref="codeInput">
+                            ref="codeInput"
+                            inputmode="numeric"
+                            autocomplete="off"
+                            autocorrect="off"
+                            spellcheck="false"
+                            autocapitalize="characters">
                         
                         <div v-if="isCodeBlocked" class="text-center mb-4">
                             <p class="text-danger mb-2">Código incorrecto. Espere:</p>
@@ -820,6 +860,14 @@
                             Continuar
                         </button>
                         
+                        <!-- Botón alternativo para mostrar teclado en móviles -->
+                        <button 
+                            v-if="isMobileDevice"
+                            @click="showKeyboard"
+                            class="btn btn-outline show-keyboard-btn mt-4">
+                            Mostrar Teclado
+                        </button>
+                        
                         <button 
                             v-if="developmentMode"
                             @click="toggleAdmin"
@@ -830,6 +878,7 @@
                 </div>
             </transition>
 
+            <!-- Resto del código sigue igual... -->
             <!-- Pantalla de información del usuario -->
             <transition name="fade">
                 <div v-if="currentScreen === 'user-info'" class="card">
@@ -1291,6 +1340,19 @@
                 const leafletMarker = ref(null);
                 const isMobileDevice = ref(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
                 const codeInput = ref(null);
+                const hiddenInput = ref(null);
+
+                // Método para forzar el teclado en móviles
+                const showKeyboard = () => {
+                    if (hiddenInput.value) {
+                        hiddenInput.value.focus();
+                        setTimeout(() => {
+                            if (codeInput.value) {
+                                codeInput.value.focus();
+                            }
+                        }, 100);
+                    }
+                };
 
                 // Computed properties
                 const currentQuestion = computed(() => selectedQuestions.value[currentQuestionIndex.value]);
@@ -2093,9 +2155,18 @@
                     if (isMobileDevice.value) {
                         setTimeout(() => {
                             if (codeInput.value) {
-                                codeInput.value.focus();
+                                codeInput.value.focus({
+                                    preventScroll: true
+                                });
+                                
+                                // Forzar el enfoque si el primer intento falla
+                                setTimeout(() => {
+                                    if (document.activeElement !== codeInput.value) {
+                                        codeInput.value.focus();
+                                    }
+                                }, 300);
                             }
-                        }, 500);
+                        }, 800);
                     }
                 });
 
@@ -2150,6 +2221,7 @@
                     showLocationModal,
                     isMobileDevice,
                     codeInput,
+                    hiddenInput,
                     verifyCode,
                     verifyAndStartExam,
                     requestLocation,
@@ -2165,7 +2237,8 @@
                     toggleAdmin,
                     saveConfig,
                     isQuestionFullyCorrect,
-                    handleCodeInput
+                    handleCodeInput,
+                    showKeyboard
                 };
             }
         }).mount('#app');
