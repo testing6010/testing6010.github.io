@@ -1359,11 +1359,12 @@
                         const examResultsCookie = Cookies.get(`results_${user.codigo}`);
                         
                         if (examCompletedCookie === 'true' && examResultsCookie) {
-                            hasCompletedExam.value = true;
                             examResults.value = JSON.parse(examResultsCookie);
                             lastExamScore.value = examResults.value.score;
                             attemptNumber.value = examResults.value.attempt;
-                            return;
+                            
+                            // Solo marcar como completado si ya hizo 2 intentos
+                            hasCompletedExam.value = attemptNumber.value >= 2;
                         }
                         
                         const attemptCookie = Cookies.get(`attempt_${user.codigo}`);
@@ -1487,6 +1488,7 @@
                     startTimer();
                     userAnswers.value = [];
                     selectedAnswers.value = [];
+                    currentQuestionIndex.value = 0;
                     
                     if (examConfig.value.protectQuestions) {
                         await updateCurrentQuestionImage();
@@ -1937,7 +1939,8 @@
                     Cookies.set(`completed_${currentUser.value.codigo}`, 'true', { expires: 365 });
                     Cookies.set(`results_${currentUser.value.codigo}`, JSON.stringify(examResults.value), { expires: 365 });
                     
-                    hasCompletedExam.value = true;
+                    // Solo marcar como completado si ya hizo 2 intentos
+                    hasCompletedExam.value = attemptNumber.value >= 2;
                     
                     // Inicializar mapa Leaflet con retraso para asegurar visibilidad
                     setTimeout(() => {
