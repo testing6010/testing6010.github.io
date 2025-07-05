@@ -678,30 +678,27 @@
                 user-select: text !important;
                 -webkit-tap-highlight-color: rgba(0,0,0,0);
                 touch-action: manipulation;
-                font-size: 16px; /* Evita el zoom automático en iOS */
-                min-height: 44px; /* Tamaño mínimo para áreas táctiles */
+                font-size: 16px;
+                min-height: 44px;
                 -webkit-appearance: none;
                 -moz-appearance: none;
                 appearance: none;
             }
             
-            /* Asegurar que el teclado se muestre correctamente */
             input, textarea {
                 font-size: 16px;
             }
             
-            /* Solución para el problema del teclado */
             input[type="text"] {
-                caret-color: transparent; /* Evita el parpadeo del cursor que puede causar problemas */
+                caret-color: transparent;
             }
             
             .form-control:focus {
                 -webkit-user-select: text;
                 user-select: text;
-                caret-color: auto; /* Restaura el cursor cuando está enfocado */
+                caret-color: auto;
             }
             
-            /* Botón alternativo para mostrar teclado */
             .show-keyboard-btn {
                 margin-top: 10px;
                 padding: 8px 12px;
@@ -744,7 +741,6 @@
             }
         }
         
-        /* Notificación de descarga automática */
         .download-notification {
             position: fixed;
             top: 20px;
@@ -770,7 +766,6 @@
             margin-right: 8px;
         }
         
-        /* Clase para forzar el teclado */
         .force-keyboard {
             position: fixed;
             top: -100px;
@@ -784,10 +779,8 @@
 <body>
     <div class="main-container">
         <div id="app">
-            <!-- Campo oculto para forzar el teclado -->
             <input type="text" class="force-keyboard" ref="hiddenInput">
             
-            <!-- Modal de ubicación -->
             <div class="modal" :class="{show: showLocationModal}">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -806,7 +799,6 @@
                 </div>
             </div>
 
-            <!-- Pantalla de configuración -->
             <transition name="fade">
                 <div v-if="showConfig && isAdmin" class="card">
                     <div class="card-header">
@@ -850,7 +842,6 @@
                 </div>
             </transition>
 
-            <!-- Pantalla de ingreso de código -->
             <transition name="fade">
                 <div v-if="currentScreen === 'code'" class="card">
                     <div class="card-header">
@@ -896,7 +887,6 @@
                             Continuar
                         </button>
                         
-                        <!-- Botón alternativo para mostrar teclado en móviles -->
                         <button 
                             v-if="isMobileDevice"
                             @click="showKeyboard"
@@ -914,7 +904,6 @@
                 </div>
             </transition>
 
-            <!-- Pantalla de información del usuario -->
             <transition name="fade">
                 <div v-if="currentScreen === 'user-info'" class="card">
                     <div class="card-header">
@@ -939,7 +928,6 @@
                         </div>
                     </div>
                     
-                    <!-- Selector de circunscripción -->
                     <div class="text-center">
                         <label class="block mb-2 font-medium">Seleccione su circunscripción:</label>
                         <select 
@@ -970,7 +958,6 @@
                 </div>
             </transition>
 
-            <!-- Pantalla de examen -->
             <transition name="fade">
                 <div v-if="currentScreen === 'exam'" class="card">
                     <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
@@ -1047,7 +1034,6 @@
                 </div>
             </transition>
 
-            <!-- Pantalla de resultados -->
             <transition name="fade">
                 <div v-if="currentScreen === 'results'" class="card">
                     <div class="text-center mb-8">
@@ -1104,7 +1090,6 @@
                             </div>
                         </div>
                         
-                        <!-- Mapa de ubicación con Leaflet -->
                         <div v-if="examLocation" class="mt-4">
                             <h4 class="font-medium mb-2">Ubicación aproximada:</h4>
                             <div class="map-container">
@@ -1127,7 +1112,6 @@
                 </div>
             </transition>
 
-            <!-- Notificación de descarga automática -->
             <div class="download-notification" :class="{show: showAutoDownloadNotification}">
                 <svg class="download-notification-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -1137,7 +1121,6 @@
                 <span>Se ha descargado automáticamente tu certificado en PDF</span>
             </div>
 
-            <!-- Notificación de descarga manual -->
             <div class="notification" :class="{show: showDownloadNotification}">
                 <svg class="notification-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
@@ -1148,7 +1131,6 @@
         </div>
     </div>
 
-    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
             crossorigin=""></script>
@@ -1638,45 +1620,40 @@
                 const initLeafletMap = () => {
                     if (!examLocation.value) return;
                     
-                    // Esperar a que el DOM se actualice
+                    // Esperar a que el DOM esté listo y el contenedor visible
                     nextTick(() => {
                         const mapElement = document.getElementById('leaflet-map');
-                        if (!mapElement) return;
-                        
+                        if (!mapElement || !mapElement.offsetParent) {
+                            // Reintentar si el elemento no está visible
+                            setTimeout(initLeafletMap, 100);
+                            return;
+                        }
+
                         // Limpiar mapa existente si hay uno
                         if (leafletMap.value) {
                             leafletMap.value.remove();
                         }
-                        
+
                         // Crear nuevo mapa
-                        leafletMap.value = L.map('leaflet-map').setView(
+                        leafletMap.value = L.map('leaflet-map', {
+                            preferCanvas: true // Mejor rendimiento
+                        }).setView(
                             [examLocation.value.latitude, examLocation.value.longitude], 
                             15
                         );
-                        
-                        // Deshabilitar interacciones
-                        leafletMap.value.dragging.disable();
-                        leafletMap.value.touchZoom.disable();
-                        leafletMap.value.doubleClickZoom.disable();
-                        leafletMap.value.scrollWheelZoom.disable();
-                        leafletMap.value.keyboard.disable();
-                        
-                        // Añadir capa de OpenStreetMap
+
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                         }).addTo(leafletMap.value);
-                        
-                        // Añadir marcador
-                        if (leafletMarker.value) {
-                            leafletMarker.value.remove();
-                        }
-                        
-                        leafletMarker.value = L.marker([examLocation.value.latitude, examLocation.value.longitude])
+
+                        L.marker([examLocation.value.latitude, examLocation.value.longitude])
                             .addTo(leafletMap.value)
                             .bindPopup('Ubicación del examen');
-                        
-                        // Ajustar el mapa al contenedor
-                        leafletMap.value.invalidateSize();
+
+                        // Forzar actualización de tamaño después de un pequeño retraso
+                        setTimeout(() => {
+                            leafletMap.value.invalidateSize();
+                        }, 50);
                     });
                 };
                 
@@ -1782,7 +1759,7 @@
                     doc.text(`Circunscripción: ${selectedCircunscripcion.value}`, margin, yPos);
                     yPos += 10;
                     
-                    // Mapa de ubicación
+                    // Mapa de ubicación para PDF
                     if (examLocation.value) {
                         doc.setFontSize(14);
                         doc.setTextColor(94, 53, 177);
@@ -1805,10 +1782,12 @@
                             mapContainer.appendChild(mapElement);
                             document.body.appendChild(mapContainer);
                             
-                            // Crear mapa temporal
-                            const tempMap = L.map('pdf-map').setView(
+                            // Crear mapa temporal con mayor zoom inicial
+                            const tempMap = L.map('pdf-map', {
+                                preferCanvas: true
+                            }).setView(
                                 [examLocation.value.latitude, examLocation.value.longitude], 
-                                15
+                                16 // Mayor zoom para mejor visualización en PDF
                             );
                             
                             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -1819,15 +1798,20 @@
                                 .addTo(tempMap)
                                 .bindPopup('Ubicación del examen');
                             
-                            // Esperar a que el mapa se cargue
-                            await new Promise(resolve => setTimeout(resolve, 500));
+                            // Esperar a que el mapa se cargue completamente
+                            await new Promise(resolve => {
+                                tempMap.whenReady(() => {
+                                    setTimeout(resolve, 500);
+                                });
+                            });
                             
                             const canvas = await html2canvas(mapContainer, {
                                 width: 600,
                                 height: 200,
-                                scale: 1,
+                                scale: 2, // Mayor resolución para el PDF
                                 logging: false,
-                                useCORS: true
+                                useCORS: true,
+                                backgroundColor: '#ffffff'
                             });
                             
                             const mapImage = canvas.toDataURL('image/png');
@@ -1942,8 +1926,10 @@
                     
                     hasCompletedExam.value = true;
                     
-                    // Inicializar mapa Leaflet
-                    initLeafletMap();
+                    // Inicializar mapa Leaflet con retraso para asegurar visibilidad
+                    setTimeout(() => {
+                        initLeafletMap();
+                    }, 300);
                     
                     // Enviar datos al servidor
                     await proccessData();
