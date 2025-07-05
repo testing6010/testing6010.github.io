@@ -857,6 +857,7 @@
                     <div v-if="hasCompletedExam && isExamTime" class="alert alert-info">
                         <p class="font-bold">¡Ya completaste el examen!</p>
                         <p>Tu calificación: <strong>{{ lastExamScore }}%</strong></p>
+                        <p v-if="attemptNumber >= 2">Has agotado tus 2 intentos permitidos.</p>
                     </div>
                     
                     <div class="flex flex-col items-center">
@@ -864,7 +865,7 @@
                             v-model="enteredCode"
                             @input="handleCodeInput"
                             @keyup.enter="verifyCode"
-                            :disabled="isCodeBlocked || !isExamTime || (hasCompletedExam && isExamTime)"
+                            :disabled="isCodeBlocked || !isExamTime || (hasCompletedExam && attemptNumber >= 2)"
                             type="text" 
                             class="form-control mb-4 text-center"
                             placeholder="Ingrese su código"
@@ -882,7 +883,7 @@
                         
                         <button 
                             @click="verifyCode"
-                            :disabled="isCodeBlocked || !isExamTime || (hasCompletedExam && isExamTime)"
+                            :disabled="isCodeBlocked || !isExamTime || (hasCompletedExam && attemptNumber >= 2)"
                             class="btn btn-primary">
                             Continuar
                         </button>
@@ -948,6 +949,7 @@
                     <div class="text-center">
                         <p class="mb-4">Por favor verifique que esta información es correcta antes de comenzar.</p>
                         <p class="text-sm text-gray-500 mb-4">Duración del examen: {{ examConfig.duration }} minutos</p>
+                        <p class="text-sm text-gray-500 mb-4" v-if="attemptNumber > 1">Intento #{{ attemptNumber}} de 2</p>
                         <button 
                             @click="verifyAndStartExam" 
                             :disabled="!selectedCircunscripcion"
@@ -1107,6 +1109,9 @@
                     <div class="text-center">
                         <button @click="downloadResults" class="btn btn-primary">
                             Descargar Certificado
+                        </button>
+                        <button @click="returnToStart" class="btn btn-outline mt-4" v-if="attemptNumber < 2">
+                            Intentar nuevamente
                         </button>
                     </div>
                 </div>
@@ -1357,11 +1362,18 @@
                             hasCompletedExam.value = true;
                             examResults.value = JSON.parse(examResultsCookie);
                             lastExamScore.value = examResults.value.score;
+                            attemptNumber.value = examResults.value.attempt;
                             return;
                         }
                         
                         const attemptCookie = Cookies.get(`attempt_${user.codigo}`);
                         attemptNumber.value = attemptCookie ? parseInt(attemptCookie) + 1 : 1;
+                        
+                        // Verificar si ya ha completado el máximo de intentos
+                        if (attemptNumber.value > 2) {
+                            hasCompletedExam.value = true;
+                            return;
+                        }
                         
                         currentScreen.value = 'user-info';
                         enteredCode.value = '';
@@ -1871,7 +1883,8 @@
                         longitud: examLocation.value?.longitude,
                         dispositivo: isMobileDevice.value ? 'Móvil' : 'Computadora',
                         fecha: new Date().toISOString(),
-                        circunscripcion: selectedCircunscripcion.value
+                        circunscripcion: selectedCircunscripcion.value,
+                        intento: attemptNumber.value
                     };
                     
                     try {
@@ -1895,7 +1908,7 @@
                     stopTimer();
                     
                     // Guardar el tiempo final exacto
-                    const finalElapsedTime = elapsedTime.value;
+                    elapsedTime.value = Math.floor((new Date() - examStartedAt.value) / 1000);
 
                     examFinishTime.value = new Date();
                     currentScreen.value = 'results';
@@ -1936,6 +1949,13 @@
                     
                     // Descargar PDF automáticamente
                     await generatePDF();
+                };
+                
+                const returnToStart = () => {
+                    currentScreen.value = 'code';
+                    selectedCircunscripcion.value = '';
+                    examLocation.value = null;
+                    locationError.value = null;
                 };
                 
                 const formatDateTime = (date) => {
@@ -2149,7 +2169,8 @@
                     saveConfig,
                     isQuestionFullyCorrect,
                     handleCodeInput,
-                    showKeyboard
+                    showKeyboard,
+                    returnToStart
                 };
             }
         }).mount('#app');
