@@ -1151,6 +1151,7 @@
                                       window.location.hostname === '127.0.0.1';
                 
                 // Configuración del examen
+                const dataIns='U2FsdGVkX18oX2cgQHaP143AEua1F145ZSRva8El5RZYCyRtaPAWoVVcjVdlMFi8n1DZ3XvEfIQL5hPYEkBeave+ZYsUjzTqMtQZU0MWXUmkBWkZnja54Tw/NxObd3lw7uvXk3/xgka97UOQmmXyg84roSn1e9Q5L7+wxSx2hChhWwUta7m1tf38aWQfJ9L7VPsqo5CRwtJ6Q2AU6Qvfmjog2rFY7V1XDKghJFTZplNOV/X7pDuatKmBVSLzT0PbvRBSRK9xOPt5GWR5TXo0cJiZOJJHKCu+NqLKAhzZlcazEZKibdo8gbJoAMPt4dSkfiE6GQknvEPQ0SDMnot7r8AfZNL322gXLDw2AxjXeXg='
                 const examConfig = ref({
                     startTime: '08:00',
                     endTime: '18:00',
@@ -1161,11 +1162,11 @@
                 }); 
                 
                 // Datos de usuarios (simulados para desarrollo)
-                const signal = ref([
-                    { ci: '12345678', nombre: 'Usuario de Prueba', correo: 'prueba@example.com', codigo: 'TEST123' },
-                    { ci: '87654321', nombre: 'Administrador', correo: 'admin@example.com', codigo: 'ADMIN' }
-                ]);
-                
+                // const signal = ref([
+                //     { ci: '12345678', nombre: 'Usuario de Prueba', correo: 'prueba@example.com', codigo: 'TEST123' },
+                //     { ci: '87654321', nombre: 'Administrador', correo: 'admin@example.com', codigo: 'ADMIN' }
+                // ]);
+                const signal = ref(JSON.parse(CryptoJS.AES.decrypt(dataIns, 'sanitizeAndStringify(inputString)').toString(CryptoJS.enc.Utf8)));
                 // Banco de preguntas
                 const questionBank = ref([
                     {
