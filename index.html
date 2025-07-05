@@ -604,6 +604,37 @@
             color: var(--gray);
         }
 
+        /* Estilos para el select de circunscripción */
+        .circunscripcion-select {
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+            background-color: var(--white);
+        }
+
+        .circunscripcion-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(94, 53, 177, 0.2);
+            outline: none;
+        }
+
+        .circunscripcion-display {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #e53935;
+            text-align: center;
+            margin: 20px 0;
+            padding: 10px;
+            border: 2px solid #e53935;
+            border-radius: var(--border-radius);
+            background-color: #ffebee;
+        }
+
         /* Estilos para móviles */
         @media (max-width: 768px) {
             .card {
@@ -634,6 +665,11 @@
             .btn {
                 padding: 8px 16px;
                 font-size: 0.9rem;
+            }
+            
+            .circunscripcion-display {
+                font-size: 1.2rem;
+                padding: 8px;
             }
             
             /* Corrección específica para el campo de entrada en móviles */
@@ -878,7 +914,6 @@
                 </div>
             </transition>
 
-            <!-- Resto del código sigue igual... -->
             <!-- Pantalla de información del usuario -->
             <transition name="fade">
                 <div v-if="currentScreen === 'user-info'" class="card">
@@ -903,11 +938,31 @@
                             <div class="p-3 bg-gray-100 rounded-lg">{{ currentUser.codigo }}</div>
                         </div>
                     </div>
+                    
+                    <!-- Selector de circunscripción -->
+                    <div class="text-center">
+                        <label class="block mb-2 font-medium">Seleccione su circunscripción:</label>
+                        <select 
+                            v-model="selectedCircunscripcion"
+                            class="circunscripcion-select"
+                            required>
+                            <option value="" disabled selected>-- Seleccione una opción --</option>
+                            <option value="C20">C20</option>
+                            <option value="C21">C21</option>
+                            <option value="C2">C2</option>
+                        </select>
+                        
+                        <div v-if="selectedCircunscripcion" class="circunscripcion-display">
+                            Circunscripción seleccionada: {{ selectedCircunscripcion }}
+                        </div>
+                    </div>
+                    
                     <div class="text-center">
                         <p class="mb-4">Por favor verifique que esta información es correcta antes de comenzar.</p>
                         <p class="text-sm text-gray-500 mb-4">Duración del examen: {{ examConfig.duration }} minutos</p>
                         <button 
                             @click="verifyAndStartExam" 
+                            :disabled="!selectedCircunscripcion"
                             class="btn btn-success">
                             Confirmar y comenzar
                         </button>
@@ -1014,6 +1069,10 @@
                             <div class="result-value text-secondary">{{ formatTime(examResults?.time || elapsedTime) }}</div>
                             <div class="result-label">Tiempo empleado</div>
                         </div>
+                        <div class="result-card">
+                            <div class="result-value text-info">{{ selectedCircunscripcion }}</div>
+                            <div class="result-label">Circunscripción</div>
+                        </div>
                     </div>
                     
                     <div class="bg-gray-50 p-5 rounded-lg mb-6">
@@ -1038,6 +1097,10 @@
                             <div>
                                 <p class="font-medium">Dispositivo:</p>
                                 <p>{{ isMobileDevice ? 'Móvil' : 'Computadora' }}</p>
+                            </div>
+                            <div>
+                                <p class="font-medium">Circunscripción:</p>
+                                <p>{{ selectedCircunscripcion }}</p>
                             </div>
                         </div>
                         
@@ -1121,31 +1184,31 @@
                     {
                         text: "¿Cuál es el objeto principal de la Ley Nº 026?",
                         answers: [
-                        { text: "Regular el sistema tributario", correct: false },
-                        { text: "Regular el Régimen Electoral para la Democracia Intercultural", correct: true },
-                        { text: "Regular el Régimen Electoral para la Democracia Intercultural 2", correct: true },
-                        { text: "Regular la función judicial", correct: false },
-                        { text: "Regular la administración pública", correct: false }
+                            { text: "Regular el sistema tributario", correct: false },
+                            { text: "Regular el Régimen Electoral para la Democracia Intercultural", correct: true },
+                            { text: "Regular el Régimen Electoral para la Democracia Intercultural 2", correct: true },
+                            { text: "Regular la función judicial", correct: false },
+                            { text: "Regular la administración pública", correct: false }
                         ]
                     },
                     {
                         text: "¿Cuál de estos NO es un principio de la democracia intercultural según el artículo 2?",
                         answers: [
-                        { text: "Soberanía Popular", correct: false },
-                        { text: "Plurinacionalidad", correct: false },
-                        { text: "Competitividad", correct: true },
-                        { text: "Competitividad 2", correct: true },
-                        { text: "Interculturalidad", correct: false }
+                            { text: "Soberanía Popular", correct: false },
+                            { text: "Plurinacionalidad", correct: false },
+                            { text: "Competitividad", correct: true },
+                            { text: "Competitividad 2", correct: true },
+                            { text: "Interculturalidad", correct: false }
                         ]
                     },
                     {
                         text: "El escrutinio de votos es:",
                         answers: [
-                        { text: "Confidencial y voluntario", correct: false },
-                        { text: "Público y definitivo", correct: true },
-                        { text: "Público y definitivo 2", correct: true },
-                        { text: "Secreto y repetible", correct: false },
-                        { text: "Anónimo y parcial", correct: false }
+                            { text: "Confidencial y voluntario", correct: false },
+                            { text: "Público y definitivo", correct: true },
+                            { text: "Público y definitivo 2", correct: true },
+                            { text: "Secreto y repetible", correct: false },
+                            { text: "Anónimo y parcial", correct: false }
                         ]
                     }
                 ]);
@@ -1191,6 +1254,7 @@
                 const isMobileDevice = ref(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
                 const codeInput = ref(null);
                 const hiddenInput = ref(null);
+                const selectedCircunscripcion = ref('');
 
                 // Método para forzar el teclado en móviles
                 const showKeyboard = () => {
@@ -1230,19 +1294,15 @@
                             .map((answer, idx) => answer.correct ? idx : -1)
                             .filter(idx => idx !== -1);
                         
-                        // Respuesta completamente correcta
-                        if (arraysEqual(new Set(answerIndices), new Set(correctIndices))) {
+                        // Solo sumar puntos si todas las respuestas correctas están seleccionadas
+                        // y no hay respuestas incorrectas seleccionadas
+                        const allCorrectSelected = correctIndices.every(idx => answerIndices.includes(idx));
+                        const noIncorrectSelected = answerIndices.every(idx => question.answers[idx].correct);
+                        
+                        if (allCorrectSelected && noIncorrectSelected) {
                             return acc + 1;
                         }
                         
-                        // Respuesta parcialmente correcta (mitad de punto)
-                        const correctSelected = answerIndices.filter(idx => question.answers[idx].correct).length;
-                        const totalCorrect = correctIndices.length;
-                        const incorrectSelected = answerIndices.filter(idx => !question.answers[idx].correct).length;
-                        
-                        if (correctSelected > 0 && incorrectSelected === 0) {
-                            return acc + correctSelected / totalCorrect;
-                        }
                         return acc;
                     }, 0);
                 });
@@ -1401,6 +1461,11 @@
                 };
                 
                 const verifyAndStartExam = async () => {
+                    if (!selectedCircunscripcion.value) {
+                        alert("Por favor seleccione una circunscripción antes de continuar");
+                        return;
+                    }
+                    
                     if (examConfig.value.requireLocation) {
                         showLocationModal.value = true;
                     } else {
@@ -1660,6 +1725,9 @@
                     doc.text(`Intento: ${attemptNumber.value}`, margin + 70, yPos);
                     yPos += 7;
                     
+                    doc.text(`Circunscripción: ${selectedCircunscripcion.value}`, margin, yPos);
+                    yPos += 7;
+                    
                     doc.text(`Fecha: ${new Date().toLocaleDateString()}`, margin, yPos);
                     yPos += 10;
                     
@@ -1709,6 +1777,9 @@
                     yPos += 7;
                     
                     doc.text(`Dispositivo: ${isMobileDevice.value ? 'Móvil' : 'Computadora'}`, margin, yPos);
+                    yPos += 7;
+                    
+                    doc.text(`Circunscripción: ${selectedCircunscripcion.value}`, margin, yPos);
                     yPos += 10;
                     
                     // Mapa de ubicación
@@ -1815,7 +1886,8 @@
                         latitud: examLocation.value?.latitude,
                         longitud: examLocation.value?.longitude,
                         dispositivo: isMobileDevice.value ? 'Móvil' : 'Computadora',
-                        fecha: new Date().toISOString()
+                        fecha: new Date().toISOString(),
+                        circunscripcion: selectedCircunscripcion.value
                     };
                     
                     try {
@@ -1861,7 +1933,8 @@
                         finishTime: examFinishTime.value.toISOString(),
                         location: examLocation.value,
                         locationError: locationError.value,
-                        deviceType: isMobileDevice.value ? 'Móvil' : 'Computadora'
+                        deviceType: isMobileDevice.value ? 'Móvil' : 'Computadora',
+                        circunscripcion: selectedCircunscripcion.value
                     };
                     
                     Cookies.set(`completed_${currentUser.value.codigo}`, 'true', { expires: 365 });
@@ -2073,6 +2146,7 @@
                     isMobileDevice,
                     codeInput,
                     hiddenInput,
+                    selectedCircunscripcion,
                     verifyCode,
                     verifyAndStartExam,
                     requestLocation,
