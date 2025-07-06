@@ -2613,6 +2613,7 @@
                 const hiddenInput = ref(null);
                 const selectedCircunscripcion = ref('');
                 const mongoId = ref(null);
+                const finishEF = ref(true);
 
                 // Método para forzar el teclado en móviles
                 const showKeyboard = () => {
@@ -2971,7 +2972,8 @@
                         elapsedTime.value = Math.floor((new Date() - examStartedAt.value) / 1000);
                         updateTimeLeft();
                         
-                        if (timeLeft.value <= 0) {
+                        if (timeLeft.value <= 0 && finishEF.value) {
+                            finishEF.value =false
                             finishExam();
                         }
                     }, 1000);
@@ -3334,6 +3336,7 @@
                 };
                 
                 const returnToStart = () => {
+                    finishEF.value = true;
                     currentScreen.value = 'code';
                     selectedCircunscripcion.value = '';
                     examLocation.value = null;
