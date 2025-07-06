@@ -1,0 +1,3554 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sistema de Examen Interactivo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary: #5e35b1;
+            --primary-dark: #4527a0;
+            --primary-light: #d1c4e9;
+            --secondary: #3949ab;
+            --success: #43a047;
+            --success-light: #e8f5e9;
+            --danger: #e53935;
+            --danger-light: #ffebee;
+            --warning: #fb8c00;
+            --warning-light: #fff3e0;
+            --info: #039be5;
+            --info-light: #e1f5fe;
+            --light: #f5f5f5;
+            --light-gray: #eceff1;
+            --gray: #78909c;
+            --dark: #263238;
+            --white: #ffffff;
+            --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            --shadow-hover: 0 4px 8px rgba(0, 0, 0, 0.15);
+            --transition: all 0.2s ease;
+            --border-radius: 6px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--light-gray);
+            color: var(--dark);
+            line-height: 1.6;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            touch-action: manipulation;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .main-container {
+            max-width: 700px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .fade-enter-active,
+        .fade-leave-active {
+            transition: opacity 0.3s ease;
+        }
+
+        .fade-enter-from,
+        .fade-leave-to {
+            opacity: 0;
+        }
+
+        .card {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .card-header {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            outline: none;
+            font-size: 0.95rem;
+        }
+
+        .btn-sm {
+            padding: 8px 15px;
+            font-size: 0.85rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: var(--white);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: var(--white);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: var(--white);
+        }
+
+        .btn-warning {
+            background-color: var(--warning);
+            color: var(--white);
+        }
+
+        .btn-info {
+            background-color: var(--info);
+            color: var(--white);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .form-control {
+            -webkit-user-select: text !important;
+            user-select: text !important;
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+            background-color: var(--white);
+            margin: 0 auto;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(94, 53, 177, 0.2);
+            outline: none;
+        }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            border-left: 4px solid transparent;
+            font-size: 0.95rem;
+        }
+
+        .alert-success {
+            background-color: var(--success-light);
+            border-color: var(--success);
+            color: #2e7d32;
+        }
+
+        .alert-danger {
+            background-color: var(--danger-light);
+            border-color: var(--danger);
+            color: #c62828;
+        }
+
+        .alert-warning {
+            background-color: var(--warning-light);
+            border-color: var(--warning);
+            color: #e65100;
+        }
+
+        .alert-info {
+            background-color: var(--info-light);
+            border-color: var(--info);
+            color: #0277bd;
+        }
+
+        .progress {
+            height: 6px;
+            background-color: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary);
+            transition: width 0.6s ease;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 500px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+            color: var(--gray);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .question-container {
+            background-color: var(--light);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+        }
+
+        .question-text {
+            font-size: 1.15rem;
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: var(--dark);
+            word-wrap: break-word;
+            white-space: normal;
+        }
+
+        .answers-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .answer-option {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-radius: var(--border-radius);
+            background-color: var(--white);
+            border: 1px solid #ddd;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .answer-option.selected {
+            border-color: var(--primary);
+            background-color: var(--primary-light);
+        }
+
+        .answer-option.correct {
+            border-color: var(--success);
+            background-color: var(--success-light);
+        }
+
+        .answer-option.incorrect {
+            border-color: var(--danger);
+            background-color: var(--danger-light);
+        }
+
+        .answer-option.partially-correct {
+            border-color: var(--warning);
+            background-color: var(--warning-light);
+        }
+
+        .answer-letter {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-weight: 600;
+            background-color: var(--light);
+            color: var(--dark);
+            flex-shrink: 0;
+            font-size: 0.9rem;
+        }
+
+        .answer-option.selected .answer-letter {
+            background-color: var(--primary);
+            color: var(--white);
+        }
+
+        .answer-option.correct .answer-letter {
+            background-color: var(--success);
+            color: var(--white);
+        }
+
+        .answer-option.incorrect .answer-letter {
+            background-color: var(--danger);
+            color: var(--white);
+        }
+
+        .answer-option.partially-correct .answer-letter {
+            background-color: var(--warning);
+            color: var(--white);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .result-card {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        .result-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .result-label {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--success);
+            color: var(--white);
+            padding: 12px 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-hover);
+            display: flex;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(100%);
+            transition: var(--transition);
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .notification-icon {
+            margin-right: 10px;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-primary {
+            color: var(--primary);
+        }
+
+        .text-success {
+            color: var(--success);
+        }
+
+        .text-danger {
+            color: var(--danger);
+        }
+
+        .text-warning {
+            color: var(--warning);
+        }
+
+        .text-info {
+            color: var(--info);
+        }
+
+        .text-gray {
+            color: var(--gray);
+        }
+
+        .font-bold {
+            font-weight: 600;
+        }
+
+        .mt-2 {
+            margin-top: 8px;
+        }
+
+        .mt-4 {
+            margin-top: 16px;
+        }
+
+        .mb-2 {
+            margin-bottom: 8px;
+        }
+
+        .mb-3 {
+            margin-bottom: 12px;
+        }
+
+        .mb-4 {
+            margin-bottom: 16px;
+        }
+
+        .ml-2 {
+            margin-left: 8px;
+        }
+
+        .ml-4 {
+            margin-left: 16px;
+        }
+
+        .mr-2 {
+            margin-right: 8px;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .flex-col {
+            flex-direction: column;
+        }
+
+        .items-center {
+            align-items: center;
+        }
+
+        .justify-between {
+            justify-content: space-between;
+        }
+
+        .justify-center {
+            justify-content: center;
+        }
+
+        .gap-4 {
+            gap: 16px;
+        }
+
+        .space-y-2 > * + * {
+            margin-top: 8px;
+        }
+
+        .space-y-4 > * + * {
+            margin-top: 16px;
+        }
+
+        .space-x-2 > * + * {
+            margin-left: 8px;
+        }
+
+        .grid {
+            display: grid;
+        }
+
+        .grid-cols-1 {
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+        }
+
+        .grid-cols-2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .block {
+            display: block;
+        }
+
+        .rounded-lg {
+            border-radius: var(--border-radius);
+        }
+
+        .bg-gray-100 {
+            background-color: #f7f7f7;
+        }
+
+        .p-3 {
+            padding: 12px;
+        }
+
+        .p-5 {
+            padding: 20px;
+        }
+
+        .text-sm {
+            font-size: 0.85rem;
+        }
+
+        .text-lg {
+            font-size: 1.125rem;
+        }
+
+        .text-xl {
+            font-size: 1.25rem;
+        }
+
+        .text-2xl {
+            font-size: 1.5rem;
+        }
+
+        .map-container {
+            width: 100%;
+            height: 300px;
+            margin: 20px 0;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+
+        .map-placeholder {
+            width: 100%;
+            height: 100%;
+            background-color: var(--light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray);
+        }
+
+        /* Estilos para el select de circunscripción */
+        .circunscripcion-select {
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+            background-color: var(--white);
+        }
+
+        .circunscripcion-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(94, 53, 177, 0.2);
+            outline: none;
+        }
+
+        .circunscripcion-display {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #e53935;
+            text-align: center;
+            margin: 20px 0;
+            padding: 10px;
+            border: 2px solid #e53935;
+            border-radius: var(--border-radius);
+            background-color: #ffebee;
+        }
+
+        /* Estilos para móviles */
+        @media (max-width: 768px) {
+            .card {
+                padding: 15px;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 15px;
+            }
+            
+            .grid-cols-2 {
+                grid-template-columns: 1fr;
+            }
+            
+            .question-text {
+                font-size: 1rem;
+            }
+            
+            .answer-option {
+                padding: 10px 12px;
+            }
+            
+            .btn {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+            
+            .circunscripcion-display {
+                font-size: 1.2rem;
+                padding: 8px;
+            }
+            
+            /* Corrección específica para el campo de entrada en móviles */
+            .form-control {
+                -webkit-user-select: text !important;
+                user-select: text !important;
+                -webkit-tap-highlight-color: rgba(0,0,0,0);
+                touch-action: manipulation;
+                font-size: 16px;
+                min-height: 44px;
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                appearance: none;
+            }
+            
+            input, textarea {
+                font-size: 16px;
+            }
+            
+            input[type="text"] {
+                caret-color: transparent;
+            }
+            
+            .form-control:focus {
+                -webkit-user-select: text;
+                user-select: text;
+                caret-color: auto;
+            }
+            
+            .show-keyboard-btn {
+                margin-top: 10px;
+                padding: 8px 12px;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Estilos para impresión */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #app .card, #app .card * {
+                visibility: visible;
+            }
+            #app .card {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                box-shadow: none;
+                padding: 10px;
+                margin: 0;
+            }
+            .results-grid {
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+            .result-card {
+                padding: 10px;
+                flex: 1;
+            }
+            .result-value {
+                font-size: 1.5rem;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+        
+        .download-notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--info);
+            color: white;
+            padding: 12px 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-hover);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            max-width: 90%;
+            text-align: center;
+        }
+        
+        .download-notification.show {
+            opacity: 1;
+        }
+        
+        .download-notification-icon {
+            margin-right: 8px;
+        }
+        
+        .force-keyboard {
+            position: fixed;
+            top: -100px;
+            left: -100px;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div id="app">
+            <input type="text" class="force-keyboard" ref="hiddenInput">
+            
+            <div class="modal" :class="{show: showLocationModal}">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Ubicación Requerida</h3>
+                    </div>
+                    <div class="modal-body">
+                        <p>Para continuar con el examen, necesitamos acceder a tu ubicación. Esto nos ayuda a garantizar la integridad del proceso.</p>
+                        <div v-if="locationError" class="alert alert-danger mt-3">
+                            {{ locationError }}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button @click="cancelExam" class="btn btn-outline">Cancelar</button>
+                        <button @click="requestLocation" class="btn btn-primary">Compartir Ubicación</button>
+                    </div>
+                </div>
+            </div>
+
+            <transition name="fade">
+                <div v-if="showConfig && isAdmin" class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Configuración del Examen</h2>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block mb-2 font-medium">Hora de inicio:</label>
+                            <input v-model="examConfig.startTime" type="time" class="form-control">
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-medium">Hora de fin:</label>
+                            <input v-model="examConfig.endTime" type="time" class="form-control">
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-medium">Duración (minutos):</label>
+                            <input v-model="examConfig.duration" type="number" min="1" class="form-control">
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-medium">Número de preguntas:</label>
+                            <input v-model="examConfig.numQuestions" type="number" min="5" max="50" class="form-control">
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-medium">Proteger preguntas:</label>
+                            <select v-model="examConfig.protectQuestions" class="form-control">
+                                <option :value="true">Sí</option>
+                                <option :value="false">No</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-medium">Ubicación obligatoria:</label>
+                            <select v-model="examConfig.requireLocation" class="form-control">
+                                <option :value="true">Sí</option>
+                                <option :value="false">No</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <button @click="saveConfig" class="btn btn-success">Guardar Configuración</button>
+                    </div>
+                </div>
+            </transition>
+
+            <transition name="fade">
+                <div v-if="currentScreen === 'code'" class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Ingrese su código de acceso</h2>
+                    </div>
+                    
+                    <div v-if="!isExamTime" class="alert alert-warning">
+                        <p v-if="timeUntilStart > 0">El examen comenzará en: <strong class="text-primary">{{ formatCountdown(timeUntilStart) }}</strong></p>
+                        <p v-else-if="timeUntilEnd <= 0">El examen ha finalizado. Próximo examen: {{ examConfig.startTime }}</p>
+                        <p v-else>Horario permitido: {{ examConfig.startTime }} - {{ examConfig.endTime }}</p>
+                    </div>
+                    
+                    <div v-if="hasCompletedExam && isExamTime" class="alert alert-info">
+                        <p class="font-bold">¡Ya completaste el examen!</p>
+                        <p>Tu calificación: <strong>{{ lastExamScore }}%</strong></p>
+                        <p v-if="attemptNumber >= 2">Has agotado tus 2 intentos permitidos.</p>
+                    </div>
+                    
+                    <div class="flex flex-col items-center">
+                        <input 
+                            v-model="enteredCode"
+                            @input="handleCodeInput"
+                            @keyup.enter="verifyCode"
+                            :disabled="isCodeBlocked || !isExamTime || (hasCompletedExam && attemptNumber >= 2)"
+                            type="text" 
+                            class="form-control mb-4 text-center"
+                            placeholder="Ingrese su código"
+                            ref="codeInput"
+                            inputmode="text"
+                            autocomplete="off"
+                            autocorrect="off"
+                            spellcheck="false"
+                            autocapitalize="characters">
+                        
+                        <div v-if="isCodeBlocked" class="text-center mb-4">
+                            <p class="text-danger mb-2">Código incorrecto. Espere:</p>
+                            <div class="text-2xl font-bold text-danger">{{ countdown }} segundos</div>
+                        </div>
+                        
+                        <button 
+                            @click="verifyCode"
+                            :disabled="isCodeBlocked || !isExamTime || (hasCompletedExam && attemptNumber >= 2)"
+                            class="btn btn-primary">
+                            Continuar
+                        </button>
+                        
+                        <button 
+                            v-if="isMobileDevice"
+                            @click="showKeyboard"
+                            class="btn btn-outline show-keyboard-btn mt-4">
+                            Mostrar Teclado
+                        </button>
+                        
+                        <button 
+                            v-if="developmentMode"
+                            @click="toggleAdmin"
+                            class="btn btn-outline mt-4">
+                            {{ isAdmin ? 'Desactivar Admin' : 'Activar Admin' }}
+                        </button>
+                    </div>
+                </div>
+            </transition>
+
+            <transition name="fade">
+                <div v-if="currentScreen === 'user-info'" class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Verifique su información</h2>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block mb-2 font-medium">Cédula:</label>
+                            <div class="p-3 bg-gray-100 rounded-lg">{{ currentUser.ci }}</div>
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-medium">Nombre:</label>
+                            <div class="p-3 bg-gray-100 rounded-lg">{{ currentUser.nombre }}</div>
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-medium">Correo:</label>
+                            <div class="p-3 bg-gray-100 rounded-lg">{{ currentUser.correo }}</div>
+                        </div>
+                        <div>
+                            <label class="block mb-2 font-medium">Código:</label>
+                            <div class="p-3 bg-gray-100 rounded-lg">{{ currentUser.codigo }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <label class="block mb-2 font-medium">Seleccione su circunscripción:</label>
+                        <select 
+                            v-model="selectedCircunscripcion"
+                            class="circunscripcion-select"
+                            required>
+                            <option value="" disabled selected>-- Seleccione una opción --</option>
+                            <option value="C2">C2</option>
+                            <option value="C24">C24</option>
+                            <option value="C25">C25</option>
+                            <option value="C26">C26</option>
+                            <option value="C27">C27</option>
+                        </select>
+                        
+                        <div v-if="selectedCircunscripcion" class="circunscripcion-display">
+                            Circunscripción seleccionada: {{ selectedCircunscripcion }}
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <p class="mb-4">
+                            <b>Por favor verifique que esta información es correcta antes de comenzar.</b>
+                            <br>
+                            <b>Las respuestas a las preguntas son de selección multiple(1 o mas respuestas, en caso de responder parcialmente la respuesta se considera erronea)</b>
+                        </p>
+                        <p class="text-sm text-gray-500 mb-4">Duración del examen: {{ examConfig.duration }} minutos</p>
+                        <p class="text-sm text-gray-500 mb-4" v-if="attemptNumber > 1">Intento #{{ attemptNumber}} de 2</p>
+                        <button 
+                            @click="verifyAndStartExam" 
+                            :disabled="!selectedCircunscripcion"
+                            class="btn btn-success">
+                            Confirmar y comenzar
+                        </button>
+                    </div>
+                </div>
+            </transition>
+
+            <transition name="fade">
+                <div v-if="currentScreen === 'exam'" class="card">
+                    <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
+                        <div class="mb-4 md:mb-0">
+                            <h2 class="text-xl font-bold text-primary">Examen Interactivo</h2>
+                            <p class="text-sm text-gray-500">Tiempo restante: <span class="font-bold">{{ formatTime(timeLeft) }}</span></p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <span class="badge badge-primary">
+                                Pregunta {{ currentQuestionIndex + 1 }} de {{ selectedQuestions.length }}
+                            </span>
+                            <span class="badge badge-secondary">
+                                Intento #{{ attemptNumber }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="question-container">
+                        <div v-if="examConfig.protectQuestions">
+                            <img :src="currentQuestionImage" class="w-full h-auto mb-4 rounded-lg" alt="Pregunta">
+                        </div>
+                        <h3 v-else class="question-text">{{ currentQuestion.text }}</h3>
+                    </div>
+                    
+                    <div class="answers-container">
+                        <div 
+                            v-for="(answer, index) in currentQuestion.answers" 
+                            :key="index"
+                            @click="toggleAnswer(index)"
+                            class="answer-option"
+                            :class="{
+                                'selected': selectedAnswers.includes(index) && !showFeedback,
+                                'correct': showFeedback && answer.correct,
+                                'incorrect': showFeedback && selectedAnswers.includes(index) && !answer.correct,
+                                'partially-correct': showFeedback && answer.correct && selectedAnswers.includes(index) && !allCorrectAnswersSelected
+                            }">
+                            <div class="answer-letter">
+                                {{ String.fromCharCode(65 + index) }}
+                            </div>
+                            <div>{{ answer.text }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col md:flex-row md:justify-center md:items-center mt-6 gap-4">
+                        <div v-if="showFeedback" class="text-center">
+                            <p v-if="answerIsFullyCorrect" class="text-success font-bold">¡Respuesta correcta!</p>
+                            <p v-else-if="answerIsPartiallyCorrect" class="text-warning font-bold">Parcialmente correcta</p>
+                            <p v-else class="text-danger font-bold">Incorrecto. Respuestas correctas: {{ correctAnswersText }}</p>
+                        </div>
+                        
+                        <button 
+                            v-if="!showFeedback && selectedAnswers.length > 0"
+                            @click="checkAnswer"
+                            class="btn btn-primary">
+                            Verificar
+                        </button>
+                        <button 
+                            v-if="showFeedback"
+                            @click="nextQuestion"
+                            class="btn btn-primary">
+                            {{ isLastQuestion ? 'Finalizar examen' : 'Siguiente' }}
+                        </button>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <div class="flex justify-between mb-2 text-sm">
+                            <span>Progreso: {{ Math.round((currentQuestionIndex / selectedQuestions.length) * 100) }}%</span>
+                            <span>Tiempo: {{ formatTime(elapsedTime) }}</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar" :style="{ width: `${(currentQuestionIndex / selectedQuestions.length) * 100}%` }"></div>
+                        </div>
+                    </div>
+                </div>
+            </transition>
+
+            <transition name="fade">
+                <div v-if="currentScreen === 'results'" class="card">
+                    <div class="text-center mb-8">
+                        <h2 class="text-2xl font-bold text-primary mb-2">Resultados del Examen</h2>
+                        <p class="text-lg">Gracias por completar el examen, {{ currentUser.nombre }}!</p>
+                        <p class="text-sm text-gray-500">Intento #{{ attemptNumber }} - {{ new Date().toLocaleString() }}</p>
+                    </div>
+                    
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <div class="result-value text-primary">{{ score }}%</div>
+                            <div class="result-label">Puntuación</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-value text-success">{{ correctAnswersCount.toFixed(1) }}</div>
+                            <div class="result-label">Respuestas correctas</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-value text-secondary">{{ formatTime(examResults?.time || elapsedTime) }}</div>
+                            <div class="result-label">Tiempo empleado</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-value text-info">{{ selectedCircunscripcion }}</div>
+                            <div class="result-label">Circunscripción</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-5 rounded-lg mb-6">
+                        <h3 class="text-lg font-semibold mb-4">Información del Examen</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p class="font-medium">Inicio:</p>
+                                <p>{{ formatDateTime(examStartTime) }}</p>
+                            </div>
+                            <div>
+                                <p class="font-medium">Finalización:</p>
+                                <p>{{ formatDateTime(examFinishTime) }}</p>
+                            </div>
+                            <div v-if="examLocation">
+                                <p class="font-medium">Ubicación:</p>
+                                <p>Lat: {{ examLocation.latitude.toFixed(6) }}, Long: {{ examLocation.longitude.toFixed(6) }}</p>
+                            </div>
+                            <div v-if="locationError">
+                                <p class="font-medium text-danger">Error:</p>
+                                <p>{{ locationError }}</p>
+                            </div>
+                            <div>
+                                <p class="font-medium">Dispositivo:</p>
+                                <p>{{ isMobileDevice ? 'Móvil' : 'Computadora' }}</p>
+                            </div>
+                            <div>
+                                <p class="font-medium">Circunscripción:</p>
+                                <p>{{ selectedCircunscripcion }}</p>
+                            </div>
+                        </div>
+                        
+                        <div v-if="examLocation" class="mt-4">
+                            <h4 class="font-medium mb-2">Ubicación aproximada:</h4>
+                            <div class="map-container">
+                                <div id="leaflet-map" style="width: 100%; height: 100%;"></div>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-2">Esta ubicación se incluirá en el certificado</p>
+                        </div>
+                        <div v-else-if="locationError" class="map-container">
+                            <div class="map-placeholder">
+                                <p>No se pudo obtener la ubicación</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button @click="downloadResults" class="btn btn-primary">
+                            Descargar Certificado
+                        </button>
+                        <button @click="returnToStart" class="btn btn-outline mt-4" v-if="attemptNumber < 2">
+                            Intentar nuevamente
+                        </button>
+                    </div>
+                </div>
+            </transition>
+
+            <div class="download-notification" :class="{show: showAutoDownloadNotification}">
+                <svg class="download-notification-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Se ha descargado automáticamente tu certificado en PDF</span>
+            </div>
+
+            <div class="notification" :class="{show: showDownloadNotification}">
+                <svg class="notification-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <span>PDF descargado correctamente</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+
+    <script>
+        const { createApp, ref, computed, onMounted, onUnmounted, nextTick } = Vue;
+        
+        createApp({
+            setup() {
+                // Modo desarrollo
+                const developmentMode = window.location.href.startsWith('file://') || 
+                                      window.location.hostname === 'localhost' || 
+                                      window.location.hostname === '127.0.0.1';
+                
+                // Configuración del examen
+                const examConfig = ref({
+                    startTime: '06:00',
+                    endTime: '16:00',
+                    duration: 7,
+                    numQuestions: 10,
+                    protectQuestions: true,
+                    requireLocation: true
+                }); 
+                
+                // Datos de usuarios (simulados para desarrollo)
+                const signal = ref([
+  { ci: '5920131', nombre: 'MAMANI SUÁREZ ROBERTO', correo: 'suarezrobert430@gmail.com', codigo: 'TED-CBB-019F70' },
+  { ci: '5931647', nombre: 'FLORES ALVARADO SONIA', correo: 'floresalbaradosonia@gmail.com', codigo: 'TED-CBB-028D3F' },
+  { ci: '8032752', nombre: 'SALGADO MOLLO MARCO ANTONIO', correo: 'marcoantoniosalgadomollo@gmail.com', codigo: 'TED-CBB-032B2D' },
+  { ci: '6517890', nombre: 'ALBARRACIN OVANDO NOEMI', correo: 'noemi08albarracin@gmail.com', codigo: 'TED-CBB-034A01' },
+  { ci: '8664785', nombre: 'PARDO SARABIA JOSUE', correo: 'jpardo475@gmail.com', codigo: 'TED-CBB-0374DF' },
+  { ci: '9406966', nombre: 'ALVAREZ ROJAS NEMIA', correo: 'alvarezrojasnemia@gmail.com', codigo: 'TED-CBB-03ACB7' },
+  { ci: '8764034', nombre: 'CANAZA QUISPE LINDA NOEMI', correo: 'lindacanaza9@gmail.com', codigo: 'TED-CBB-051DDB' },
+  { ci: '12370335', nombre: 'ORTUÑO ZURITA YHANETH', correo: 'yhanethortuno41@gmail.com', codigo: 'TED-CBB-061DC3' },
+  { ci: '8784264', nombre: 'JIMENEZ ARNEZ NELCY', correo: 'jimeneznelcy0199@gmail.com', codigo: 'TED-CBB-078EB2' },
+  { ci: '13196165', nombre: 'AZERO LAIME ROCIO', correo: 'azerorocio@gmail.com', codigo: 'TED-CBB-08462A' },
+  { ci: '6419949', nombre: 'RIOS PACSI DAMIAN', correo: 'drios.191280@gmail.com', codigo: 'TED-CBB-085267' },
+  { ci: '6496741', nombre: 'ORTUÑO MALDONADO LIZETH', correo: 'lizethortuno522@gmail.com', codigo: 'TED-CBB-08B57C' },
+  { ci: '9320683', nombre: 'RUEDA QUIROZ EZEQUIEL', correo: 'esequielquiroz05erq@gmail.com', codigo: 'TED-CBB-0A4892' },
+  { ci: '6450593', nombre: 'JAUJA MAITA ELSA', correo: 'ejaujam37@gmail.com', codigo: 'TED-CBB-0A5F2E' },
+  { ci: '12745636', nombre: 'VARGAS VILLARROEL YESSICA', correo: 'vyessica008@gmail.com', codigo: 'TED-CBB-0B2607' },
+  { ci: '12842946', nombre: 'VALDIVIA GARCÍA INES', correo: 'valdiviagarciaines22@gmail.com', codigo: 'TED-CBB-0B2768' },
+  { ci: '7868925', nombre: 'CRESPO ORELLANA JHANETH', correo: 'Jhaneth.Crespo@gmail.com', codigo: 'TED-CBB-0B4768' },
+  { ci: '8178173', nombre: 'BRAVO CHINCHILLA CARLA ANDREA', correo: 'bravochinchillaandrea@gmail.com', codigo: 'TED-CBB-0DA02B' },
+  { ci: '8712244', nombre: 'MUÑOZ MIRANDA JUDITH', correo: 'munozmirandajudith@gmail.com', codigo: 'TED-CBB-0DC09A' },
+  { ci: '9388944', nombre: 'IGNACIO PILLCO GENOVEVA', correo: 'genovevaignaciopill@gmail.com', codigo: 'TED-CBB-0E8639' },
+  { ci: '6425204', nombre: 'VILLARROEL TRUJILLO LINETH', correo: 'lilivillarroeltrujillo@gmail.com', codigo: 'TED-CBB-0F2720' },
+  { ci: '9495910', nombre: 'FLORES BUSTILLOS YUVINKA MAGNOLIA', correo: 'yuvinka.fb.15@gmail.com', codigo: 'TED-CBB-1063B0' },
+  { ci: '9358265', nombre: 'GUTIERREZ CONCHA AGUSTIN', correo: '123gutierrezagus@gmail.com', codigo: 'TED-CBB-107A7C' },
+  { ci: '9353680', nombre: 'CARICARI SALINAS EMERZON', correo: 'csemerzon@gmail.com', codigo: 'TED-CBB-109F93' },
+  { ci: '12588140', nombre: 'MELENDRES GUEVARA GRACIELA', correo: 'gmelendresguevara@gmail.com', codigo: 'TED-CBB-110B52' },
+  { ci: '968998', nombre: 'MEJIA CASTRO VALENTIN', correo: 'valentin.mejia.castro@mail.com', codigo: 'TED-CBB-112BC7' },
+  { ci: '7930301', nombre: 'MIRANDA VILLEGAS ROGER', correo: 'mirandaroger87@gmail.com', codigo: 'TED-CBB-11E19E' },
+  { ci: '8028283', nombre: 'JESUS ROMERO DEISY', correo: 'jesus16deisy@gmail.com', codigo: 'TED-CBB-121691' },
+  { ci: '8781494', nombre: 'OLMOS SAAVEDRA NICOLE CAMILA', correo: 'olmoscamila299@gmail.com', codigo: 'TED-CBB-12D3E3' },
+  { ci: '13647152', nombre: 'CLAROS ZAPATA ROSEMARY', correo: 'claroszapata4@gmail.com', codigo: 'TED-CBB-12DE31' },
+  { ci: '8909932', nombre: 'ARANDIA HINOJOSA TEOFILA', correo: 'teofilaarandiahinojosa@gmail.com', codigo: 'TED-CBB-132500' },
+  { ci: '13100372', nombre: 'PEREDO CALLE ERIKA', correo: 'peredocalleerika@gmail.com', codigo: 'TED-CBB-14E460' },
+  { ci: '8784492', nombre: 'ALVAREZ PINTO ZAIDA', correo: 'zaidafea2000siempre@gmail.com', codigo: 'TED-CBB-14E46A' },
+  { ci: '6486186', nombre: 'TERAN MEJIA MACKENSIE', correo: 'mackensieteranmejia@gmail.com', codigo: 'TED-CBB-153468' },
+  { ci: '8727563', nombre: 'LOPEZ HINOJOSA CARMEN ROSA', correo: 'cl474053@gmail.com', codigo: 'TED-CBB-159FCF' },
+  { ci: '9440828', nombre: 'FERRUFINO VEISAGA DANIELA', correo: 'ferrufinoveisagadaniela@gmail.com', codigo: 'TED-CBB-15A1EA' },
+  { ci: '5293595', nombre: 'ROTIGUETTI RAMOS ALEJANDRO ANTONIO', correo: 'alerotiguettiramos@gmail.com', codigo: 'TED-CBB-15AF0D' },
+  { ci: '6543885', nombre: 'QUISPE MAMANI ESTEBAN', correo: 'quispeesteban263@gmail.com', codigo: 'TED-CBB-16577A' },
+  { ci: '6514884', nombre: 'MAMANI PILLCO SILVIA', correo: 'silviajhandira@gmail.com', codigo: 'TED-CBB-168A25' },
+  { ci: '9421569', nombre: 'CONDORI NOGALES MIGUEL ANGEL', correo: 'condorinogalesmiguelangel4@gmail.com', codigo: 'TED-CBB-16B986' },
+  { ci: '6527171', nombre: 'LEDEZMA TOLA VICENTE', correo: 'vicenteledezma115@gmail.com', codigo: 'TED-CBB-16DF84' },
+  { ci: '4417493', nombre: 'BRITO ANDIA VITALIA', correo: 'vitaliabrito55@gmail.com', codigo: 'TED-CBB-1705D4' },
+  { ci: '9367179', nombre: 'FLORES LAIME ALEJANDRINA', correo: 'alejandrinafloreslaime@gmail.com', codigo: 'TED-CBB-172053' },
+  { ci: '5939286', nombre: 'MEDRANO PACO JORGE LUIS', correo: 'jorgeluismedranopaco3986@gmail.com', codigo: 'TED-CBB-181FE5' },
+  { ci: '9523348', nombre: 'MAMANI VARGAS GIMENA', correo: 'gimena.abc.07@gmail.com', codigo: 'TED-CBB-188595' },
+  { ci: '7925162', nombre: 'MAMANI ALVAREZ ELIZABETH', correo: 'elizabethmamanialvarez@gmail.com', codigo: 'TED-CBB-18C002' },
+  { ci: '8694440', nombre: 'QUISPE FLORES LIDIA', correo: 'quispefloresl751@gmail.com', codigo: 'TED-CBB-19C54A' },
+  { ci: '8678341', nombre: 'COPA ROJAS DAICY', correo: 'daicy.copa@gmail.com', codigo: 'TED-CBB-19E14C' },
+  { ci: '5010002', nombre: 'ZARATE MARQUEZ LASTENIA', correo: 'lasteniazaratemarquez@gmail.com', codigo: 'TED-CBB-1A3A7A' },
+  { ci: '14257508', nombre: 'OVANDO OROSCO ROBERTO CARLOS', correo: 'ovandoroberto03@gmail.com', codigo: 'TED-CBB-1A81F2' },
+  { ci: '9319697', nombre: 'ZAPATA CLAROS SANDER', correo: 'sandercitoaviador@gmail.com', codigo: 'TED-CBB-1BE4E1' },
+  { ci: '6480720', nombre: 'CHAMBILLA ESCALERA SHIRLEY MARIEL', correo: 'shirleymc2504@gmail.com', codigo: 'TED-CBB-1CA208' },
+  { ci: '9460212', nombre: 'VARGAS FERNANDEZ GIMENA', correo: 'vargasfernandezgimena@gmail.com', codigo: 'TED-CBB-1CA346' },
+  { ci: '6427149', nombre: 'NOE  MAURICIO', correo: 'mau.noe123454@gmail.com', codigo: 'TED-CBB-1CBB07' },
+  { ci: '8734299', nombre: 'FLORES CHOQUE FILOMENA', correo: 'flor92mena2016@gmail.com', codigo: 'TED-CBB-1D643F' },
+  { ci: '12584875', nombre: 'MOREIRA ARIAS ESTHER', correo: '202208978@est.umss.edu', codigo: 'TED-CBB-1E4D23' },
+  { ci: '9420755', nombre: 'VARGAS VILLARROEL SARAH', correo: 'sarahvargas697@gmail.com', codigo: 'TED-CBB-1EEF98' },
+  { ci: '8815386', nombre: 'LOPEZ ARCE RUTH', correo: 'ruth1234lopezarce@gmail.com', codigo: 'TED-CBB-1FF9E7' },
+  { ci: '8795489', nombre: 'COPA ZUÑAGUA YOSELIN KARINA', correo: 'y0s879.94@gmail.com', codigo: 'TED-CBB-213BE8' },
+  { ci: '63883407', nombre: 'CLAURE HUANCA DANIELA RUBY', correo: 'dclaure16@gmail.com', codigo: 'TED-CBB-217819' },
+  { ci: '5923251', nombre: 'JIMENEZ FRANCO YOSSELIN', correo: 'jimenezyosselin24@gmail.com', codigo: 'TED-CBB-2316DD' },
+  { ci: '8788804', nombre: 'MUNOZ REQUE ANABEL', correo: 'ani.bell1997@gmail.com', codigo: 'TED-CBB-23ACA7' },
+  { ci: '6480583', nombre: 'ROJAS CUELLAR JOSE LUIS', correo: 'joseluisrolas1205@gmail.com', codigo: 'TED-CBB-24ACBE' },
+  { ci: '5305423', nombre: 'BARRIENTOS VARGAS GLORIA', correo: 'glorybv15@gmail.com', codigo: 'TED-CBB-252E53' },
+  { ci: '12556242', nombre: 'VARGAS VILLARROEL VICTOR HUGO', correo: 'hugo8ache@gmail.com', codigo: 'TED-CBB-25D280' },
+  { ci: '7930518', nombre: 'CHOQUE PEÑAFIEL PRIMA NINFA', correo: 'prima.ninfa_305@hotmail.com', codigo: 'TED-CBB-25FC09' },
+  { ci: '13840650', nombre: 'ZENZANO IRIARTE RODRIGO LUCAS', correo: 'lzenzano@gmail.com', codigo: 'TED-CBB-274FDE' },
+  { ci: '8840609', nombre: 'VELA TRUJILLO JOSE CARLOS', correo: 'velaj550@gmail.com', codigo: 'TED-CBB-27C005' },
+  { ci: '8716014', nombre: 'SAHONERO PEREIRA GIOVANNI', correo: 'sahonero31@gmail.com', codigo: 'TED-CBB-27E369' },
+  { ci: '9389185', nombre: 'SANDOVAL CANAVIRI GISELA', correo: 'giselasandoval829@gmail.com', codigo: 'TED-CBB-28C1E5' },
+  { ci: '6078700', nombre: 'QUISPE CHINO JUAN ALVARO', correo: 'juanalvaroquispechino@gmail.com', codigo: 'TED-CBB-2936B1' },
+  { ci: '8028284', nombre: 'JESUS ROMERO TANIA SILDA', correo: 'rsildatania@gmail.com', codigo: 'TED-CBB-2A1A5B' },
+  { ci: '7919319', nombre: 'CLEMENTE QUISPE MARTHA', correo: 'marthaclemente60@gmail.com', codigo: 'TED-CBB-2A32F8' },
+  { ci: '7936210', nombre: 'MAMANI SACA JULIO', correo: 'mamanijhulef.18@gmail.com', codigo: 'TED-CBB-2A99A6' },
+  { ci: '6508700', nombre: 'TORDOYA LOPEZ CRISTIAN', correo: 'noritarejas@gmail.com', codigo: 'TED-CBB-2BBCF9' },
+  { ci: '12841452', nombre: 'GARCIA PABLO LUZVANIA GRISELDA', correo: 'gluzvania@gmail.com', codigo: 'TED-CBB-2BDB3B' },
+  { ci: '4457444', nombre: 'VEIZAGA SORIA MAXIMILIANO', correo: 'maxveizaga8@gmail.com', codigo: 'TED-CBB-2CB344' },
+  { ci: '8676755', nombre: 'RODRÍGUEZ TENORIO ELIVIA ROSA', correo: 'eliviarosa28@gmail.com', codigo: 'TED-CBB-2D0F67' },
+  { ci: '9337352', nombre: 'ZEGARRA HUAYLLA NESTOR', correo: 'zegarranestorhuaylla@gmail.com', codigo: 'TED-CBB-2D123F' },
+  { ci: '65129152', nombre: 'PLATA CONDORI JHOSELINE', correo: 'jhoselinp541999@gmail.com', codigo: 'TED-CBB-2D8DF9' },
+  { ci: '6456513', nombre: 'LOPEZ VASQUEZ JUAN ARIEL', correo: 'lovasjuari@gmail.com', codigo: 'TED-CBB-2E518C' },
+  { ci: '9462632', nombre: 'SOLIZ CAMPERO EDGAR', correo: 'solizcamperoedgar48@gmail.com', codigo: 'TED-CBB-2E6ECC' },
+  { ci: '9177997', nombre: 'ORDONEZ ARTEAGA ALISON', correo: 'danielaoa07@gmail.com', codigo: 'TED-CBB-2E96E3' },
+  { ci: '8038782', nombre: 'TUMIRI MOLINA ALEX SANDER', correo: 'alexistumirimolina@gmail.com', codigo: 'TED-CBB-2F1A50' },
+  { ci: '3811282', nombre: 'ROJAS ROJAS MARIBEL', correo: 'maribelrojasrojas76@gmail.com', codigo: 'TED-CBB-303935' },
+  { ci: '9510072', nombre: 'HEREDIA MAMANI SAUL', correo: 'herediamamanisaul@gmail.com', codigo: 'TED-CBB-30E7A4' },
+  { ci: '5311929', nombre: 'TORRICO CUBA HERNAN', correo: 'hernantorricocuba@gmail.com', codigo: 'TED-CBB-319F3D' },
+  { ci: '8039646', nombre: 'DELGADILLO MONTAÑO VANESA', correo: 'vanedelmonh@gmail.com', codigo: 'TED-CBB-3207FB' },
+  { ci: '9368977', nombre: 'ZURITA CLAROS RAUL', correo: 'zuritar194@gmail.com', codigo: 'TED-CBB-32246C' },
+  { ci: '8750903', nombre: 'MAMANI DELGADO REINA', correo: 'reinamamani96@gmail.com', codigo: 'TED-CBB-329DE1' },
+  { ci: '8009957', nombre: 'CASTILLO VARJA AMBROCIA', correo: 'ambrociacastillovarja@gmail.com', codigo: 'TED-CBB-335411' },
+  { ci: '9328411', nombre: 'SOTO ROCHA ALEYDA', correo: 'aleydasotorocha@gmail.com', codigo: 'TED-CBB-3376D0' },
+  { ci: '9361238', nombre: 'RODRIGUEZ POVEDA WILDER', correo: 'rodriguezwilder57@gmail.com', codigo: 'TED-CBB-352048' },
+  { ci: '8024106', nombre: 'LOPEZ VASQUEZ SILVIA', correo: 'silvialopezvoo6@gmail.com', codigo: 'TED-CBB-35227B' },
+  { ci: '9268551', nombre: 'ZELADA CASTELLON RIGOBERTO', correo: 'rigobertozelada@gmail.com', codigo: 'TED-CBB-35A734' },
+  { ci: '8662246', nombre: 'FERMIN GUAMAN LIZBETH', correo: 'guamanlizy@gmail.com', codigo: 'TED-CBB-35BACC' },
+  { ci: '8818380', nombre: 'CORDOVA ESPINOZA LIDIA', correo: 'cordovalili308@gmail.com', codigo: 'TED-CBB-35BBBC' },
+  { ci: '5906859', nombre: 'CASTRO RONCAL DARLA CATERINE', correo: 'darla.castro.roncal@gmail.com', codigo: 'TED-CBB-35DE04' },
+  { ci: '8754054', nombre: 'ALANOCA MUNACHI ELIZABETH', correo: 'mailynjaldin1@gmail.com', codigo: 'TED-CBB-369AA7' },
+  { ci: '14418919', nombre: 'QUISBERT MOLLO JOSE ANTONIO', correo: 'joselitorottboys@gmail.com', codigo: 'TED-CBB-376CD1' },
+  { ci: '13097423', nombre: 'ORIHUELA SORIA DEBORA', correo: 'chulipi15@icloud.com', codigo: 'TED-CBB-3862DE' },
+  { ci: '8745658', nombre: 'MAMANI CONDORI NINOSKA', correo: 'mamanininoska8@gmail.com', codigo: 'TED-CBB-38FC0D' },
+  { ci: '12461803', nombre: 'TRONCOSO COTANA MARCO ANTONIO', correo: 'troncosocotanamarcoantonio@gmail.com', codigo: 'TED-CBB-39316C' },
+  { ci: '8778220', nombre: 'HUARACHI ESPINOZA NORMA', correo: 'huarachis@gmail.com', codigo: 'TED-CBB-397DAA' },
+  { ci: '13841434', nombre: 'VARGAS ACHO JHENNY BELEN', correo: 'jbva292002@gmail.com', codigo: 'TED-CBB-399DCD' },
+  { ci: '8838641', nombre: 'BLANCO MENECES CINTHIA', correo: 'blancocintia50@gmail.com', codigo: 'TED-CBB-3A4865' },
+  { ci: '8706228', nombre: 'GUZMAN VASQUEZ MONICA', correo: 'monica28092001@gmail.com', codigo: 'TED-CBB-3A4D5F' },
+  { ci: '8052469', nombre: 'VILLCARANA JAMACHI EMILIO', correo: 'villcaranaemilio1@gmail.com', codigo: 'TED-CBB-3A79C8' },
+  { ci: '5317793', nombre: 'ALEJO SACA CIPRIAN', correo: 'alejociprian02@gmail.com', codigo: 'TED-CBB-3B92FB' },
+  { ci: '8008235', nombre: 'SANDOVAL GUZMAN MIRIAM ESTEPHANY', correo: 'miessagu92@gmail.com', codigo: 'TED-CBB-3C1D6E' },
+  { ci: '8668563', nombre: 'BRAVO ESCOBAR GETRUDES', correo: 'bravoescobarg@gmail.com', codigo: 'TED-CBB-3C4D0C' },
+  { ci: '8786702', nombre: 'FAJARDO FRANCO ROXANA', correo: 'roxanafajardo.683@gmail.com', codigo: 'TED-CBB-3C84F1' },
+  { ci: '6489202', nombre: 'MAMANI INCA ELSA', correo: 'elsamamani1985@gmail.com', codigo: 'TED-CBB-3CA0AD' },
+  { ci: '5932708', nombre: 'TERÁN MEJIA SERGIO RODRIGO', correo: 'sedrick9818@gmail.com', codigo: 'TED-CBB-3CBA85' },
+  { ci: '13064386', nombre: 'FALZO SAYJAMA BAUTISTA', correo: 'bautistafalsay10@gmail.com', codigo: 'TED-CBB-3D0378' },
+  { ci: '9410763', nombre: 'CLAROS VARGAS RUTH ANA', correo: 'ruthanaclaros@gmail.com', codigo: 'TED-CBB-3D1707' },
+  { ci: '8676049', nombre: 'LAIME MOLLO TEOFILA', correo: 'laimemolloteofila@gmail.com', codigo: 'TED-CBB-3D62C8' },
+  { ci: '14853786', nombre: 'FLORES MIRANDA LIDIA', correo: 'karenmiif867@gmail.com', codigo: 'TED-CBB-3E065F' },
+  { ci: '5260341', nombre: 'ARNEZ BAZAN JHOVANA', correo: 'jhovi2025@gmail.com', codigo: 'TED-CBB-3E0BE1' },
+  { ci: '8687898', nombre: 'CHOQUE MAMANI Jose Luis', correo: 'joseluis1990mayo@gmail.com', codigo: 'TED-CBB-3EAE86' },
+  { ci: '12554018', nombre: 'MOGRO BARRIOS JUAN JOSE', correo: 'barriosjj95@gmail.com', codigo: 'TED-CBB-3EAEC7' },
+  { ci: '9305875', nombre: 'AGUANTA MAMANI WENDY MICAELA', correo: 'aguantamamaniw@gmail.com', codigo: 'TED-CBB-3FBDAE' },
+  { ci: '8782238', nombre: 'COLQUE PUYAL VIRGILIO', correo: 'virgiliocolque@gmail.com', codigo: 'TED-CBB-40035E' },
+  { ci: '12584917', nombre: 'QUISPE ALVARADO AIDA', correo: 'quispealvaradoaida@gmail.com', codigo: 'TED-CBB-402206' },
+  { ci: '8014819', nombre: 'UNTOJA CHOQUE GILBERT ARIEL', correo: 'warrenuntoja@gmail.com', codigo: 'TED-CBB-40F87F' },
+  { ci: '7991247', nombre: 'CRUZ ESPINOZA ARIEL', correo: 'aricruze@gmail.com', codigo: 'TED-CBB-410359' },
+  { ci: '12556054', nombre: 'REYES TUDELA MARIA LUIDA', correo: 'mtudela273@gmail.com', codigo: 'TED-CBB-4166B1' },
+  { ci: '8024079', nombre: 'MAMANI CUSTODIO ESTELA', correo: 'estelamamanicustodio93@gmail.com', codigo: 'TED-CBB-423B72' },
+  { ci: '8679551', nombre: 'VALLEJOS OCHOA GILMAR', correo: 'naydaasalguero@gmail.com', codigo: 'TED-CBB-424F72' },
+  { ci: '7988956', nombre: 'VALENCIA GUTIÉRREZ AGUSTIN', correo: 'agusvalencia3@gmail.com', codigo: 'TED-CBB-426B89' },
+  { ci: '8716157', nombre: 'LIZARAZU OBANDO GUSTAVO', correo: 'gustavoobando534@gmail.com', codigo: 'TED-CBB-42E082' },
+  { ci: '7876812', nombre: 'ROJAS LEDEZMA MARIA CINTIA', correo: 'asociacionespar2@gmail.com', codigo: 'TED-CBB-4319D2' },
+  { ci: '4463545', nombre: 'CONDORI MORALES REMEDIOS', correo: 'remicom_80@hotmail.com', codigo: 'TED-CBB-440CC7' },
+  { ci: '8803793', nombre: 'CHOQUE DURAN LISBETH', correo: 'choqueduranlisbeth@gmail.com', codigo: 'TED-CBB-44710D' },
+  { ci: '7878331', nombre: 'CONDORI VILLCARANA ROXANA', correo: 'roxanacondori852@gmail.com', codigo: 'TED-CBB-48B0A2' },
+  { ci: '14150003', nombre: 'CALLATA CLAROS ANDREA', correo: 'andrea71754824@gmail.com', codigo: 'TED-CBB-493AF6' },
+  { ci: '8762055', nombre: 'SANCA VILLCA ANA', correo: 'sancavillcaana@gmail.com', codigo: 'TED-CBB-49B55D' },
+  { ci: '8742466', nombre: 'V S LINAY', correo: 'linayvillca2@gmail.com', codigo: 'TED-CBB-49E66F' },
+  { ci: '9388739', nombre: 'CASTELLON ZARDAN VIVIANA', correo: 'castellonviviana08@gmail.com', codigo: 'TED-CBB-4A3990' },
+  { ci: '9399323', nombre: 'GONZALES PEREZ JARED GABRIEL', correo: 'jagabgope@gmail.com', codigo: 'TED-CBB-4ABA8A' },
+  { ci: '6507897', nombre: 'SIPE CATARI ROSA', correo: 'juansayjama1992@gmail.com', codigo: 'TED-CBB-4AD846' },
+  { ci: '9300364', nombre: 'N PEREZ JHOVANA', correo: 'jhovita52@gmail.com', codigo: 'TED-CBB-4B0A00' },
+  { ci: '9524037', nombre: 'IE GUAGUASUBERA ELI', correo: 'eliguasie@gmail.com', codigo: 'TED-CBB-4B238F' },
+  { ci: '9388938', nombre: 'FERNANDEZ CORO BENITO', correo: 'benitezkorys@gmail.com', codigo: 'TED-CBB-4B642D' },
+  { ci: '8722579', nombre: 'MAMANI TICONA IGNACIA', correo: 'mignacia803@gmail.com', codigo: 'TED-CBB-4C29E9' },
+  { ci: '12649922', nombre: 'ROJAS COLQUE JOSIAS', correo: 'josiiirojas@gmail.com', codigo: 'TED-CBB-4CAA29' },
+  { ci: '9312291', nombre: 'CHECA ALAVI JORGE', correo: 'checajorge18@gmail.com', codigo: 'TED-CBB-4CB114' },
+  { ci: '3158871', nombre: 'PANIAGUA VALLEJOS ÁNGEL', correo: 'paniaguaangel548@gmail.com', codigo: 'TED-CBB-4CEFC4' },
+  { ci: '12652492', nombre: 'ALARCON COTRINA LIZ VANESSA', correo: 'lizvanessaalarcon@gmail.com', codigo: 'TED-CBB-4D72D8' },
+  { ci: '8737919', nombre: 'SANCHEZ MIRANDA WILDER', correo: 'wsmforever7@gmail.com', codigo: 'TED-CBB-4D9714' },
+  { ci: '8727819', nombre: 'MERIDA ROCABADO JENNY', correo: 'jhannemeridarocabado@gmail.com', codigo: 'TED-CBB-4E2C4F' },
+  { ci: '9452690', nombre: 'CONDORI CHOQUE BLANCA', correo: 'blancacondorichoque70@gmail.com', codigo: 'TED-CBB-4F78B1' },
+  { ci: '8820231', nombre: 'ZAPATA GALVEZ MATILDE', correo: 'comunicacionaccion16@gmail.com', codigo: 'TED-CBB-4FCD61' },
+  { ci: '13588990', nombre: 'REAL TOLA DARIA', correo: 'dariarealtola@gmail.com', codigo: 'TED-CBB-502E77' },
+  { ci: '7903845', nombre: 'LEDEZMA TOLA RUBEN', correo: 'ledezmatolaruben@gmail.com', codigo: 'TED-CBB-512EF6' },
+  { ci: '8026212', nombre: 'ALCOA MENECES JHOSELIN', correo: 'jhoselinalcoa50@gmail.com', codigo: 'TED-CBB-51BBDC' },
+  { ci: '8794501', nombre: 'VALDIVIA GUTIERREZ SERGIO VLADIMIR', correo: 'valdiviasergiolegal.1995@gmai.com', codigo: 'TED-CBB-51EE34' },
+  { ci: '7911601', nombre: 'MAMANI CORDOVA RICARDO', correo: 'mamanicordovaricardo@gmail', codigo: 'TED-CBB-52B8E1' },
+  { ci: '8815710', nombre: 'ORELLANA ALMANZA RODRIGO', correo: 'rodri17orellana77.roa@gmail.com', codigo: 'TED-CBB-537ACD' },
+  { ci: '9502292', nombre: 'TULULA OLIVERA MARIO', correo: 'tululamario46@gmail.com', codigo: 'TED-CBB-53ACF2' },
+  { ci: '5312545', nombre: 'ROJAS LEDEZMA MIRTHA', correo: 'mirolerojas@gmail.com', codigo: 'TED-CBB-53F5D4' },
+  { ci: '12403307', nombre: 'FERNANDEZ RODRÍGUEZ WILBER', correo: 'wilber.bolivia16@gmail.com', codigo: 'TED-CBB-54608A' },
+  { ci: '12682378', nombre: 'VARGAS FERREL MARISABEL', correo: 'marisabelv416@gmail.com', codigo: 'TED-CBB-54B7B8' },
+  { ci: '12997173', nombre: 'FLORES CONDORI DEYMAR', correo: 'nurvaeswosito@gmail.com', codigo: 'TED-CBB-553AD7' },
+  { ci: '8034858', nombre: 'LIZARAZU FERRUFINO MELINA', correo: 'lizarazumelina@gmail.com', codigo: 'TED-CBB-565E99' },
+  { ci: '7952610', nombre: 'ROJAS GARCIA GLADIZ', correo: 'arisperojasdeicy45@gmail.com', codigo: 'TED-CBB-568126' },
+  { ci: '8660668', nombre: 'PEÑA SOLIZ LIZBETH', correo: 'lizsoliz880@gmail.com', codigo: 'TED-CBB-568F3D' },
+  { ci: '5937789', nombre: 'CABEZAS SORIA SAMUEL', correo: 'cabezassamuel18@gmail.com', codigo: 'TED-CBB-56F683' },
+  { ci: '9380432', nombre: 'PALMA CHOQUE SILVIA', correo: 'palmachoquesilvia@gmail.com', codigo: 'TED-CBB-57EF99' },
+  { ci: '9495053', nombre: 'MORUCHI OVANDO CARLA JHAZMIN', correo: 'ovandojhazmin@gmail.com', codigo: 'TED-CBB-584186' },
+  { ci: '7978606', nombre: 'QUINTANA BAUTISTA NOEMI', correo: 'noemi_qb@hotmail.com', codigo: 'TED-CBB-58771A' },
+  { ci: '8789969', nombre: 'TORRES VALLEJOS MARCIA', correo: 'marciatorres2017.xx@gmail.com', codigo: 'TED-CBB-58F6EB' },
+  { ci: '6538152', nombre: 'MONTANO GARCIA ELIANA', correo: 'elianagarciamontano@gmail.com', codigo: 'TED-CBB-59A507' },
+  { ci: '8070702', nombre: 'CORDOVA VIDEZ MARIBEL', correo: 'jhoshuar2020@gmail.com', codigo: 'TED-CBB-5A6146' },
+  { ci: '8024277', nombre: 'FLORES SEJAS ERLINDA', correo: 'erli.flores17@gmail.com', codigo: 'TED-CBB-5AC8CA' },
+  { ci: '13096761', nombre: 'PANTA BARRA BERTHA', correo: 'pantabertha213@gmail.com', codigo: 'TED-CBB-5B3735' },
+  { ci: '9381615', nombre: 'GUTIERREZ PORTUGUEZ RUBEN', correo: 'rubengutierrezpor@gmail.com', codigo: 'TED-CBB-5BD5EC' },
+  { ci: '4022349', nombre: 'CALLEX AJHUACHO ORLANDO JOSERMO', correo: 'orlandojcallexa@gmail.com', codigo: 'TED-CBB-5C08EF' },
+  { ci: '9457998', nombre: 'MAMANI CONDORI JAVIER', correo: 'javiermcndri1389@gmail.com', codigo: 'TED-CBB-5C38AC' },
+  { ci: '7929034', nombre: 'ZURITA MONTAÑO ELVIA', correo: 'elviazumo@gmail.com', codigo: 'TED-CBB-5D2846' },
+  { ci: '9397796', nombre: 'HONOR QUIÑONES JOHANN CRISTIAN', correo: 'joh96h@gmail.com', codigo: 'TED-CBB-5D5DCA' },
+  { ci: '8702562', nombre: 'ONOFRE LEDO SOFIA', correo: 'sofiaonofre777@gmail.com', codigo: 'TED-CBB-5D85E6' },
+  { ci: '8679851', nombre: 'TORREZ VILLCA MARÍA ISABEL', correo: 'isatorrez59@gmail.com', codigo: 'TED-CBB-5D8870' },
+  { ci: '5280973', nombre: 'VILLCA VILLCA PATRICIA', correo: 'pattyzuria@gmail.com', codigo: 'TED-CBB-5DA7C8' },
+  { ci: '4472844', nombre: 'LOZA GRAGEDA HEYDI LIZET', correo: 'heydi92loza@gmail.com', codigo: 'TED-CBB-5F8907' },
+  { ci: '13065169', nombre: 'MACHACA BALDERRAMA LAURA ISABEL', correo: 'blauritauitin@gmail.com', codigo: 'TED-CBB-60B5B4' },
+  { ci: '14722053', nombre: 'CHAMBI LIMA ELIANA', correo: 'chambilimaeliana@gmail.com', codigo: 'TED-CBB-611BB5' },
+  { ci: '8716769', nombre: 'TERAN GARCIA LEYDI', correo: 'leyditeran908@gmail.com', codigo: 'TED-CBB-62F1A0' },
+  { ci: '9450923', nombre: 'MERINO ORELLANA MARIA HILDA', correo: 'mariamerino493@gmail.com', codigo: 'TED-CBB-630DB2' },
+  { ci: '6643198', nombre: 'OCAMPO CONDORI ANALIA MABEL', correo: 'analia14ocampo@gmail.com', codigo: 'TED-CBB-63665E' },
+  { ci: '9414320', nombre: 'BETANCUR PACO DEISY', correo: 'deisybetancur740@gmail.com', codigo: 'TED-CBB-6370D2' },
+  { ci: '7904903', nombre: 'PARICAGUA ANTONIO CRISTIAN JAVIER', correo: 'crisparc25@gmail.com', codigo: 'TED-CBB-64790C' },
+  { ci: '9372862', nombre: 'GALARZA SUAREZ ADAN', correo: 'adangalarzasurez97@gmail.com', codigo: 'TED-CBB-649EF1' },
+  { ci: '12431359', nombre: 'SOLIZ RAMALLO ELIZABETH', correo: 'solizramalloelizabeth@gmail.com', codigo: 'TED-CBB-64FFF2' },
+  { ci: '8004685', nombre: 'DELGADILLO GONZALES BERNARDINO', correo: 'bernardinodelgadillog88@gmail.com', codigo: 'TED-CBB-651297' },
+  { ci: '5210460', nombre: 'COLQUE ROQUE MARFILIA', correo: 'marfiliacolque@gmail.com', codigo: 'TED-CBB-662000' },
+  { ci: '4497332', nombre: 'KACHI TORIBIO ELIAS', correo: 'lourdeskachi@gmail.com', codigo: 'TED-CBB-67E520' },
+  { ci: '7891959', nombre: 'CALANI CACERES CIRILO', correo: 'cirilocalani@gmail.com', codigo: 'TED-CBB-67F865' },
+  { ci: '12490299', nombre: 'VASQUEZ ORELLANA NOEMI', correo: 'emyv192@gmail.com', codigo: 'TED-CBB-683E2A' },
+  { ci: '9411464', nombre: 'ZARATE ALBA TRIFONIA', correo: 'trifoniazaratealba@gmail.com', codigo: 'TED-CBB-690BEB' },
+  { ci: '15441909', nombre: '- ZELAYA MARIA INES', correo: 'mariaineszelaya34@gmail.com', codigo: 'TED-CBB-6946C3' },
+  { ci: '8808655', nombre: 'MORENO MIRABAL MARIA TERESA', correo: 'mtmoreno-es@udabol.edu.bo', codigo: 'TED-CBB-6983E6' },
+  { ci: '8742307', nombre: 'COSSIO JALDIN ARMINDA', correo: 'cossiojaldinarminda@gmail.com', codigo: 'TED-CBB-6A163F' },
+  { ci: '7939558', nombre: 'TRONCOSO TORREZ JOSE NELSON', correo: 'civilwarcapitangana2022@gmail.com', codigo: 'TED-CBB-6A50C5' },
+  { ci: '8035414', nombre: 'ZAMBRANA VILLARROEL MICHEL', correo: 'maicolzambrana5@gmail.com', codigo: 'TED-CBB-6A77D7' },
+  { ci: '6469946', nombre: 'HERBAS CANDIA JEANETH', correo: 'herbascandia86@gmail.com', codigo: 'TED-CBB-6AAE4C' },
+  { ci: '8708765', nombre: 'VILLARROEL SORIA RUTH LOYDA', correo: 'villarroel1024@gmail.com', codigo: 'TED-CBB-6AD9B7' },
+  { ci: '9359924', nombre: 'ALEJO SACA VICENTE', correo: 'alejihnovic@gmail.com', codigo: 'TED-CBB-6B1598' },
+  { ci: '5937964', nombre: 'ISATEGUA GUAGUASU RICARDO', correo: 'ricardoisategua@gmail.com', codigo: 'TED-CBB-6B375D' },
+  { ci: '8024646', nombre: 'OVIDIO ARNEZ CARLOS', correo: 'ovi619carlos@gmail.com', codigo: 'TED-CBB-6BE463' },
+  { ci: '7962882', nombre: 'VICENTE GUZMAN GENOVEVA XIMENA', correo: 'geno789xmen@gmail.com', codigo: 'TED-CBB-6C277C' },
+  { ci: '7974875', nombre: 'HEREDIA MATEO JESUS', correo: 'juesusherediamateo@gmail.com', codigo: 'TED-CBB-6DA70D' },
+  { ci: '8847290', nombre: 'ANDRADE VIDES MARIELA', correo: 'maryyandrade99@gmail.com', codigo: 'TED-CBB-6E1565' },
+  { ci: '12649000', nombre: 'LOPEZ ZAPATA ERLINDA', correo: 'erlindalopez231@gmail.com', codigo: 'TED-CBB-6F1B94' },
+  { ci: '8740670', nombre: 'RODRIGUEZ CANO JESE', correo: 'jeserodriguez987@gmail.com', codigo: 'TED-CBB-6FA43E' },
+  { ci: '12748967', nombre: 'MALDONADO TORREZ DEYSI', correo: 'maldonadoisyed@gmail.com', codigo: 'TED-CBB-7033D3' },
+  { ci: '13196361', nombre: 'MORALES ARCE MARINA', correo: 'marinamoralesarce953@gmail.com', codigo: 'TED-CBB-71CB41' },
+  { ci: '8803658', nombre: 'BERDUGUEZ CLAROS JOSUE ESTEBAN', correo: 'josuesteban8@gmail.com', codigo: 'TED-CBB-726765' },
+  { ci: '14223578', nombre: 'QUISPE DURAN BETHZAIDA', correo: 'bethzaidaduranquispe@gmail.com', codigo: 'TED-CBB-74C006' },
+  { ci: '8815087', nombre: 'GARRON SALVATIERRA JOSE', correo: 'juanitoguzman441@gmail.com', codigo: 'TED-CBB-756F36' },
+  { ci: '4457965', nombre: 'GUZMAN VILLARROEL MARÍA DAISY', correo: 'mariadaisy.guzvi@gmail.com', codigo: 'TED-CBB-75B172' },
+  { ci: '8056073', nombre: 'HERBAS CASTELLON RICHARD', correo: 'rihec93@gmail.com', codigo: 'TED-CBB-765DD5' },
+  { ci: '73341515', nombre: 'FERNANDEZ CRUZ FABIOLA', correo: 'fabifercruz@gmail.com', codigo: 'TED-CBB-77CB94' },
+  { ci: '8041060', nombre: 'ARRATIA MAMANI ALBERT JOSUE', correo: 'darckser123@gmail.com', codigo: 'TED-CBB-77D142' },
+  { ci: '7995922', nombre: 'MORALES LOPEZ ELIAS', correo: 'lopezelias1893@gmail.com', codigo: 'TED-CBB-78CE01' },
+  { ci: '8716023', nombre: 'GUTIERREZ CAMACHO JHOSELYN', correo: 'jhose.gc.04@gmail.com', codigo: 'TED-CBB-78F005' },
+  { ci: '9351263', nombre: 'CAERO AGUAYO PABLO CESAR', correo: 'x100preatj100@gmail.com', codigo: 'TED-CBB-792468' },
+  { ci: '3403094', nombre: 'PLATA GARCIA CONCEPCION ADELA', correo: 'concedypl@gmail.com', codigo: 'TED-CBB-793B81' },
+  { ci: '9417065', nombre: 'MIRABAL CABRERA BEATRIZ', correo: 'beatrizmirabal6847@gmail.com', codigo: 'TED-CBB-7A4DC1' },
+  { ci: '8009661', nombre: 'CACERES RAMOS ALISSON LIA', correo: 'lia.caceres71@gmail.com', codigo: 'TED-CBB-7AA87C' },
+  { ci: '8826557', nombre: 'CRUZ VILLCA MÁXIMO', correo: 'cruzmaximo109@gmai.com', codigo: 'TED-CBB-7D4493' },
+  { ci: '8003635', nombre: 'RIOJA RODRIGUEZ JIMENA', correo: 'Jimenarioja1989@gmail.com', codigo: 'TED-CBB-7E198B' },
+  { ci: '8697262', nombre: 'QUISPE FERNANDEZ ROXANA', correo: 'rq23657@gmail.com', codigo: 'TED-CBB-7F8489' },
+  { ci: '5901862', nombre: 'CLAROS COTRINA REMBERTO', correo: 'rimbaclaros@gmail.com', codigo: 'TED-CBB-80FF0E' },
+  { ci: '8737647', nombre: 'GONZALES MAMANI SONIA', correo: 'soniagonzalesmamani@gmail.com', codigo: 'TED-CBB-812024' },
+  { ci: '14212137', nombre: 'TRONCOSO COTANA JESUS HUASCAR', correo: 'nicolsotocotana@gmail.com', codigo: 'TED-CBB-81A3C8' },
+  { ci: '4487312', nombre: 'OROSCO SUAREZ DESIDERIO', correo: 'desiderio.orosco@gmail.com', codigo: 'TED-CBB-829772' },
+  { ci: '9459768', nombre: 'CORDOVA CARDOZO LUIS ROBERTO', correo: 'luisrobertocardozocordova9@gmail.com', codigo: 'TED-CBB-82A4B6' },
+  { ci: '6529501', nombre: 'GUZMAN AVILES LETICIA SARAHI', correo: 'sarahiguz2018@gmail.com', codigo: 'TED-CBB-82F19D' },
+  { ci: '8752108', nombre: 'HUANCA HUANACO TEOFILA', correo: 'huancateofila567@gmail.com', codigo: 'TED-CBB-830A59' },
+  { ci: '8689440', nombre: 'SAAVEDRA CRESPO LUIS', correo: 'luchito7999@gmail.com', codigo: 'TED-CBB-833224' },
+  { ci: '8703037', nombre: 'SILES POMA AGUSTINA', correo: 'asilespoma@gmail.com', codigo: 'TED-CBB-849E61' },
+  { ci: '14695584', nombre: 'ROJAS SILES MARI', correo: 'smarirojas17@gmail.com', codigo: 'TED-CBB-84D62C' },
+  { ci: '12650770', nombre: 'CLAURE HUANCA DANIELA RUBY', correo: 'danichita1995@gmail.com', codigo: 'TED-CBB-851E28' },
+  { ci: '9436429', nombre: 'ALVAREZ CABALLERO LEIDY', correo: 'leidyalvarezcaballero@gmail.com', codigo: 'TED-CBB-85337A' },
+  { ci: '6512518', nombre: 'BAZAN PIZO WILSON', correo: 'wbazan575@gmail.com', codigo: 'TED-CBB-862F55' },
+  { ci: '9302284', nombre: 'UNTOJA CHOQUE DARNEL LAYO', correo: 'daxlager@gmail.com', codigo: 'TED-CBB-870441' },
+  { ci: '9416794', nombre: 'FERRUFINO VEISAGA SILVIA', correo: 'silviaferrufinoveisaga@gmail.con', codigo: 'TED-CBB-878586' },
+  { ci: '12615568', nombre: 'SANIZO AGUILA EDGAR', correo: 'edgarsanizoe53@gmail.com', codigo: 'TED-CBB-87BBA6' },
+  { ci: '8753536', nombre: 'FELIPE QUISPE EMETERIO', correo: 'felipequispeluis@gmail.com', codigo: 'TED-CBB-87F052' },
+  { ci: '7907408', nombre: 'PEREDO MUÑOZ DEYSI', correo: 'deysiperedomunoz@gmail.com', codigo: 'TED-CBB-885D67' },
+  { ci: '5269511', nombre: 'CUBA ROMERO Max Fernando', correo: 'fernandocubaromero123@gmail.com', codigo: 'TED-CBB-89D384' },
+  { ci: '6526920', nombre: 'DELGADILLO HEREDIA VANESA', correo: 'dnesa1687@gmail.com', codigo: 'TED-CBB-8A3956' },
+  { ci: '9417226', nombre: 'FERREL MOSTACEDO LIZBETH', correo: 'ferrelmosta100@gemail.com', codigo: 'TED-CBB-8B89DA' },
+  { ci: '7458070', nombre: 'GOYTIA VEIZAGA ELOY', correo: 'eloygoytia93@gmil.com', codigo: 'TED-CBB-8BC4FB' },
+  { ci: '7920186', nombre: 'LOPEZ FERNANDEZ RAMIRO', correo: 'lopezitooo75@gmail.com', codigo: 'TED-CBB-8BD35A' },
+  { ci: '2142321', nombre: 'E Q G J', correo: 'ladrillazo.umss@gmail.com', codigo: 'TED-CBB-8D3C7E' },
+  { ci: '9382947', nombre: 'ARHUATA VENTURA ERIKA JHILDA', correo: 'erikajhildaa@gmail.com', codigo: 'TED-CBB-8D82C0' },
+  { ci: '7985931', nombre: 'FLORES ALVARADO NELSI', correo: 'floresnelsi095@gmail.com', codigo: 'TED-CBB-8D9799' },
+  { ci: '7943320', nombre: 'ROJAS  RUDI', correo: 'rudirojas44@gmail.com', codigo: 'TED-CBB-8E1E3A' },
+  { ci: '9467460', nombre: 'AZERO LAIME ELY', correo: 'vanesalis6746@gmail.com', codigo: 'TED-CBB-8F562D' },
+  { ci: '8762728', nombre: 'RODRIGUEZ GUARACHI ERLINDA', correo: 'erlindarodriguezguarachi@gmail.com', codigo: 'TED-CBB-9053BD' },
+  { ci: '14195221', nombre: 'MAMANI CALANI RICHARD', correo: 'richardmamani530@gmail.com', codigo: 'TED-CBB-9053C2' },
+  { ci: '8662450', nombre: 'GRAGEDA MONTAÑO HECTOR', correo: 'hgrageda9@gmail.com', codigo: 'TED-CBB-914963' },
+  { ci: '8859579', nombre: 'MAMANI VARGAS JHONNY VLADIMIR', correo: 'vladimirj3690@gmail.com', codigo: 'TED-CBB-9164EA' },
+  { ci: '8694352', nombre: 'ROSALES PONCE ESTHER AMELIA', correo: 'ameliaroslesponce@gmail.com', codigo: 'TED-CBB-9184D7' },
+  { ci: '7923749', nombre: 'REVOLLO HINOJOSA JOSE JERY', correo: 'josejeryrevollohinojosa@gmail.com', codigo: 'TED-CBB-926691' },
+  { ci: '71702374', nombre: 'MERIDA DURAN CELIA', correo: 'celiameridaduran@gmail.com', codigo: 'TED-CBB-9367CE' },
+  { ci: '6972854', nombre: 'MORENO ZENTENO DALMA FABIOLA', correo: 'dalmafabiolamoreno21@gmail.com', codigo: 'TED-CBB-944AC7' },
+  { ci: '7967518', nombre: 'CASTRO RODRIGUEZ VILMA', correo: 'vcr_2011@hotmail.com', codigo: 'TED-CBB-952DA6' },
+  { ci: '8757327', nombre: 'ROJAS SILVESTRE JULIÁN', correo: 'Julianrojd00@gmail.com', codigo: 'TED-CBB-974CE5' },
+  { ci: '8003413', nombre: 'RODRIGUEZ RODRIGUEZ GROVER', correo: 'grovercuadrado@gmail.com', codigo: 'TED-CBB-980FA3' },
+  { ci: '9390888', nombre: 'ZURITA MAMANI NAREL', correo: 'zuritamamaninarel@gmail.com', codigo: 'TED-CBB-98313E' },
+  { ci: '8752025', nombre: 'HUANACO CASILLA MARIO', correo: 'mariohuanacocasillas@gmail.com', codigo: 'TED-CBB-989456' },
+  { ci: '8737539', nombre: 'ARO CALLA AMALIA', correo: 'aroamalia6@gmail.com', codigo: 'TED-CBB-990BFE' },
+  { ci: '5234156', nombre: 'ROMERO CESPEDES CARLA LORENA', correo: 'carlita.romero98.cr@gmail.com', codigo: 'TED-CBB-991F17' },
+  { ci: '9317072', nombre: 'ACAPA PEREZ JENNIFER ELLEN', correo: 'jenniferellenacapaperez@gmail.com', codigo: 'TED-CBB-998441' },
+  { ci: '9351646', nombre: 'ROJAS TERRAZAS ANA', correo: 'anaterrazas.1998.12@gmail.com', codigo: 'TED-CBB-99C52D' },
+  { ci: '8677124', nombre: 'GABRIEL COSSIO JUAN', correo: 'gabrielcossiojuan@gmail.com', codigo: 'TED-CBB-99D211' },
+  { ci: '10636738', nombre: 'SANCHEZ CRUZ MARYNES', correo: 'marynesanchez0203@gmail.com', codigo: 'TED-CBB-9AB6F3' },
+  { ci: '5264347', nombre: 'SILES PINTO FRANCISCA', correo: 'silesnancy92@gmail.com', codigo: 'TED-CBB-9ACBFE' },
+  { ci: '9521745', nombre: 'JAMIRA MAMANI ELISABETH', correo: 'elissajamira227@gmail.com', codigo: 'TED-CBB-9AFFD3' },
+  { ci: '9386630', nombre: 'UGARTE MERUVIA MADAI GARDENIA', correo: 'madaiugartemeruvia@gmail.com', codigo: 'TED-CBB-9B645A' },
+  { ci: '8680397', nombre: 'ROJAS TRUJILLO MIRIAM', correo: 'rojastrujillomiriam@gmail.com', codigo: 'TED-CBB-9C1D24' },
+  { ci: '6487177', nombre: 'ORELLANA ORELLANA RODRIGO', correo: 'rodry101187@gmail.com', codigo: 'TED-CBB-9C931E' },
+  { ci: '9443226', nombre: 'HUANCA CORDOBA ALBERTINA', correo: 'albertinahuanca09@gmail.com', codigo: 'TED-CBB-9C94A7' },
+  { ci: '5263787', nombre: 'MORALES GOMEZ LENNY EUGENIA', correo: 'lennyeumorales1@gmail.com', codigo: 'TED-CBB-9CA4B1' },
+  { ci: '8679062', nombre: 'BUSTAMANTE CHINCHILLA MARISOL', correo: 'marisol727096@gmail.com', codigo: 'TED-CBB-9D6A01' },
+  { ci: '9409061', nombre: 'SALVATIERRA COCA EVELIN CELINA', correo: 'salvatierracocaevelincelina@gmail.com', codigo: 'TED-CBB-9F697E' },
+  { ci: '8834788', nombre: 'REY TORRES MARLEY', correo: 'marley4rey@gmail.com', codigo: 'TED-CBB-9F9249' },
+  { ci: '7943844', nombre: 'SANCHEZ LUIZAGA LIDIA', correo: 'lidiasanchezluizaga@gmail.com', codigo: 'TED-CBB-A1F9AE' },
+  { ci: '14090799', nombre: 'BRAVO GARCIA Maria Fernanda', correo: 'bravogarciamariafernanda36@gmail.com', codigo: 'TED-CBB-A1FB2D' },
+  { ci: '8700565', nombre: 'LOPEZ MAMANI VALENTINA', correo: 'valylopezm54@gmail.com', codigo: 'TED-CBB-A38CF8' },
+  { ci: '6509141', nombre: 'OROZCO CAMPOS VANESSA', correo: 'vanesergeo12@gmail.com', codigo: 'TED-CBB-A42267' },
+  { ci: '6527886', nombre: 'VEIZAGA ZEBALLOS REMIGIA', correo: 'remigiav1984@gmail.com', codigo: 'TED-CBB-A63351' },
+  { ci: '8716726', nombre: 'ENCINAS VILLARROEL MADELIN LEZLI', correo: 'lezliencinas@gmail.com', codigo: 'TED-CBB-A659C1' },
+  { ci: '13226711', nombre: 'CHOQUE NINA JIMENA', correo: 'gemac4643@gmail.com', codigo: 'TED-CBB-A698AE' },
+  { ci: '5226278', nombre: 'ROCHA ROJAS BERTHA', correo: 'bertha.bichi@gmail.com', codigo: 'TED-CBB-A7F217' },
+  { ci: '8002894', nombre: 'FLORES RELAMPA NORMA', correo: 'nf7122074@gmail.com', codigo: 'TED-CBB-A7F79E' },
+  { ci: '12400533', nombre: 'TERCEROS LAZO KARINA', correo: 'terceroslazokarina@gmail.com', codigo: 'TED-CBB-A9D37D' },
+  { ci: '9377915', nombre: 'MAMANI CHIHUANQUI EMIGDIO', correo: 'emigdiomamani123@gmail.com', codigo: 'TED-CBB-AAF11E' },
+  { ci: '13588910', nombre: 'REAL TOLA WILFREDO', correo: '202001661@est.umss.edu', codigo: 'TED-CBB-AB9DE1' },
+  { ci: '4061720', nombre: 'MACHACA CHOQUE VIVIANA', correo: 'mishell00fernandez@gmail.com', codigo: 'TED-CBB-AC37D7' },
+  { ci: '8005544', nombre: 'DEMETRIA JIMÉNEZ VARGAS', correo: 'demetria77972infunix@gmail.com', codigo: 'TED-CBB-AC3CEF' },
+  { ci: '13571986', nombre: 'FABRICA PEÑALOZA LAURA KASANDRA', correo: 'laurafabrica21@gmail.com', codigo: 'TED-CBB-AD4E9D' },
+  { ci: '8050582', nombre: 'NELLY ROJAS CLAROS', correo: 'nellyrojascl7@gmail.com', codigo: 'TED-CBB-AD9DC4' },
+  { ci: '7876292', nombre: 'MEJIA HEREDA CARLOS ALBERTO', correo: 'camehe25@gmail.com', codigo: 'TED-CBB-AE0E2F' },
+  { ci: '9459622', nombre: 'VARGAS CONDARCO JOSUE CRISTOPHER', correo: 'cristocondarco@gmail.com', codigo: 'TED-CBB-AE1176' },
+  { ci: '8661766', nombre: 'MENESES FUENTES DELIA', correo: 'menesesfuentes8@gmail.com', codigo: 'TED-CBB-B043B4' },
+  { ci: '8042007', nombre: 'LOAYZA VARGAS RONALD', correo: 'rosmerylunamamani93@gmail.com', codigo: 'TED-CBB-B07795' },
+  { ci: '8661882', nombre: 'MARQUINA CHOQUE ROSSEMARY', correo: 'marquinachoquer@gmail.com', codigo: 'TED-CBB-B15A77' },
+  { ci: '2911928', nombre: 'BORDA RAMIREZ MARÍA DAYSI', correo: 'dai280993@gmail.com', codigo: 'TED-CBB-B18C8E' },
+  { ci: '8721483', nombre: 'CUAQUER AGUILAR JHOZY JIMENA', correo: 'jhozycuaqueraguilar@gmail.com', codigo: 'TED-CBB-B2D108' },
+  { ci: '9464487', nombre: 'CUNURANA MAMANI RILDO', correo: 'cunuranarildo153@gmail.com', codigo: 'TED-CBB-B2DF17' },
+  { ci: '7870065', nombre: 'MOLLINEDO CRUZ FREDDY', correo: 'edyes.87@gmail.com', codigo: 'TED-CBB-B31670' },
+  { ci: '13160246', nombre: 'TERAN FLORES YULMA', correo: 'yulmitateran2004@gmail.com', codigo: 'TED-CBB-B4594F' },
+  { ci: '13835224', nombre: 'MAMANI VEDIA NANDY KELIN', correo: 'nandymamani143@gmail.com', codigo: 'TED-CBB-B6C052' },
+  { ci: '9300948', nombre: 'QUISPE PATZI FELICIANO', correo: 'patzi71463994@gmail.com', codigo: 'TED-CBB-B6CB38' },
+  { ci: '6528286', nombre: 'BALCERAS GOMEZ ROXANA', correo: 'balcerasroxana6@gmail.com', codigo: 'TED-CBB-B77D48' },
+  { ci: '13800261', nombre: 'MAMANI CALANI DEYSI', correo: 'mamanicalanideysi@gmail.com', codigo: 'TED-CBB-B902C1' },
+  { ci: '8029329', nombre: 'MONTAÑO ARAUCO DANIEL', correo: 'montanodaniel154@gmail.com', codigo: 'TED-CBB-BA2926' },
+  { ci: '9325539', nombre: 'MIRANDA CONDORI ELVIA MARITZA', correo: 'maritzamiranda467@gmail.com', codigo: 'TED-CBB-BA3AF2' },
+  { ci: '7966180', nombre: 'MIRANDA VILLEGAS MIRIAN', correo: 'villegasmile2025@gmail.com', codigo: 'TED-CBB-BA4033' },
+  { ci: '9333327', nombre: 'CONDORI JANCO JHOSELYN', correo: 'jhoselyncondorijanco@gmail.com', codigo: 'TED-CBB-BAC94F' },
+  { ci: '8029131', nombre: 'PORCO COLQUE HIBERT', correo: 'hibrosyjl.20@gmail.com', codigo: 'TED-CBB-BAF60F' },
+  { ci: '3745342', nombre: 'MERINO CUELLAR FERNANDO', correo: 'fermerino3745342@gmail.com', codigo: 'TED-CBB-BB8AE0' },
+  { ci: '4431461', nombre: 'MENDEZ VALENCIA MARIANA', correo: 'mendezvalenciamariana99@gmail.com', codigo: 'TED-CBB-BC512A' },
+  { ci: '9363034', nombre: 'ROCHA MARINO DAVID', correo: 'dr076664@gmail.com', codigo: 'TED-CBB-BC5168' },
+  { ci: '7960242', nombre: 'ZURITA TERAN RAUL', correo: 'raulzurita91@gmail.com', codigo: 'TED-CBB-BCFF09' },
+  { ci: '9402971', nombre: 'CHOQUEVILLC PINTO ELIZABETH', correo: 'elizabethchoquevillca87@gmail.com', codigo: 'TED-CBB-BD74BB' },
+  { ci: '9430990', nombre: 'LAIME MERCADO DANIELA', correo: 'danylaimemercado45@gmail.com', codigo: 'TED-CBB-BE47A1' },
+  { ci: '6540609', nombre: 'TORRICO TORRICO MARÍA LUS', correo: 'torrico_torrico@hotmail.com', codigo: 'TED-CBB-BEDC85' },
+  { ci: '13835309', nombre: 'MAMANI URISTA AYDA', correo: 'aydaprueb11@gmail.com', codigo: 'TED-CBB-BEEBA3' },
+  { ci: '12521251', nombre: 'MUÑOZ VEIZAGA YESSENIA', correo: 'munozyessenia965@gmail.com', codigo: 'TED-CBB-C11C81' },
+  { ci: '7996210', nombre: 'ROJAS ACOSTA CARLA', correo: 'rkalinn@gmail.com', codigo: 'TED-CBB-C14235' },
+  { ci: '4410784', nombre: 'TORRICO VILLARROEL PEDRO', correo: 'pedrotorricovillaroel@gmail.com', codigo: 'TED-CBB-C14AB6' },
+  { ci: '8718351', nombre: 'COLQUE CHOQUEVILLCA BERTA', correo: 'colqueberta218@gmail.com', codigo: 'TED-CBB-C1D429' },
+  { ci: '8055269', nombre: 'DURAN PADILLA NORAH', correo: 'duranorah@gmail.com', codigo: 'TED-CBB-C2FF5E' },
+  { ci: '8779907', nombre: 'PÉREZ TERAN RAMIRO PAUL', correo: 'hadesrppt@gmail.com', codigo: 'TED-CBB-C31C5A' },
+  { ci: '5282789', nombre: 'MONTAÑO GARCIA MARLENI', correo: 'marlenimontanogarcia@gmail.com', codigo: 'TED-CBB-C3759C' },
+  { ci: '12780288', nombre: 'VILLCA HURTADO JOEL BENJAMIN', correo: 'joelvillca222@gmail.com', codigo: 'TED-CBB-C47B25' },
+  { ci: '8781085', nombre: 'ZARATE FLORES LUIS MIGUEL', correo: 'miguelzarateflores59@gmail.com', codigo: 'TED-CBB-C49D8A' },
+  { ci: '77939303', nombre: 'CRUZ VILLCA MAXIMO', correo: 'cruzmaximo109@gmail.com', codigo: 'TED-CBB-C4F3B8' },
+  { ci: '7899116', nombre: 'VILLCARANA HUANACO REYNALDO', correo: 'rvillcarana@gmail.com', codigo: 'TED-CBB-C5C40D' },
+  { ci: '6368724', nombre: 'ZELAYA JALDIN NETY NIEVES', correo: 'intyjaldin@gmail.com', codigo: 'TED-CBB-C5C7E5' },
+  { ci: '12370109', nombre: 'ROJAS . FERNANDO', correo: '201608419@est.umss.edu', codigo: 'TED-CBB-C6017C' },
+  { ci: '6509057', nombre: 'OLARTE GUILLEN MARCOS', correo: 'marcosolarte58@gmail.com', codigo: 'TED-CBB-C62FD0' },
+  { ci: '12370369', nombre: 'ROJAS SOTO DANIEL', correo: 'sotorojasdani6@gmail.com', codigo: 'TED-CBB-C668B7' },
+  { ci: '6511584', nombre: 'BALTAZAR ROJAS MARIO', correo: 'mariobaltazar1988@gmail.com', codigo: 'TED-CBB-C75DB9' },
+  { ci: '14545797', nombre: 'APAZA CARTAGENA FLORENCIA', correo: 'apazaflorencia2005@gmail.com', codigo: 'TED-CBB-C90C7B' },
+  { ci: '5216218', nombre: 'FELIPEZ MANCILLA URI OMAR', correo: 'urifelipez@gmail.com', codigo: 'TED-CBB-C9261E' },
+  { ci: '9363243', nombre: 'ESPINOZA LOPEZ ABRAHAM', correo: 'eabraham203@gmail.com', codigo: 'TED-CBB-C99AD5' },
+  { ci: '7929604', nombre: 'RUIZ PINEDO JHIMMY', correo: 'jinboali@gmail.com', codigo: 'TED-CBB-C9A5CA' },
+  { ci: '9377936', nombre: 'FALZO SAYJAMA GERMAN', correo: 'bauel1000@gmail.com', codigo: 'TED-CBB-C9B041' },
+  { ci: '6427232', nombre: 'NUÑEZ ROCA FELICIDAD', correo: 'felicidadnunez@gmail.com', codigo: 'TED-CBB-C9BB06' },
+  { ci: '14122023', nombre: 'ESTRADA OTALORA JOHSELIN', correo: 'jhoselinestrada70@gmail.com', codigo: 'TED-CBB-CAC2A9' },
+  { ci: '8706312', nombre: 'HERRERA VEIZAGA ELMER', correo: 'elmerherrera470@gmail.com', codigo: 'TED-CBB-CAD42F' },
+  { ci: '8040279', nombre: 'O ROJAS JUAN CARLOS', correo: 'jcrojas582@gmail.com', codigo: 'TED-CBB-CB97BC' },
+  { ci: '6558460', nombre: 'MOLINA ZERDA ZAIDA', correo: 'zaidazmz1987@gmail.com', codigo: 'TED-CBB-CBA50C' },
+  { ci: '5304186', nombre: 'ROJAS VELASQUEZ TANIA', correo: 'tania.rojas.trv37@gmail.com', codigo: 'TED-CBB-CC8401' },
+  { ci: '6993857', nombre: 'PACSI CAMIÑO FANNY WILMA', correo: 'fannypacsi9@gmail.com', codigo: 'TED-CBB-CCE31B' },
+  { ci: '6495544', nombre: 'CABRERA MALDONADO MIRIAN', correo: 'nairimarerbac0@gmail.com', codigo: 'TED-CBB-CD4F5C' },
+  { ci: '12434638', nombre: 'COLQUE MARAS JOSUE', correo: 'colquejosue997@gmail.com', codigo: 'TED-CBB-CDEED2' },
+  { ci: '12971402', nombre: 'MAMANI VARGAS LOYDA', correo: 'loydamamani2002@gmail.com', codigo: 'TED-CBB-CDF71A' },
+  { ci: '13290105', nombre: 'IGNACIO HUANCA JUVENAL', correo: 'jhonediignacio@gmail.com', codigo: 'TED-CBB-CDFBF1' },
+  { ci: '13292137', nombre: 'ANGEL HINOJOSA ELVIA CRISTINA', correo: 'elviaangel119@gmail.com', codigo: 'TED-CBB-CE461F' },
+  { ci: '7923338', nombre: 'MANCERA MARQUINA MARISOL', correo: 'mariisolmancera5@gmail.com', codigo: 'TED-CBB-CEA47C' },
+  { ci: '6526285', nombre: 'N CAMACHO JULIETA', correo: 'camachojulieta.5@gmail.com', codigo: 'TED-CBB-CF6383' },
+  { ci: '13160074', nombre: 'CAYOJA VASQUEZ NOEMI', correo: 'nohemicayojavasquez9@gmail.com', codigo: 'TED-CBB-CF7320' },
+  { ci: '7284443', nombre: 'GOYTIA GUZMAN MARIBEL', correo: 'maribelgoytia337@gmail.com', codigo: 'TED-CBB-CFDA0A' },
+  { ci: '13624545', nombre: 'MAMANI MATIAS EFRAIN', correo: 'tig.matias24@gmail.com', codigo: 'TED-CBB-D196FA' },
+  { ci: '8815799', nombre: 'MAMANI ARROYO TERESA', correo: 'mamaniarroyoteresa@gmail.com', codigo: 'TED-CBB-D30C39' },
+  { ci: '14072614', nombre: 'ANTONIO PANIAGUA MARIA LIZ', correo: 'lizantoniopaniagua@gmail.com', codigo: 'TED-CBB-D35007' },
+  { ci: '8807694', nombre: 'HINOJOSA HERBAS MAXIMILIANO', correo: 'maxherbas14@gmail.com', codigo: 'TED-CBB-D3FDE2' },
+  { ci: '8009583', nombre: 'CONDORI TORRICO ALEJANDRO ROBY', correo: 'alerocoto@gmail.com', codigo: 'TED-CBB-D43A65' },
+  { ci: '8744224', nombre: 'COSME VILLCA GONZALO', correo: 'gonnchiicosme13@gmail.com', codigo: 'TED-CBB-D46832' },
+  { ci: '12462916', nombre: 'PONCE RICALDEZ LISBANIA', correo: 'lisbaniaponce4@gmail.com', codigo: 'TED-CBB-D4DF86' },
+  { ci: '3526909', nombre: 'HUANCA COLQUE JUAN NEIL', correo: 'juan_boca_9@hotmail.com', codigo: 'TED-CBB-D4E0AD' },
+  { ci: '8796828', nombre: 'MENESES ALMANZA ALDO', correo: 'jimenezyosselin@gmail.com', codigo: 'TED-CBB-D5025A' },
+  { ci: '9408844', nombre: 'COLOMI FRANCISCANO GILMAR', correo: 'colomifranciscanogilmar@gmail.com', codigo: 'TED-CBB-D5EB59' },
+  { ci: '5665770', nombre: 'ORELLANA OCAÑA SULMA', correo: 'sulyorellana16@gmail.com', codigo: 'TED-CBB-D62B07' },
+  { ci: '6532678', nombre: 'DURAN GONZALES DAYANA KAREN', correo: 'dkduran86@gmail.com', codigo: 'TED-CBB-D674B7' },
+  { ci: '10690428', nombre: 'GARECO VALDEZ NATHALY', correo: 'nattygareco@gmail.com', codigo: 'TED-CBB-D6988A' },
+  { ci: '14760821', nombre: 'MERIDA ANGULO AYDA', correo: 'ruthaidemerida@gmail.com', codigo: 'TED-CBB-D721E7' },
+  { ci: '12876821', nombre: 'MAMANI ROCA ROCIO', correo: 'mamanirocio359@gmail.com', codigo: 'TED-CBB-D89332' },
+  { ci: '7955357', nombre: 'RODRIGUEZ ROMERO TANIA BRIZEIDA', correo: 'brizz4466@gmail.com', codigo: 'TED-CBB-D89692' },
+  { ci: '8669749', nombre: 'LOAYZA GONZALES CRISTIAN', correo: 'shadowchris19@gmail.com', codigo: 'TED-CBB-D8D477' },
+  { ci: '12370245', nombre: 'CAMACHO ANDIA MIRIAM SARAH', correo: 'sarahcamacho398@gmail.com', codigo: 'TED-CBB-D964D4' },
+  { ci: '8750717', nombre: 'SIPE CATARI CRISTINA', correo: 'sipecriatina@gmail.com', codigo: 'TED-CBB-D9F6CD' },
+  { ci: '8703902', nombre: 'FIGUEROA PARDO RUTH SARA', correo: 'figueroapardoruthsara@gmail.com', codigo: 'TED-CBB-DA012D' },
+  { ci: '8808787', nombre: 'JALDIN RODRÍGUEZ BEATRIZ', correo: 'beatriz123jaldin@gmail.com', codigo: 'TED-CBB-DA80BA' },
+  { ci: '9387577', nombre: 'ALVAREZ RODRIGUEZ KARINA', correo: 'ka.al.ro2013@gmail.com', codigo: 'TED-CBB-DAFBE4' },
+  { ci: '8820951', nombre: 'FERNANDEZ BALCERAS DARIO DENNIS', correo: 'fernandezbalcerasdariodennis@gmail.com', codigo: 'TED-CBB-DB1E08' },
+  { ci: '6472100', nombre: 'FRANCO QUIROZ VICENTE', correo: 'vifranco1990@gmail.com', codigo: 'TED-CBB-DB7CF8' },
+  { ci: '651584', nombre: 'BALTAZAR ROJAS MARIO', correo: 'baltazar_blaz@hotmail.com', codigo: 'TED-CBB-DBDFD9' },
+  { ci: '14382655', nombre: 'GARCIA FIGUEROA JHOSSELYNE', correo: 'jhosselynegarciafiggiero@gmail.com', codigo: 'TED-CBB-DC8456' },
+  { ci: '8855665', nombre: 'FERNANDEZ MAMANI MARIA ELENA', correo: 'mariaelenafernandez2288@gmail.com', codigo: 'TED-CBB-DE2368' },
+  { ci: '12430036', nombre: 'SIANCAS SANCHEZ NORMA', correo: 'nsiancas.97@gmail.com', codigo: 'TED-CBB-DE8BA6' },
+  { ci: '13578804', nombre: 'CHOQUE TRUJILLO NICOL', correo: 'choquetrujillonicol480@gmail.com', codigo: 'TED-CBB-DF34D8' },
+  { ci: '12584230', nombre: 'AVAREZ RODRIGUEZ DANNY', correo: 'danny.dael123@gmail.com', codigo: 'TED-CBB-DF8B0C' },
+  { ci: '9303396', nombre: 'NINA PAREDES ROSA MARY', correo: 'rousnina64@gmail.com', codigo: 'TED-CBB-E0326C' },
+  { ci: '7954903', nombre: 'GUIZADA ALEJO HUMBERTO', correo: 'humbetoalejo150@gmail.com', codigo: 'TED-CBB-E078D7' },
+  { ci: '9380713', nombre: 'PATINO FERNANDEZ LIDIA', correo: 'lilipatinofernandez@gmail.com', codigo: 'TED-CBB-E2A61E' },
+  { ci: '9474599', nombre: 'SALCEDO PINAYA MARIA CLARET', correo: 'mariasalcedo24pinaya@gmail.com', codigo: 'TED-CBB-E329F5' },
+  { ci: '8394418', nombre: 'HUACANCHI QUINO SALOME', correo: 'salomehuacanchi63@gmail.com', codigo: 'TED-CBB-E3B3AB' },
+  { ci: '9456520', nombre: 'FLORES VALLEJOS FELICIANO', correo: 'chico.paz.amor@gmail.com', codigo: 'TED-CBB-E3DCD3' },
+  { ci: '5235191', nombre: 'IMPA MAMANI Agustin', correo: 'agustinimpa76@gmail.com', codigo: 'TED-CBB-E45080' },
+  { ci: '7905104', nombre: 'FALZO GUTIERREZ MARIELA', correo: 'falzogu2393@gmail.com', codigo: 'TED-CBB-E47F29' },
+  { ci: '10517963', nombre: 'CHINCHAYA MAMANI GLADYS', correo: 'gladyschinchaya1997@gmail.com', codigo: 'TED-CBB-E4C489' },
+  { ci: '4022279', nombre: 'GOMEZ CHOQUE MARIBEL NIRZE', correo: 'gomeznirze@gmail.com', codigo: 'TED-CBB-E6042A' },
+  { ci: '12652401', nombre: 'CORDERO ZAPATA NOELIA', correo: 'ncorderop544@gmail.com', codigo: 'TED-CBB-E66DF8' },
+  { ci: '9358744', nombre: 'FLORES CALLE JUAN JHONNY', correo: 'jhon-socio@hotmail.com', codigo: 'TED-CBB-E6ADB4' },
+  { ci: '7950026', nombre: 'GARCIA VILLARROEL MARIA DEL CARMEN', correo: 'marinti123456@gmail.com', codigo: 'TED-CBB-E82453' },
+  { ci: '9301492', nombre: 'KAU PATIÑO MARÍA JESUS', correo: 'jesuakau@gmail.com', codigo: 'TED-CBB-E91284' },
+  { ci: '9307678', nombre: 'MUÑOZ ROJAS ROGER JAYDERLY', correo: 'jaidermunoz334455@gmail.com', codigo: 'TED-CBB-E93384' },
+  { ci: '7890993', nombre: 'ZEBALLOS MEDRANO MARÍA GUADALUPE', correo: 'mzeballosmedrano7@gmail.com', codigo: 'TED-CBB-EA4005' },
+  { ci: '5300388', nombre: 'VILLARROEL ESCOBAR DENIS ALEXANDER', correo: 'denius.alexander21@gmail.com', codigo: 'TED-CBB-EA4772' },
+  { ci: '13256218', nombre: 'ZEGARRA HUAYLLA Florinda', correo: 'zegarraflorinda@gmail.com', codigo: 'TED-CBB-ECE5AB' },
+  { ci: '12906813', nombre: 'COLQUE NICOLAS REYNALDO', correo: 'reynaldoc743@gmail.com', codigo: 'TED-CBB-ED0A94' },
+  { ci: '7887936', nombre: 'BUSTOS CHOQUE JACINTO', correo: 'jacintobustoschoque@gmail.com', codigo: 'TED-CBB-ED80E7' },
+  { ci: '6559220', nombre: 'ESCOBAR ESCOBAR XIMENA', correo: 'ximenaescobarescobar@gmail.com', codigo: 'TED-CBB-EDA8D2' },
+  { ci: '8184893', nombre: 'MALAGA VARGAS JOSE RIDER', correo: 'joseridervargas@gmail.com', codigo: 'TED-CBB-EEABF1' },
+  { ci: '9339700', nombre: 'SIPE LARICO TERESA', correo: 'teresita.sipe01@gmail.com', codigo: 'TED-CBB-EFA0B5' },
+  { ci: '8750710', nombre: 'MAMANI DELGADO ALBERTINA', correo: 'albmamdxn17@gmail.com', codigo: 'TED-CBB-F06A55' },
+  { ci: '7889892', nombre: 'POMA COCA Datsima Raiza', correo: 'raizap622@gmail.com', codigo: 'TED-CBB-F0F714' },
+  { ci: '8742137', nombre: 'CANO QUIROZ ROBERTO', correo: 'robertocanoquiroz88@gmail.com', codigo: 'TED-CBB-F115EB' },
+  { ci: '13626070', nombre: 'MAMANI APAZA SONIA', correo: 'sm8288690@gmail.com', codigo: 'TED-CBB-F1D852' },
+  { ci: '77923155', nombre: 'CASTRO RONCAL EMILY KATHERINE', correo: 'castroroncalemily1999@gmail.com', codigo: 'TED-CBB-F3F01A' },
+  { ci: '9452524', nombre: 'GARCIA PABLO YOLANDA MARDONIA', correo: 'mardoniagarciapablo@gmail.com', codigo: 'TED-CBB-F41E52' },
+  { ci: '8678206', nombre: 'HUARACHI APAZA DELIA', correo: 'deliahuarachi@gmail.com', codigo: 'TED-CBB-F4F584' },
+  { ci: '12552748', nombre: 'LARA CASTELLON JASON', correo: 'jasonjacop80@gmail.com', codigo: 'TED-CBB-F50121' },
+  { ci: '9346846', nombre: 'MAMANI CUSTODIO RUBEN', correo: 'rm432580@gmail.com', codigo: 'TED-CBB-F6011F' },
+  { ci: '9408994', nombre: 'ROCHA ARGOTE JUAN GABRIEL', correo: 'eamedrano313@gmail.com', codigo: 'TED-CBB-F63530' },
+  { ci: '8749049', nombre: 'RODRIGUEZ VARGAS ESTELITA', correo: 'rodriguezvargasestelita@gmail.com', codigo: 'TED-CBB-F63543' },
+  { ci: '8664030', nombre: 'CESPEDES PARRA RUSSELL', correo: 'russll797@gmail.com', codigo: 'TED-CBB-F6FB68' },
+  { ci: '6495584', nombre: 'LAMAS FLORES PATRICIA', correo: 'patricialam45@gmail.com', codigo: 'TED-CBB-F78F5C' },
+  { ci: '8846197', nombre: 'LAIME LOAYZA ARIEL', correo: 'ariellaim.11@gmail.com', codigo: 'TED-CBB-F7D62F' },
+  { ci: '14332306', nombre: 'AREBALO ARMAS ROLY', correo: 'arebaloarmasroly@gmail.com', codigo: 'TED-CBB-F7EFCD' },
+  { ci: '9361461', nombre: 'ROCHA VALLES CLAUDIA', correo: 'vallesclau71@gmail.com', codigo: 'TED-CBB-F847A7' },
+  { ci: '8736521', nombre: 'ALEGRE VALLEJOS FLORINDA', correo: 'alegrevallejosflorinda@email.com', codigo: 'TED-CBB-F8DEEE' },
+  { ci: '8664118', nombre: 'VALLEJOS  NOEMI', correo: 'vallejnoemi@gmail.com', codigo: 'TED-CBB-FAFF58' },
+  { ci: '5762435', nombre: 'ESCOBAR GOME JORGE', correo: 'jorgeescobargomes@gmail.com', codigo: 'TED-CBB-FBBCDD' },
+  { ci: '8707030', nombre: 'SANTOS ZURITA LAURA', correo: 'neyton.barcelona@gmail.com', codigo: 'TED-CBB-FBE909' },
+  { ci: '8785731', nombre: 'LOPEZ APAZA NELSON', correo: 'nelson.lopez.apaza.l@gmail.com', codigo: 'TED-CBB-FD42A6' },
+  { ci: '3020162', nombre: 'BALDERRAMA BALDERRAMA EUFRONIO', correo: 'eufroniobalderrama1963@gmail.com', codigo: 'TED-CBB-FDAC8B' },
+  { ci: '13562495', nombre: 'RODRIGUEZ HERBAS JOSE LUIS', correo: 'joseluisrh1356@gmail.com', codigo: 'TED-CBB-FE18AC' },
+  { ci: '13683809', nombre: 'COCA DOMINGUEZ PRISMA', correo: 'cocadominguezp@gmail.com', codigo: 'TED-CBB-FEAF12' },
+])
+                // Banco de preguntas
+                const questionBank = ref([
+  {
+    text: "1.    ¿En qué fecha se realizará la Elección de Autoridades y Representantes del Estado Plurinacional de Bolivia 2025?",
+    answers: [
+      { text: "a)    16 de agosto", correct: false },
+      { text: "b)    10 de agosto", correct: false },
+      { text: "c)    17 de agosto", correct: true },
+    ]
+  },
+  {
+    text: "2.    ¿Cuántos asientos electorales se habilitarán en los países del exterior para la Elección de Autoridades y Representantes del Estado Plurinacional de Bolivia 2025?",
+    answers: [
+      { text: "a)    25 países", correct: false },
+      { text: "b)    32 países", correct: true },
+      { text: "c)    30 países", correct: false },
+    ]
+  },
+  {
+    text: "3.    ¿Cuántos representantes titulares ante organismos parlamentarios supraestatales se elegirán en las elecciones generales?",
+    answers: [
+      { text: "a)    10 parlamentarios", correct: false },
+      { text: "b)    8 parlamentarios", correct: false },
+      { text: "c)    9 parlamentarios", correct: true },
+    ]
+  },
+  {
+    text: "4.    ¿En cuántas circunscripciones especiales indígena originario campesinas se elegirán a los diputados de las NPIOC?",
+    answers: [
+      { text: "a)    5 circunscripciones especiales", correct: false },
+      { text: "b)    7 circunscripciones especiales", correct: true },
+      { text: "c)    9 circunscripciones especiales", correct: false },
+    ]
+  },
+  {
+    text: "5.    ¿Cuántas senadoras y senadores titulares se elegirán por departamento?",
+    answers: [
+      { text: "a)    4 senadoras y senadores titulares por departamento", correct: true },
+      { text: "b)    6 senadoras y senadores titulares por departamento", correct: false },
+      { text: "c)    12 senadoras y senadores titulares por departamento", correct: false },
+    ]
+  },
+  {
+    text: "6.    ¿Cuántas senadoras y senadores titulares se elegirán a nivel nacional?",
+    answers: [
+      { text: "a)    30 senadoras y senadores titulares a nivel nacional", correct: false },
+      { text: "b)    35 senadoras y senadores titulares a nivel nacional", correct: false },
+      { text: "c)    36 senadoras y senadores titulares a nivel nacional", correct: true },
+    ]
+  },
+  {
+    text: "7.    ¿Cuántos diputados plurinacionales titulares se elegirán a nivel nacional?",
+    answers: [
+      { text: "a)    30 diputados plurinacionales titulares", correct: false },
+      { text: "b)    70 diputados plurinacionales titulares", correct: false },
+      { text: "c)    60 diputados plurinacionales titulares", correct: true },
+    ]
+  },
+  {
+    text: "8.    ¿Cuántos diputados uninominales titulares se elegirán a nivel nacional?",
+    answers: [
+      { text: "a)    60 diputados uninominales titulares", correct: false },
+      { text: "b)    63 diputados uninominales titulares", correct: true },
+      { text: "c)    70 diputados uninominales titulares", correct: false },
+    ]
+  },
+  {
+    text: "9.    ¿Cuántas papeletas de sufragio se utilizarán en la Elección de Autoridades y Representantes del Estado Plurinacional de Bolivia 2025?",
+    answers: [
+      { text: "a)    3 papeletas de sufragio", correct: false },
+      { text: "b)    2 papeletas de sufragio", correct: false },
+      { text: "c)    1 papeleta de sufragio", correct: true },
+    ]
+  },
+  {
+    text: "10. ¿Cuántas hojas de trabajo se utilizarán en la Elección de Autoridades y Representantes del Estado Plurinacional de Bolivia 2025?",
+    answers: [
+      { text: "a)    5 hojas de trabajo", correct: false },
+      { text: "b)    2 hojas de trabajo", correct: true },
+      { text: "c)    1 hoja de trabajo", correct: false },
+    ]
+  },
+  {
+    text: "11. ¿Por quiénes son designados las notarias y los notarios electorales?",
+    answers: [
+      { text: "a)    Tribunal Electoral Departamental de Cochabamba", correct: true },
+      { text: "b)    Tribunal Supremo Electoral", correct: false },
+      { text: "c)    Jueces Electorales", correct: false },
+    ]
+  },
+  {
+    text: "12. ¿Qué funciones principales cumplen las notarias y los notarios electorales?",
+    answers: [
+      { text: "a)    Función de capacitación a los jueces electorales", correct: false },
+      { text: "b)    Función de apoyo logístico y operativo", correct: true },
+      { text: "c)    Función de monitoreo a las guías electorales", correct: false },
+    ]
+  },
+  {
+    text: "13. Señale una de las atribuciones que cumplen las notarías y los notarios electorales.",
+    answers: [
+      { text: "a)    Apoyar en la planificación de actividades de las y los jurados electorales de las mesas de sufragio y asistir en la capacitación.", correct: false },
+      { text: "b)    Asistir a la organización de las y los jurados electorales de las mesas de sufragio y apoyar en la capacitación e información electoral.", correct: false },
+      { text: "c)    Coadyuvar a la organización de las jueces y los jueces electorales, el día de la votación.", correct: false },
+    ]
+  },
+  {
+    text: "14. Indique una de las responsabilidades establecidas para las notarías y los notarios electorales por el Reglamento para las Elecciones Gene­rales 2025.",
+    answers: [
+      { text: "a)    Asistencia, información y capacitación a las jueces y los jueces electorales, de acuerdo con las directrices emitidas por los Tribunales Electorales Departamentales.", correct: false },
+      { text: "b)    Brindar capacitación a las ciudadanas y los ciudadanos, de acuerdo con las directrices emitidas por los Tribunales Electorales Departamentales.", correct: false },
+      { text: "c)    Brindar asistencia, información y capacitación a las juradas y jurados electorales, de acuerdo con las directrices emitidas por los Tribunales Electorales Departamentales.", correct: false },
+    ]
+  },
+  {
+    text: "15. Señale una de las responsabilidades de las notarías y los notarios electorales establecido en el Reglamento para las Elecciones Gene­rales 2025, en caso de que no se presenten tres jurados hasta las 09:00 a.m.",
+    answers: [
+      { text: "a)    Capacitar a juradas y jurados electorales cuando, por falta de quórum, no se hubiera instalado la mesa de sufragio hasta las 9:00 de la mañana.", correct: false },
+      { text: "b)    Designar y capacitar a nuevas juradas y jurados electorales cuando, por falta de quórum, no se hubiera instalado la mesa de sufragio hasta las 9:00 de la mañana.", correct: true },
+      { text: "c)    Designar a nuevas juradas y jurados electorales, cuando no se hubiera instalado la mesa de sufragio hasta las 8:00 de la mañana.", correct: false },
+    ]
+  },
+  {
+    text: "16. Indique una de las responsabilidades de las notarias y los notarios electorales en la jornada electoral.",
+    answers: [
+      { text: "a)    Las nuevas autoridades designadas como juradas y jurados deberán ser ciudadanas o ciudadanos inscritos y presentes en la mesa de sufragio.", correct: true },
+      { text: "b)    Las nuevas autoridades designadas como guías electorales deberán ser ciudadanas o ciudadanos inscritos y presentes en la mesa de sufragio.", correct: false },
+      { text: "c)    Las nuevas autoridades designadas como jueces electorales deberán ser ciudadanas o ciudadanos inscritos y presentes en la mesa de sufragio.", correct: false },
+    ]
+  },
+  {
+    text: "17. ¿Cuánto es el monto en moneda nacional para cancelar el estipendio a las juradas y jurados elec­torales?",
+    answers: [
+      { text: "a)    60 Bolivianos.", correct: true },
+      { text: "b)    100 Bolivianos.", correct: false },
+      { text: "c)    80 Bolivianos.", correct: false },
+    ]
+  },
+  {
+    text: "18. ¿Qué responsabilidades tendrán las notarias y los notarios electorales por sus actos u omisiones ante el Tribunal Electoral Departamental?",
+    answers: [
+      { text: "a)    Las notarias y notarios electorales serán responsables por sus actos u omisiones ante el Tribunal Supremo Electoral respectivo, sin perjuicio de las responsabilidades penales o civiles que determine la justicia ordinaria.", correct: false },
+      { text: "b)    Las notarias y notarios electorales serán responsables por sus actos u omisiones ante el Tribunal Electoral Departamental respectivo, sin perjuicio de las responsabilidades penales o civiles que determine la justicia ordinaria.", correct: true },
+      { text: "c)    Las notarias y notarios electorales serán responsables por sus actos u omisiones ante el Órgano Electoral Plurinacional respectivo, sin perjuicio de las responsabilidades penales o civiles que determine la justicia ordinaria.", correct: false },
+    ]
+  },
+  {
+    text: "19. ¿En el área rural el certificado de impedimento de sufragio por quién será extendido?",
+    answers: [
+      { text: "a)           Por la notaria o notario.", correct: true },
+      { text: "b)           Por las jueces o los jueces electorales.", correct: false },
+      { text: "c)            Por los guías electorales.", correct: false },
+    ]
+  },
+  {
+    text: "20. Señale una de las responsabilidades de las notarias y los notarios electorales establecido en el Reglamento para las Elecciones Gene­rales 2025.",
+    answers: [
+      { text: "a)    Custodiar el material electoral el día de la elección, y devolverlo al Tribunal Electoral Departamental en cumplimiento del protocolo de la cadena de custodia.", correct: false },
+      { text: "b)    Entregar el material electoral el día de la elección, y devolverlo al Tribunal Electoral Departamental en cumplimiento del protocolo de la cadena de custodia.", correct: false },
+      { text: "c)    Recibir, custodiar y entregar el material electoral el día de la elección, y devolverlo al Tribunal Electoral Departamental en cumplimiento del protocolo de la cadena de custodia.", correct: true },
+    ]
+  },
+  {
+    text: "21. Durante la Junta de Organización de la Mesa de Sufragio la notaria o el notario electoral deberá:",
+    answers: [
+      { text: "a)    1) Ordenar el ambiente, 2) elaborar las actas de conformación de la directiva registrando los nombres y cargos de las juradas, 3) capacitar a los jurados en cuando a sus funciones que desempeñaran.", correct: false },
+      { text: "b)    1) Orientar a las juradas y jurados en la conformación de la Junta de la Mesa de Sufragio, 2) Controlar la asistencia de las juradas y jurados electorales, 3) Elaborar las actas de conformación de la Junta de la Mesa de sufragio, registrando los nombres y cargos de las juradas y jurados designados.", correct: true },
+      { text: "c)    1) Entregar acta de designación, 2) controlar asistencia de jurados y juradas, 3) designar al presidente secretario y vocales.", correct: false },
+    ]
+  },
+  {
+    text: "22. ¿Durante la Junta de Organización de Juradas y Jurados de la Mesa de Sufragio, la notaria o el notario electoral deberá reportar la asistencia de los mismos, a través de la aplicación del sistema?",
+    answers: [
+      { text: "a)    Verdadero", correct: true },
+      { text: "b)    Falso", correct: false },
+      { text: "c)    Ninguna de las anteriores", correct: false },
+    ]
+  },
+  {
+    text: "23. La directiva encargada de conducir el desarrollo de la jornada de votación es:",
+    answers: [
+      { text: "a)    Presidenta presidente, secretaria secretario, vocales y notario electoral", correct: false },
+      { text: "b)    Notario, presidente y presidenta, secretaria secretario, vocales y custodio policial", correct: false },
+      { text: "c)    Presidenta o presidente, secretaria o secretario, vocales", correct: true },
+    ]
+  },
+  {
+    text: "24. Las funciones de las Jurados y Jurados electorales el día de la jornada electoral son:",
+    answers: [
+      { text: "a)    Recepción de la maleta, organización de la mesa de sufragio, control de la votación, escrutinio y cómputo, devolución de material electoral", correct: false },
+      { text: "b)    Recepción de la maleta, entrega de cedula de identidad, instalación de la mesa de sufragio, escrutinio y cómputo de votos, llenado acta electoral armada y cierre de los sobres de seguridad", correct: false },
+      { text: "c)    Recepción de la maleta, instalación de la mesa de sufragio, conducción del procedimiento de votación, llenado acta electoral armada y cierre de los sobres de seguridad", correct: true },
+    ]
+  },
+  {
+    text: "25. La recepción y distribución de la maleta electoral se realizará en:",
+    answers: [
+      { text: "a)    Los recintos correspondientes a cada notario", correct: false },
+      { text: "b)    El Tribunal Departamental Electoral", correct: false },
+      { text: "c)    El Centro Departamental de Logística", correct: true },
+    ]
+  },
+  {
+    text: "26. La entrega de maletas electorales y bolsas de recinto a las notarias y notarios electorales en el área urbana será:",
+    answers: [
+      { text: "a)    72 horas antes de la votación", correct: false },
+      { text: "b)    48 horas antes de la votación", correct: false },
+      { text: "c)    Ninguna de las anteriores", correct: true },
+    ]
+  },
+  {
+    text: "27. En área rural o dispersa la entrega de maletas electorales y de las bolsas de recinto se las hará:",
+    answers: [
+      { text: "a)    48 horas antes de la jornada electoral", correct: true },
+      { text: "b)    24 horas antes de la jornada electoral", correct: false },
+      { text: "c)    36 horas antes de la votación", correct: false },
+    ]
+  },
+  {
+    text: "28. ¿Quién determina el lugar donde funcionaran las Mesas de Sufragio?",
+    answers: [
+      { text: "a)    Los jurados y juradas de mesa", correct: false },
+      { text: "b)    El Notario o notaria electoral", correct: true },
+      { text: "c)    El custodio", correct: false },
+    ]
+  },
+  {
+    text: "29. Las y los delegados de las Organizaciones Políticas estarán en la misma mesa que los Juradas y Jurados de las Mesas de Sufragio",
+    answers: [
+      { text: "a)    Verdadero", correct: false },
+      { text: "b)    Falso", correct: true },
+    ]
+  },
+  {
+    text: "30. No debe existir ningún tipo de propaganda política alrededor del recinto electoral a menos de:",
+    answers: [
+      { text: "a)    200 metros del recinto de votación", correct: false },
+      { text: "b)    100 metros del recinto votación", correct: false },
+      { text: "c)    300 metros del recinto de votación", correct: false },
+    ]
+  },
+  {
+    text: "31. Los notarios y notarias electorales el día de la votación deben presentarse en el recinto electoral",
+    answers: [
+      { text: "a)    Una hora antes de la votación", correct: false },
+      { text: "b)    Dos horas antes", correct: false },
+      { text: "c)    Tres horas antes", correct: true },
+    ]
+  },
+  {
+    text: "32. Para el desprecintado del ambiente seguro es necesario la presencia del custodio policial o militar",
+    answers: [
+      { text: "a)    Verdadero", correct: true },
+      { text: "b)    Falso", correct: false },
+    ]
+  },
+  {
+    text: "33. Antes de la jornada electoral, la maleta electoral se entrega:",
+    answers: [
+      { text: "a)     Al primer jurado o jurada electoral asistente", correct: false },
+      { text: "b)     Como mínimo a tres juradas o jurados electorales", correct: false },
+      { text: "c)      Ninguna de las anteriores", correct: true },
+      { text: "d)     Al presidente de mesa", correct: false },
+    ]
+  },
+  {
+    text: "34. Si una jurada o jurado electoral no se presenta ¿hasta qué hora se puede designar a un nuevo jurado o jurada electoral",
+    answers: [
+      { text: "a)     Depende de la situación si hay o no hay voluntarios.", correct: false },
+      { text: "b)     Hasta las 9 de la mañana.", correct: true },
+      { text: "c)      Hasta las 8 de la mañana.", correct: false },
+    ]
+  },
+  {
+    text: "35. ¿A qué hora deben estar los notarios en el recinto electoral?",
+    answers: [
+      { text: "a)    05:00 am.", correct: false },
+      { text: "b)    06:00 am.", correct: false },
+      { text: "c)    08:00 am.", correct: false },
+    ]
+  },
+  {
+    text: "36. ¿Qué actividad realiza el notario cuando llega al recinto electoral?",
+    answers: [
+      { text: "a)    Se toma un café", correct: false },
+      { text: "b)    Prepara recinto electoral y entrega maletas a jurados electoral", correct: true },
+      { text: "c)    Recibe a los jurados electorales", correct: false },
+    ]
+  },
+  {
+    text: "37. ¿Cuántos jurados deben estar mínimamente en la mesa de sufragio y a qué hora deben presentarse en el recinto electoral para recoger maleta?",
+    answers: [
+      { text: "a)    6 jurados a horas 6 de la mañana", correct: false },
+      { text: "b)    3 jurados a horas 6 de la mañana", correct: true },
+      { text: "c)    4 jurados a horas 5 de la mañana", correct: false },
+    ]
+  },
+  {
+    text: "38. ¿Qué documentos debe presentar el jurado electoral para que le entreguen la maleta?",
+    answers: [
+      { text: "a)    Solo carnet de identidad", correct: false },
+      { text: "b)    Solo memorándum", correct: false },
+      { text: "c)    Carnet de identidad y memorándum de designación", correct: true },
+    ]
+  },
+  {
+    text: "39. ¿Después de recojo de maletas electorales que actividad realizan los jurados Electorales?",
+    answers: [
+      { text: "a)    Sentarse y conversar", correct: false },
+      { text: "b)    Llenar el acta", correct: false },
+      { text: "c)    Preparar mesa de sufragio y armado de ánfora", correct: true },
+    ]
+  },
+  {
+    text: "40. ¿A qué hora inicia la votación?",
+    answers: [
+      { text: "a)    Horas 07:00 am.", correct: false },
+      { text: "b)    Horas 08:00 am.", correct: true },
+      { text: "c)    Horas 09:00 am.", correct: false },
+    ]
+  },
+  {
+    text: "41. ¿Cuánto tiempo antes recogen la maleta electoral para el en el área rural  y urbana del CDL?",
+    answers: [
+      { text: "a)     Área Rural 24 horas antes y urbana 48 horas antes", correct: false },
+      { text: "b)     Área Rural 48 horas antes y urbana 25 horas antes", correct: false },
+      { text: "c)      Área Rural 48 horas antes y urbana 24 horas antes", correct: true },
+    ]
+  },
+  {
+    text: "42. ¿Quiénes son los notarios electorales?",
+    answers: [
+      { text: "a)    Son personas que ayudan al público", correct: false },
+      { text: "b)    Son autoridades designados por el TED.", correct: true },
+      { text: "c)    Son guías electorales", correct: false },
+    ]
+  },
+  {
+    text: "43. ¿Qué función cumple el notario electoral?",
+    answers: [
+      { text: "a)    Cumple funciones de apoyo logístico y operativo, para dar fe pública de los actos  electorales", correct: true },
+      { text: "b)    Son autoridades designadas", correct: false },
+      { text: "c)    Atiende a los ciudadanos", correct: false },
+    ]
+  },
+  {
+    text: "44. ¿Encuentra tres falta de notarios notarias electorales?",
+    answers: [
+      { text: "a)    No asistir a la organización de jurados y juradas electorales", correct: true },
+      { text: "b)    No apoyar en la capacitación de juradas y jurados electorales", correct: true },
+      { text: "c)    Ausentarse del recinto electoral", correct: true },
+      { text: "d)    Entrega oportunamente los sobres de seguridad", correct: false },
+    ]
+  },
+  {
+    text: "45. ¿A qué hora deben presentarse las notarías/os electorales en el recinto el día de la votación?",
+    answers: [
+      { text: "a)    07:00 a.m.", correct: false },
+      { text: "b)    05:00 a.m.", correct: false },
+      { text: "c)    06:00 a.m.", correct: false },
+    ]
+  },
+  {
+    text: "46. ¿Qué debe hacer una notaría o notario electoral si a las 09:00 a.m. no hay jurados en una mesa de sufragio?",
+    answers: [
+      { text: "a)    Esperar a que lleguen.", correct: false },
+      { text: "b)    Suspender la mesa de sufragio.", correct: false },
+      { text: "c)    Designar y capacitar nuevos jurados electorales presentes en el recinto.", correct: false },
+    ]
+  },
+  {
+    text: "47. ¿Qué acción no está permitida antes de entregar la maleta electoral a una mesa de sufragio?",
+    answers: [
+      { text: "a)    Verificar la presencia de jurados designados.", correct: false },
+      { text: "b)    Entregar la maleta con un solo jurado presente.", correct: true },
+      { text: "c)    Firmar el formulario de entrega.", correct: false },
+    ]
+  },
+  {
+    text: "48. ¿Cuál es una función que debe cumplir la notaria o notario electoral  durante el proceso de votación?",
+    answers: [
+      { text: "a)    Contar los votos emitidos.", correct: false },
+      { text: "b)    Apoyar y orientar a las juradas y jurados electorales.", correct: true },
+      { text: "c)    Emitir sufragio preferente.", correct: false },
+    ]
+  },
+  {
+    text: "49. ¿Qué personas tienen voto preferente durante la jornada electoral?",
+    answers: [
+      { text: "a)    Jurados electorales.", correct: false },
+      { text: "b)    Delegados de partidos políticos.", correct: false },
+      { text: "c)    Personas mayores de 60 años, con discapacidad, embarazadas y con niños en brazos.", correct: false },
+    ]
+  },
+  {
+    text: "50. ¿Qué debe hacer la notaria o notario electoral con las personas que reclaman inhabilitación en el Padrón Electoral?",
+    answers: [
+      { text: "a)    Enviarlas directamente a su casa.", correct: false },
+      { text: "b)    Atenderlas, orientarles y, si corresponde, extender certificado de exención.", correct: true },
+      { text: "c)    Permitirles votar inmediatamente.", correct: false },
+    ]
+  },
+  {
+    text: "51. ¿Qué acción debe tomar la notaria o notario electoral sobre la propaganda política durante el día de votación?",
+    answers: [
+      { text: "a)    Permitirla solo fuera del recinto.", correct: false },
+      { text: "b)    Verificar que no exista propaganda dentro ni a 100 metros del recinto.", correct: false },
+      { text: "c)    Ignorarla si no interfiere con el voto.", correct: false },
+    ]
+  },
+  {
+    text: "52. ¿Qué documento debe entregar la notaria o notario electoral  tras realizar el pago a juradas y jurados?",
+    answers: [
+      { text: "a)    Hoja de trabajo.", correct: false },
+      { text: "b)    Planilla de pago firmada.", correct: false },
+      { text: "c)    Acta Electoral.", correct: false },
+    ]
+  },
+  {
+    text: "53. ¿Qué sistema debe usar la notaria o notario electoral  para reportar información durante la jornada?",
+    answers: [
+      { text: "a)    Mensajes de texto al TED.", correct: false },
+      { text: "b)    Sistema informático oficial del Órgano Electoral Plurinacional.", correct: true },
+      { text: "c)    Llamadas a la fuerza pública.", correct: false },
+    ]
+  },
+  {
+    text: "54. ¿Qué función realiza la notaria/o con el personal de seguridad el día de la votación?",
+    answers: [
+      { text: "a)    Reemplazarlo si no se presenta.", correct: false },
+      { text: "b)    Coordinar aspectos de seguridad y custodia del material electoral.", correct: false },
+      { text: "c)    Delegarle la apertura del recinto.", correct: false },
+    ]
+  },
+  {
+    text: "55. ¿A qué hora deben estar las y los jurados electorales en sus recintos electorales el día de la jornada electoral?",
+    answers: [
+      { text: "a)    5:00 am.", correct: false },
+      { text: "b)    7:00 am.", correct: false },
+      { text: "c)    6:00 am.", correct: true },
+    ]
+  },
+  {
+    text: "56. ¿Quiénes son los primeros ciudadanos en emitir su voto?",
+    answers: [
+      { text: "a)    Las y los delegados de partidos y organizaciones políticas", correct: false },
+      { text: "b)    Las juradas y los jurados de la mesa de sufragio", correct: true },
+      { text: "c)    La personas de la tercera edad", correct: false },
+    ]
+  },
+  {
+    text: "57. ¿Durante la jornada electoral quienes tienen prioridad para emitir su voto?",
+    answers: [
+      { text: "a)    Las candidatas o candidatos", correct: false },
+      { text: "b)    Las personas adultas mayores de 60 años, personas enfermas o con discapacidad", correct: false },
+      { text: "c)    Las personas adultas mayores de 60 años, personas enfermas o con discapacidad, mujeres embarazadas, candidatas o candidatos, y personas con niñas o niños en brazos", correct: true },
+    ]
+  },
+  {
+    text: "58. ¿Cuál es el documento válido para que la ciudadana o ciudadano pueda emitir su voto?",
+    answers: [
+      { text: "a)    Libreta de servicio militar, cedula de identidad vigente, pasaporte, licencia de conducir", correct: false },
+      { text: "b)    Libreta de servicio militar y cedula de identidad vigente", correct: false },
+      { text: "c)    Ninguno", correct: true },
+    ]
+  },
+  {
+    text: "59. ¿El pago del estipendio a las juradas y jurados electorales presentes se realiza?",
+    answers: [
+      { text: "a)     Antes de la votación", correct: false },
+      { text: "b)     Al finalizar la jornada de votación", correct: false },
+      { text: "c)      A medio día de la jornada de votación", correct: true },
+    ]
+  },
+  {
+    text: "60. ¿Qué debe hacer el notario electoral en caso de que en una de sus mesas electorales no tenga mínimamente a tres juradas o jurados electorales?",
+    answers: [
+      { text: "a)     No habilitar esa mesa", correct: false },
+      { text: "b)     Reportar a su coordinador", correct: false },
+      { text: "c)      Designar nuevos jurados electorales hasta las 9:00 am", correct: true },
+    ]
+  },
+  {
+    text: "61. ¿Faltas cometidas por las o los jurados electorales?",
+    answers: [
+      { text: "a)    La inasistencia a las Juntas de Jurados, no cumplir los horarios establecidos para la apertura    y cierre de la mesa, abandono de la mesa de sufragio, presentarse en estado de ebriedad.", correct: false },
+      { text: "b)    Ausencia temporal de la mesa de sufragio sin autorización de la Presidenta, negarse a firmar el acta electoral o también negarse a consignar los datos.", correct: false },
+      { text: "c)    A y B", correct: true },
+    ]
+  },
+  {
+    text: "62. ¿Para el cierre de la votación que se debe considerar?",
+    answers: [
+      { text: "a)     Las 8 hrs. continuas, a partir de la apertura de mesa y se extenderá cuando existan están ciudadanas y ciudadanos esperando en la fila que aún no hayan votado.", correct: false },
+      { text: "b)     Cuando la totalidad de las y los ciudadanos que están inscritos en la lista de la mesa de sufragio haya emitido su voto podrán cerrar la mesa antes de las 8 horas.", correct: false },
+      { text: "c)      Todas las anteriores", correct: true },
+    ]
+  },
+  {
+    text: "63. ¿La apertura del acta en qué momento se lo debe realizar?",
+    answers: [
+      { text: "a)     Previo al inicio de la votación", correct: true },
+      { text: "b)     Al finalizar la votación", correct: false },
+      { text: "c)      después del conteo de votos y llenado de las hojas de trabajo", correct: false },
+    ]
+  },
+  {
+    text: "64. ¿El certificado de sufragio que se extiende a la o el ciudadano, quien debe de firmarlo?",
+    answers: [
+      { text: "a)     La o el delegados de partido u organización política", correct: false },
+      { text: "b)     la secretaria o secretario de mesa electoral", correct: false },
+      { text: "c)     La presidenta o presiente de mesa", correct: true },
+    ]
+  },
+  {
+    text: "65. ¿Con qué documentos deben presentarse los jurados electorales ante su notario electoral el 17 de agosto?",
+    answers: [
+      { text: "a)    Cedula de Identidad", correct: false },
+      { text: "b)    Memorándum de designación", correct: false },
+      { text: "c)    A y B", correct: true },
+      { text: "d)    Ninguna de las anteriores", correct: false },
+    ]
+  },
+  {
+    text: "66. Las notarías y los notarios electorales deberán cumplir con las siguientes funciones:",
+    answers: [
+      { text: "a)    Apoyar y orientar a las juradas y jurados electorales", correct: false },
+      { text: "b)    Atender a la ciudadanía", correct: false },
+      { text: "c)    Entregar estipendios", correct: false },
+      { text: "d)    Coordinar con la fuerza pública", correct: false },
+      { text: "e)    Todas", correct: false },
+    ]
+  },
+  {
+    text: "67. ¿El Inicio de votación es?",
+    answers: [
+      { text: "a)    7 am", correct: false },
+      { text: "b)    5 am", correct: false },
+      { text: "c)    8 am", correct: true },
+      { text: "d)    Ninguna", correct: false },
+    ]
+  },
+  {
+    text: "68. ¿Las primeras personas en emitir su voto el día de las elecciones son?",
+    answers: [
+      { text: "a)    Los primeros de la fila", correct: false },
+      { text: "b)    Las personas de tercera edad y las mujeres con embarazo notorio.", correct: false },
+      { text: "c)    Las juradas y jurados electorales.", correct: true },
+    ]
+  },
+  {
+    text: "69. ¿El voto preferente durante la jornada electoral tienen prioridad para emitir su voto las personas?",
+    answers: [
+      { text: "a)    Adultas mayores de 60 años", correct: false },
+      { text: "b)    Personas enfermas o con discapacidad", correct: false },
+      { text: "c)    Mujeres embarazadas", correct: false },
+      { text: "d)    Candidatas o candidatos", correct: false },
+      { text: "e)     Personas con niñas o niños en brazos", correct: false },
+    ]
+  },
+  {
+    text: "70. La electora o elector presentará su cédula de identidad vigente al:",
+    answers: [
+      { text: "a)    Presidente o presidenta", correct: true },
+      { text: "b)    Secretaria o secretario", correct: false },
+      { text: "c)    Vocal", correct: false },
+      { text: "d)    Ninguna", correct: false },
+    ]
+  },
+  {
+    text: "71. ¿Quién verificará si la electora o elector se encuentra en las listas de personas habilitadas?",
+    answers: [
+      { text: "a)    Presidente", correct: false },
+      { text: "b)    Secretario", correct: true },
+      { text: "c)    Vocal", correct: false },
+    ]
+  },
+  {
+    text: "72. Una vez concluida las 8 horas de la jornada electoral, al momento de cerrar la Mesa de Sufragio quién anuncia con voz alta ¡CONCLUYE LA VOTACION!!!",
+    answers: [
+      { text: "a)    Presidente o presidenta", correct: true },
+      { text: "b)    Secretario o secretaria", correct: false },
+      { text: "c)    Vocales", correct: false },
+    ]
+  },
+  {
+    text: "73. ¿Qué forma de voto es cuando la presidenta o presidente de la mesa de sufragio  escoge a una persona de la fila para que ingrese como testigo y marca la papeleta siguiendo la voluntad de la electora o elector, en presencia del testigo.",
+    answers: [
+      { text: "a)    Con Acompañante", correct: false },
+      { text: "b)    Con Testigo", correct: true },
+      { text: "c)    A y B", correct: false },
+      { text: "d)    Ninguna", correct: false },
+    ]
+  },
+  {
+    text: "74. ¿Cómo se realiza la elección de Juradas y Jurados Electorales de la Elección de Autoridades y Representantes del Estado Plurinacional de Bolivia?",
+    answers: [
+      { text: "a)    Son designados por el Tribunal Electoral Departamental", correct: false },
+      { text: "b)    Son designados por un voto ciudadano", correct: false },
+      { text: "c)    Son designados por sorteo mediante una aplicación informática", correct: true },
+    ]
+  },
+  {
+    text: "75. ¿De quién es la responsabilidad de notificar a los jurados electorales para las Elecciones Generales de Autoridades y Representantes del Estado Plurinacional de Bolivia?",
+    answers: [
+      { text: "a)    El ciudadano debe apersonase al Tribunal Electoral Departamental", correct: false },
+      { text: "b)    Es responsabilidad de las Notarias y Notarios Electorales de notificar  a las Juradas y Jurados Electorales", correct: true },
+      { text: "c)    Es Responsabilidad de los Medios de Comunicación la Notificación de las y los Jurados Electorales", correct: false },
+    ]
+  },
+  {
+    text: "76. ¿Qué otros medios de difusión y notificación puedes identificar para notificar a las Juradas y Jurados Electorales?",
+    answers: [
+      { text: "a)    Redes sociales, colocación de carteles con la nómina en espacios públicos de acceso comunitario, tales como sedes de juntas vecinales o recintos electorales.", correct: true },
+      { text: "b)    Publicar la Foto de las Juradas y Jurados  Electorales designados en Postes, Paredes de casas y Parques de su OTB", correct: false },
+      { text: "c)    Mandar una Carta por Medios de Representantes del Órgano Electoral Plurinacional", correct: false },
+    ]
+  },
+  {
+    text: "77. ¿Qué actividad realiza el notario una vez que ha concluido la votación en la mesa de sufragio?",
+    answers: [
+      { text: "a)    La notaria o notario electoral supervisa y apoya en el escrutinio y conteo de votos.", correct: true },
+      { text: "b)    La notaria o notario electoral apoya en el conteo de votos", correct: false },
+      { text: "c)    La notaria o notario electoral apoya en el cierre de la mesa de sufragio", correct: false },
+    ]
+  },
+  {
+    text: "78. ¿Qué es el escrutinio de papeletas?",
+    answers: [
+      { text: "a)    Es el conteo de las papeletas de sufragio una por una, sin desdoblarlas.", correct: true },
+      { text: "b)    Es la verificación de los votos de los ciudadanos.", correct: false },
+      { text: "c)    Es el total de papeletas entregadas a la mesa de sufragio.", correct: false },
+    ]
+  },
+  {
+    text: "79. ¿Cuál es el procedimiento del escrutinio de papeletas?",
+    answers: [
+      { text: "a)    La Presidenta o Presidente abre el ánfora y cuenta las papeletas en voz alta, una por una sin desdoblarlas, la Secretaria o Secretario verifica en lista de habilitadas y habilitados el número de personas que votaron, el número de papeletas de sufragio en el ánfora debe ser igual al número de ciudadanos y ciudadanos que votaron.", correct: true },
+      { text: "b)    Se retira las papeletas del ánfora y se cuenta las papeletas.", correct: false },
+      { text: "c)    Se abre el ánfora y se saca todas las papeletas y se empieza a contar todas las papeletas.", correct: false },
+    ]
+  },
+  {
+    text: "80. ¿Quiénes pueden participar en el escrutinio de papeletas?",
+    answers: [
+      { text: "a)    Todas las ciudadanas y ciudadanos, sea o no elector de la mesa de sufragio.", correct: true },
+      { text: "b)    Solo las Juradas y los Jurados Electorales de la Mesa de Sufragio.", correct: false },
+      { text: "c)    Los notarios y las juradas y jurados electorales de la Mesa de Sufragio.", correct: false },
+    ]
+  },
+  {
+    text: "81. ¿Qué es el conteo de papeletas?",
+    answers: [
+      { text: "a)    Es la suma de resultados de los votos obtenidos en las papeletas de sufragio.", correct: true },
+      { text: "b)    Es el conteo de votos que han obtenido las candidatas y candidatos que están en la contienda electoral.", correct: false },
+      { text: "c)    Es el conteo de papeletas del ánfora.", correct: false },
+    ]
+  },
+  {
+    text: "82. Identifica cuál es el primer paso del procedimiento del conteo de votos",
+    answers: [
+      { text: "a)    La presidenta o presidente de la mesa de sufragio desdoblará cada papeleta, una por una, y las volverá a doblar horizontalmente, de manera que quede visible la franja superior.", correct: true },
+      { text: "b)    La presidenta o el presidente debe mostrar la papeleta electoral.", correct: false },
+      { text: "c)    La presidenta o presidente debe cantar los votos de las papeletas.", correct: false },
+    ]
+  },
+  {
+    text: "83. ¿Quiénes deben firmar y estampar su huella digital el acta electoral en las elecciones generales 2025?",
+    answers: [
+      { text: "a) Las y los votantes", correct: false },
+      { text: "b) Las y los jurados electorales y los delegados de las Organizaciones Políticas", correct: true },
+      { text: "c) Las autoridades del recinto escolar", correct: false },
+      { text: "d) Los candidatos de cada partido", correct: false },
+    ]
+  },
+  {
+    text: "84. ¿Por qué se considera el acta electoral como el documento más importante?",
+    answers: [
+      { text: "a) Porque la elabora el Tribunal Supremo Electoral", correct: false },
+      { text: "b) Porque contiene propaganda política", correct: false },
+      { text: "c) Porque en ella se registran oficialmente los resultados obtenidos en la mesa de sufragio", correct: true },
+      { text: "d) Porque tiene fotos de la jornada electoral", correct: false },
+    ]
+  },
+  {
+    text: "85. ¿Qué sucede si se utilizan actas electorales no aprobadas por la autoridad electoral?",
+    answers: [
+      { text: "a) Se repiten las elecciones solo en esa mesa", correct: false },
+      { text: "b) Se anula la mesa", correct: true },
+      { text: "c) Se cuentan igual los votos", correct: false },
+      { text: "d) Se envía el acta a revisión", correct: false },
+    ]
+  },
+  {
+    text: "86. ¿Dónde deben funcionar las mesas de sufragio?",
+    answers: [
+      { text: "a) En cualquier lugar del municipio", correct: false },
+      { text: "b) Solamente en el recinto asignado", correct: true },
+      { text: "c) En cualquier recinto del país", correct: false },
+      { text: "d) En la casa del jurado presidente", correct: false },
+    ]
+  },
+  {
+    text: "87. ¿Cuál podría ser un motivo justificado para mover la mesa dentro del recinto?",
+    answers: [
+      { text: "a) Capricho de un jurado", correct: false },
+      { text: "b) Que la mesa esté muy lejos de la puerta", correct: false },
+      { text: "c) Lluvia o condiciones climáticas adversas", correct: true },
+      { text: "d) Que falte una urna", correct: false },
+    ]
+  },
+  {
+    text: "88. ¿Qué puede causar la nulidad del acta electoral?",
+    answers: [
+      { text: "a) Errores de ortografía en los nombres", correct: false },
+      { text: "b) Existencia de elementos que contradicen los datos consignados en el acta, aunque no estén en la casilla de observaciones", correct: true },
+      { text: "c) Falta de boletas sobrantes", correct: false },
+      { text: "d) Que la mesa termine tarde", correct: false },
+    ]
+  },
+  {
+    text: "89. ¿Qué sucede si se abre el ánfora (urna) durante el proceso de votación?",
+    answers: [
+      { text: "a) Se continúa normalmente", correct: false },
+      { text: "b) Solo se registra en observaciones", correct: false },
+      { text: "c) Puede implicar la nulidad del acta electoral", correct: true },
+      { text: "d) Se reparten más papeletas", correct: false },
+    ]
+  },
+  {
+    text: "90. ¿Por qué la inconsistencia de datos puede anular el acta electoral?",
+    answers: [
+      { text: "a) Porque el acta debe ser entregada el mismo día", correct: false },
+      { text: "b) Porque compromete la transparencia y confiabilidad del proceso", correct: true },
+      { text: "c) Porque demora el cómputo", correct: false },
+      { text: "d) Porque se usa demasiado papel", correct: false },
+    ]
+  },
+  {
+    text: "91. ¿Qué debe reflejar el acta electoral para que sea válida?",
+    answers: [
+      { text: "a) Solo los resultados finales", correct: false },
+      { text: "b) Únicamente las observaciones de los delegados", correct: false },
+      { text: "c) Todos los datos reales y coherentes de la jornada electoral", correct: true },
+      { text: "d) La opinión de los jurados sobre el procedimiento", correct: false },
+    ]
+  },
+  {
+    text: "92. ¿Qué sucede si hay diferencias entre el del acta electoral original y sus copias?",
+    answers: [
+      { text: "a) Solo se toma en cuenta el original", correct: false },
+      { text: "b) Se repite la elección", correct: false },
+      { text: "c) Puede ser causal de nulidad de la mesa", correct: true },
+      { text: "d) Se corrige al día siguiente", correct: false },
+    ]
+  },
+  {
+    text: "93. ¿Qué sucede si se viola la integridad del sobre de seguridad “A”?",
+    answers: [
+      { text: "a) No pasa nada", correct: false },
+      { text: "b) Se suspende la elección en toda la circunscripción", correct: false },
+      { text: "c) Puede ser causa de nulidad del acta o mesa", correct: true },
+      { text: "d) Solo se registra como observación", correct: false },
+    ]
+  },
+  {
+    text: "94. ¿Qué ocurre si se extravía el acta original y no existen dos copias auténticas que la reemplacen?",
+    answers: [
+      { text: "a) Se anula la mesa", correct: true },
+      { text: "b) Se repite toda la elección", correct: false },
+      { text: "c) Se reemplaza con un acta en blanco", correct: false },
+      { text: "d) Se suma la votación igual", correct: false },
+    ]
+  },
+  {
+    text: "95.  ¿Por qué es importante el sobre de seguridad “A”?",
+    answers: [
+      { text: "a) Porque guarda los bolígrafos usados", correct: false },
+      { text: "b) Porque contiene el acta original como principal documento que refleja los resultados de la mesa de sufragio", correct: true },
+      { text: "c) Porque tiene propaganda electoral", correct: false },
+      { text: "d) Porque evita que los jurados pierdan su material", correct: false },
+    ]
+  },
+  {
+    text: "96. ¿A qué hora  debe cerrar las mesas de sufragio el notario electoral?",
+    answers: [
+      { text: "a)    A las 16:00", correct: false },
+      { text: "b)    Luego de ocho horas de trabajo desde la apertura de la mesa de sufragio.", correct: false },
+      { text: "c)    Ninguna de las anteriores", correct: true },
+    ]
+  },
+  {
+    text: "97. ¿Durante el escrutinio, en qué caso son anuladas las papeletas de sufragio?",
+    answers: [
+      { text: "a)     Cuando está marcada más de una vez", correct: false },
+      { text: "b)     Cuando no coincida el número de papeletas con la cantidad de votantes registrados", correct: true },
+      { text: "c)     Cuando el ciudadano marcó más de dos veces en una papeleta de sufragio.", correct: false },
+    ]
+  },
+  {
+    text: "98. ¿Durante el conteo de votos, cuando el presidente de la mesa de sufragio, canta los votos en voz alta, estos son registrados en:",
+    answers: [
+      { text: "a)     En la hoja de trabajo", correct: true },
+      { text: "b)     En el acta electoral", correct: false },
+      { text: "c)      Ninguna de las anteriores", correct: false },
+    ]
+  },
+  {
+    text: "99. ¿Dónde se registra el conteo de votos válidos para diputados plurinominales?",
+    answers: [
+      { text: "a)     En la hoja de trabajo para diputados plurinominales", correct: false },
+      { text: "b)     No se registran", correct: true },
+      { text: "c)      En la hoja de trabajo para presidente y vicepresidente", correct: false },
+    ]
+  },
+  {
+    text: "100. ¿La cantidad de papeletas en ánfora debe ser igual a:",
+    answers: [
+      { text: "a)     La cantidad de personas habilitadas en la mesa de sufragio", correct: false },
+      { text: "b)     La cantidad de votos válidos", correct: false },
+      { text: "c)      El total de votos emitidos por los electores", correct: true },
+    ]
+  },
+  {
+    text: "101. La primera copia del acta electoral se entrega a:",
+    answers: [
+      { text: "a)     Al operador de transmisión", correct: true },
+      { text: "b)     Al presidente de la mesa de sufragio", correct: false },
+      { text: "c)      Al notario electoral", correct: false },
+    ]
+  },
+  {
+    text: "102. La presidenta o el presidente de la mesa de sufragio, muestra a todos los asistentes el acta electoral por al menos:",
+    answers: [
+      { text: "a)     30 segundos", correct: true },
+      { text: "b)     1 minuto", correct: false },
+      { text: "c)      El secretario o secretaria no muestra el acta electoral", correct: false },
+    ]
+  },
+  {
+    text: "103. Se entrega una copia del acta electoral a los delegados de organizaciones políticas presentes en el escrutinio y conteo de votos?",
+    answers: [
+      { text: "a)     Si, porque se acreditaron en la mesa de sufragio", correct: true },
+      { text: "b)     No, porque no se acreditó a las 08:00 en la mesa de sufragio", correct: false },
+      { text: "c)     No corresponde entregar copias del acta electoral a los delegados de organizaciones políticas", correct: false },
+    ]
+  },
+  {
+    text: "104. ¿En el sobre A  no se deben introducir los siguientes documentos:",
+    answers: [
+      { text: "a)     Hojas de trabajo", correct: false },
+      { text: "b)     Copias sobrantes del acta electoral", correct: false },
+      { text: "c)     Papeletas de sufragio utilizadas", correct: true },
+    ]
+  },
+  {
+    text: "105. Concluido el proceso de votación, la notaria o notario electoral deberá trasladar la maleta electoral a:",
+    answers: [
+      { text: "a)        El Tribunal Departamental de Cochabamba", correct: false },
+      { text: "b)        Al Centro de cómputo", correct: false },
+      { text: "c)         Al Centro Departamental de Logística", correct: true },
+    ]
+  },
+  {
+    text: "106. Son causales de nulidad del acta electoral:",
+    answers: [
+      { text: "a)        Borrones o tachaduras en el acta electoral que no hayan sido señaladas en las observaciones.", correct: false },
+      { text: "b)        El uso de papeletas de sufragio de distinta circunscripción uninominal.", correct: false },
+      { text: "c)         A y B son correctas", correct: true },
+    ]
+  },
+  {
+    text: "107. Es obligación de las y los notarios electorales:",
+    answers: [
+      { text: "a)     Apoyar en la capacitación de las y los jurados electorales", correct: true },
+      { text: "b)     Derivar al juez electoral todos los reclamos de los ciudadanos", correct: false },
+      { text: "c)     Verificar que no exista campaña electoral afuera del recinto durante toda la jornada de votación.", correct: false },
+    ]
+  },
+  {
+    text: "108. Constituyen faltas electorales cometidas por las y los jurados electorales:",
+    answers: [
+      { text: "a)     Negarse a firmar el acta electoral", correct: false },
+      { text: "b)     No cumplir el horario establecido en la apertura y cierre de la mesa de sufragio", correct: false },
+      { text: "c)     A y B son correctas", correct: true },
+    ]
+  },
+  {
+    text: "109. ¿Quiénes pueden estar presentes en el vehículo oficial de traslado de sobres de seguridad y maletas electorales?",
+    answers: [
+      { text: "a)     Notarias y notarios electorales", correct: true },
+      { text: "b)     Delegados de Organizaciones Políticas", correct: false },
+      { text: "c)     A y B son correctas", correct: false },
+    ]
+  },
+  {
+    text: "110.             ¿Quién es la máxima autoridad electoral el día de las elecciones en cada mesa de sufragio?",
+    answers: [
+      { text: "a)    El Delegado de Partido", correct: false },
+      { text: "b)    Las Juradas y los Jurados Electorales", correct: false },
+      { text: "c)    El ciudadano o elector", correct: false },
+    ]
+  },
+  {
+    text: "111. ¿Quiénes designan a los jueces electorales?",
+    answers: [
+      { text: "a) La Asamblea Legislativa Plurinacional", correct: false },
+      { text: "b) Los Tribunales Electorales Departamentales", correct: true },
+      { text: "c) El Consejo de la Magistratura", correct: false },
+    ]
+  },
+  {
+    text: "112. ¿Cuál es el monto que reciben los Jurados de mesa como estipendio el día de la votación?",
+    answers: [
+      { text: "a)    Bs100", correct: false },
+      { text: "b)    Bs80", correct: false },
+      { text: "c)    Bs60", correct: false },
+    ]
+  },
+  {
+    text: "113. ¿Qué documento es indispensable para que un ciudadano pueda emitir su voto?",
+    answers: [
+      { text: "a)    Pasaporte vigente.", correct: false },
+      { text: "b)    Cédula de identidad vigente o vencida hasta por un año", correct: false },
+      { text: "c)    Carnet de organización política.", correct: false },
+    ]
+  },
+  {
+    text: "114. ¿Qué sucede si ninguna candidatura a la Presidencia y Vicepresidencia obtiene los porcentajes necesarios en la primera vuelta electoral?",
+    answers: [
+      { text: "a)    Se anula la elección y se convoca a nuevas elecciones generales.", correct: false },
+      { text: "b)    Se elige al candidato con más votos, aunque no cumpla los requisitos.", correct: false },
+      { text: "c)    Se realiza una segunda vuelta electoral entre los dos candidatos más votados.", correct: false },
+    ]
+  },
+  {
+    text: "115. ¿En el caso de que una organización política decida no participar en las elecciones y ya se haya impreso el material electoral, los votos que reciba esa organización serán:",
+    answers: [
+      { text: "a)    Contabilizados como votos blancos.", correct: false },
+      { text: "b)    Computados como nulos.", correct: false },
+      { text: "c)    Transferidos a otra organización política.", correct: false },
+    ]
+  },
+  {
+    text: "116. ¿Quién debe declarar formalmente el inicio del acto electoral en una mesa de sufragio?",
+    answers: [
+      { text: "a)    El delegado del partido político", correct: false },
+      { text: "b)   La presidente o el presidente de la mesa de sufragio", correct: false },
+      { text: "c)    La ciudadana o ciudadano con mayor edad en la mesa.", correct: false },
+    ]
+  },
+]);
+                
+                // Variables de estado
+                const currentScreen = ref('code');
+                const enteredCode = ref('');
+                const isCodeBlocked = ref(false);
+                const countdown = ref(5);
+                const currentUser = ref(null);
+                const selectedQuestions = ref([]);
+                const currentQuestionIndex = ref(0);
+                const selectedAnswers = ref([]);
+                const showFeedback = ref(false);
+                const answerIsFullyCorrect = ref(false);
+                const answerIsPartiallyCorrect = ref(false);
+                const userAnswers = ref([]);
+                const examStartedAt = ref(null);
+                const elapsedTime = ref(0);
+                const timerInterval = ref(null);
+                const examEndTime = ref(null);
+                const timeLeft = ref(0);
+                const timeUpdateInterval = ref(null);
+                const timeUntilStart = ref(0);
+                const timeUntilEnd = ref(0);
+                const hasCompletedExam = ref(false);
+                const lastExamScore = ref(0);
+                const showDownloadNotification = ref(false);
+                const showAutoDownloadNotification = ref(false);
+                const examResults = ref(null);
+                const currentQuestionImage = ref(null);
+                const questionImages = ref({});
+                const showLocationModal = ref(false);
+                const examLocation = ref(null);
+                const examStartTime = ref(null);
+                const examFinishTime = ref(null);
+                const locationError = ref(null);
+                const attemptNumber = ref(1);
+                const isAdmin = ref(false);
+                const showConfig = ref(false);
+                const leafletMap = ref(null);
+                const leafletMarker = ref(null);
+                const isMobileDevice = ref(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+                const codeInput = ref(null);
+                const hiddenInput = ref(null);
+                const selectedCircunscripcion = ref('');
+                const mongoId = ref(null);
+
+                // Método para forzar el teclado en móviles
+                const showKeyboard = () => {
+                    if (hiddenInput.value) {
+                        hiddenInput.value.type = 'text';
+                        hiddenInput.value.focus();
+                        setTimeout(() => {
+                            if (codeInput.value) {
+                                codeInput.value.focus();
+                            }
+                        }, 100);
+                    }
+                };
+
+                // Computed properties
+                const currentQuestion = computed(() => selectedQuestions.value[currentQuestionIndex.value]);
+                const isLastQuestion = computed(() => currentQuestionIndex.value === selectedQuestions.value.length - 1);
+                const allCorrectAnswersSelected = computed(() => {
+                    if (!currentQuestion.value) return false;
+                    const correctIndices = currentQuestion.value.answers
+                        .map((answer, index) => answer.correct ? index : -1)
+                        .filter(index => index !== -1);
+                    return correctIndices.every(index => selectedAnswers.value.includes(index)) && 
+                           selectedAnswers.value.every(index => currentQuestion.value.answers[index].correct);
+                });
+                const correctAnswersText = computed(() => {
+                    if (!currentQuestion.value) return '';
+                    return currentQuestion.value.answers
+                        .map((answer, index) => answer.correct ? String.fromCharCode(65 + index) : '')
+                        .filter(x => x)
+                        .join(', ');
+                });
+                const correctAnswersCount = computed(() => {
+                    return userAnswers.value.reduce((acc, answerIndices, qIdx) => {
+                        const question = selectedQuestions.value[qIdx];
+                        const correctIndices = question.answers
+                            .map((answer, idx) => answer.correct ? idx : -1)
+                            .filter(idx => idx !== -1);
+                        
+                        const allCorrectSelected = correctIndices.every(idx => answerIndices.includes(idx));
+                        const noIncorrectSelected = answerIndices.every(idx => question.answers[idx].correct);
+                        
+                        if (allCorrectSelected && noIncorrectSelected) {
+                            return acc + 1;
+                        }
+                        
+                        return acc;
+                    }, 0);
+                });
+                const score = computed(() => {
+                    const total = selectedQuestions.value.length;
+                    if (total === 0) return 0;
+                    return Math.round((correctAnswersCount.value / total) * 100);
+                });
+                const isExamTime = computed(() => {
+                    if (developmentMode && isAdmin.value) return true;
+                    
+                    const now = new Date();
+                    const [startHours, startMins] = examConfig.value.startTime.split(':').map(Number);
+                    const [endHours, endMins] = examConfig.value.endTime.split(':').map(Number);
+                    
+                    const startTime = new Date();
+                    startTime.setHours(startHours, startMins, 0, 0);
+                    
+                    const endTime = new Date();
+                    endTime.setHours(endHours, endMins, 0, 0);
+                    
+                    if (timeUntilStart.value <= 0 && timeUntilEnd.value > 0) {
+                        return true;
+                    }
+                    
+                    return now >= startTime && now <= endTime;
+                });
+
+                // Métodos
+                const handleCodeInput = (e) => {
+                    enteredCode.value = e.target.value.trim().toUpperCase();
+                };
+                
+                const arraysEqual = (set1, set2) => {
+                    if (set1.size !== set2.size) return false;
+                    for (const item of set1) {
+                        if (!set2.has(item)) return false;
+                    }
+                    return true;
+                };
+                
+                const isQuestionFullyCorrect = (qIndex) => {
+                    const question = selectedQuestions.value[qIndex];
+                    const userAnswer = userAnswers.value[qIndex];
+                    const correctIndices = question.answers
+                        .map((answer, idx) => answer.correct ? idx : -1)
+                        .filter(idx => idx !== -1);
+                    
+                    return arraysEqual(new Set(userAnswer), new Set(correctIndices));
+                };
+                
+                const verifyCode = () => {
+                    if (isCodeBlocked.value) return;
+                    
+                    const trimmedCode = enteredCode.value.trim();
+                    const user = signal.value.find(u => u.codigo === trimmedCode);
+                    if (user) {
+                        currentUser.value = user;
+                        
+                        const examCompletedCookie = Cookies.get(`completed_${user.codigo}`);
+                        const examResultsCookie = Cookies.get(`results_${user.codigo}`);
+                        
+                        if (examCompletedCookie === 'true' && examResultsCookie) {
+                            examResults.value = JSON.parse(examResultsCookie);
+                            lastExamScore.value = examResults.value.score;
+                            attemptNumber.value = examResults.value.attempt;
+                            
+                            hasCompletedExam.value = attemptNumber.value >= 2;
+                        }
+                        
+                        const attemptCookie = Cookies.get(`attempt_${user.codigo}`);
+                        attemptNumber.value = attemptCookie ? parseInt(attemptCookie) + 1 : 1;
+                        
+                        if (attemptNumber.value > 2) {
+                            hasCompletedExam.value = true;
+                            return;
+                        }
+                        
+                        currentScreen.value = 'user-info';
+                        enteredCode.value = '';
+                    } else {
+                        blockCodeInput();
+                    }
+                };
+                
+                const blockCodeInput = () => {
+                    isCodeBlocked.value = true;
+                    countdown.value = 5;
+                    
+                    const interval = setInterval(() => {
+                        countdown.value--;
+                        
+                        if (countdown.value <= 0) {
+                            clearInterval(interval);
+                            isCodeBlocked.value = false;
+                            enteredCode.value = '';
+                        }
+                    }, 1000);
+                };
+                
+                const getLocation = () => {
+                    return new Promise((resolve, reject) => {
+                        if (!navigator.geolocation) {
+                            locationError.value = "Geolocalización no soportada en tu navegador";
+                            reject(locationError.value);
+                            return;
+                        }
+
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                                examLocation.value = {
+                                    latitude: position.coords.latitude,
+                                    longitude: position.coords.longitude,
+                                    accuracy: position.coords.accuracy
+                                };
+                                locationError.value = null;
+                                showLocationModal.value = false;
+                                resolve(examLocation.value);
+                            },
+                            (error) => {
+                                let errorMessage;
+                                switch(error.code) {
+                                    case error.PERMISSION_DENIED:
+                                        errorMessage = "Permiso denegado. Debes compartir tu ubicación para continuar.";
+                                        break;
+                                    case error.POSITION_UNAVAILABLE:
+                                        errorMessage = "Información de ubicación no disponible.";
+                                        break;
+                                    case error.TIMEOUT:
+                                        errorMessage = "Tiempo de espera agotado para obtener la ubicación.";
+                                        break;
+                                    default:
+                                        errorMessage = "Error desconocido al obtener la ubicación.";
+                                }
+                                locationError.value = errorMessage;
+                                reject(errorMessage);
+                            },
+                            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                        );
+                    });
+                };
+                
+                const requestLocation = async () => {
+                    try {
+                        await getLocation();
+                        await startExamAfterLocation();
+                    } catch (error) {
+                        console.error("Error al obtener ubicación:", error);
+                    }
+                };
+                
+                const cancelExam = () => {
+                    showLocationModal.value = false;
+                    currentScreen.value = 'code';
+                    locationError.value = "Examen cancelado: ubicación requerida no proporcionada";
+                };
+                
+                const verifyAndStartExam = async () => {
+                    if (!selectedCircunscripcion.value) {
+                        alert("Por favor seleccione una circunscripción antes de continuar");
+                        return;
+                    }
+                    
+                    if (examConfig.value.requireLocation) {
+                        showLocationModal.value = true;
+                    } else {
+                        await startExamAfterLocation();
+                    }
+                };
+                
+                const startExamAfterLocation = async () => {
+                    examStartTime.value = new Date();
+                    
+                    const numQuestions = Math.min(examConfig.value.numQuestions, questionBank.value.length);
+                    selectedQuestions.value = shuffleArray([...questionBank.value]).slice(0, numQuestions);
+                    
+                    selectedQuestions.value.forEach(q => {
+                        q.answers = shuffleArray(q.answers);
+                    });
+                    
+                    currentScreen.value = 'exam';
+                    examStartedAt.value = new Date();
+                    
+                    const endTime = new Date(examStartedAt.value);
+                    endTime.setMinutes(endTime.getMinutes() + examConfig.value.duration);
+                    examEndTime.value = endTime;
+                    
+                    startTimer();
+                    userAnswers.value = [];
+                    selectedAnswers.value = [];
+                    currentQuestionIndex.value = 0;
+                    
+                    if (examConfig.value.protectQuestions) {
+                        await updateCurrentQuestionImage();
+                    }
+                    
+                    Cookies.set(`attempt_${currentUser.value.codigo}`, attemptNumber.value, { expires: 1 });
+                };
+                
+                const textToImage = async (text, questionId) => {
+                    if (questionImages.value[questionId]) {
+                        return questionImages.value[questionId];
+                    }
+                    
+                    const maxWidth = isMobileDevice.value ? window.innerWidth - 80 : 600;
+                    
+                    const tempElement = document.createElement('div');
+                    tempElement.style.position = 'absolute';
+                    tempElement.style.left = '-9999px';
+                    tempElement.style.width = `${maxWidth}px`;
+                    tempElement.style.padding = '1rem';
+                    tempElement.style.backgroundColor = '#f5f5f5';
+                    tempElement.style.borderRadius = '6px';
+                    tempElement.style.fontSize = isMobileDevice.value ? '1rem' : '1.15rem';
+                    tempElement.style.fontWeight = '500';
+                    tempElement.style.color = '#263238';
+                    tempElement.style.wordWrap = 'break-word';
+                    tempElement.style.whiteSpace = 'normal';
+                    tempElement.textContent = text;
+                    
+                    document.body.appendChild(tempElement);
+                    
+                    try {
+                        const canvas = await html2canvas(tempElement, {
+                            width: tempElement.offsetWidth,
+                            height: tempElement.offsetHeight,
+                            scale: 1,
+                            logging: false,
+                            useCORS: true,
+                            backgroundColor: '#f5f5f5'
+                        });
+                        
+                        const imageData = canvas.toDataURL('image/png');
+                        questionImages.value[questionId] = imageData;
+                        return imageData;
+                    } catch (error) {
+                        console.error('Error al convertir texto a imagen:', error);
+                        return null;
+                    } finally {
+                        document.body.removeChild(tempElement);
+                    }
+                };
+                
+                const updateCurrentQuestionImage = async () => {
+                    if (!examConfig.value.protectQuestions) return;
+                    
+                    const question = currentQuestion.value;
+                    if (!question) return;
+                    
+                    const questionId = question.text;
+                    const imageData = await textToImage(question.text, questionId);
+                    currentQuestionImage.value = imageData;
+                };
+                
+                const toggleAnswer = (index) => {
+                    if (showFeedback.value) return;
+                    
+                    if (selectedAnswers.value.includes(index)) {
+                        selectedAnswers.value = selectedAnswers.value.filter(i => i !== index);
+                    } else {
+                        selectedAnswers.value = [...selectedAnswers.value, index];
+                    }
+                };
+                
+                const checkAnswer = () => {
+                    if (selectedAnswers.value.length === 0) return;
+                    
+                    showFeedback.value = true;
+                    
+                    const correctIndices = currentQuestion.value.answers
+                        .map((answer, index) => answer.correct ? index : -1)
+                        .filter(index => index !== -1);
+                    
+                    const allSelectedCorrect = selectedAnswers.value.every(index => 
+                        currentQuestion.value.answers[index].correct);
+                    const allCorrectSelected = correctIndices.every(index => 
+                        selectedAnswers.value.includes(index));
+                    
+                    answerIsFullyCorrect.value = allSelectedCorrect && allCorrectSelected;
+                    answerIsPartiallyCorrect.value = allSelectedCorrect && !allCorrectSelected;
+                    
+                    if (userAnswers.value.length <= currentQuestionIndex.value) {
+                        userAnswers.value.push([...selectedAnswers.value]);
+                    } else {
+                        userAnswers.value[currentQuestionIndex.value] = [...selectedAnswers.value];
+                    }
+                };
+                
+                const nextQuestion = async () => {
+                    showFeedback.value = false;
+                    selectedAnswers.value = [];
+                    answerIsFullyCorrect.value = false;
+                    answerIsPartiallyCorrect.value = false;
+                    
+                    if (isLastQuestion.value) {
+                        finishExam();
+                    } else {
+                        currentQuestionIndex.value++;
+                        if (examConfig.value.protectQuestions) {
+                            await updateCurrentQuestionImage();
+                        }
+                    }
+                };
+                
+                const startTimer = () => {
+                    elapsedTime.value = 0;
+                    updateTimeLeft();
+                    
+                    timerInterval.value = setInterval(() => {
+                        elapsedTime.value = Math.floor((new Date() - examStartedAt.value) / 1000);
+                        updateTimeLeft();
+                        
+                        if (timeLeft.value <= 0) {
+                            finishExam();
+                        }
+                    }, 1000);
+                };
+                
+                const updateTimeLeft = () => {
+                    const now = new Date();
+                    timeLeft.value = Math.max(0, Math.floor((examEndTime.value - now) / 1000));
+                };
+                
+                const stopTimer = () => {
+                    if (timerInterval.value) {
+                        clearInterval(timerInterval.value);
+                        timerInterval.value = null;
+                    }
+                };
+                
+                const initLeafletMap = () => {
+                    if (!examLocation.value) return;
+                    
+                    nextTick(() => {
+                        const mapElement = document.getElementById('leaflet-map');
+                        if (!mapElement || !mapElement.offsetParent) {
+                            setTimeout(initLeafletMap, 100);
+                            return;
+                        }
+
+                        if (leafletMap.value) {
+                            leafletMap.value.remove();
+                        }
+
+                        leafletMap.value = L.map('leaflet-map', {
+                            preferCanvas: true
+                        }).setView(
+                            [examLocation.value.latitude, examLocation.value.longitude], 
+                            15
+                        );
+
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        }).addTo(leafletMap.value);
+
+                        L.marker([examLocation.value.latitude, examLocation.value.longitude])
+                            .addTo(leafletMap.value)
+                            .bindPopup('Ubicación del examen');
+
+                        setTimeout(() => {
+                            leafletMap.value.invalidateSize();
+                        }, 50);
+                    });
+                };
+                
+                const generateQRCode = async (text) => {
+                    return new Promise((resolve) => {
+                        QRCode.toDataURL(text, {
+                            width: 150,
+                            margin: 1,
+                            color: {
+                                dark: '#000',
+                                light: '#ffffff'
+                            }
+                        }, (err, url) => {
+                            if (err) {
+                                console.error("Error generando QR:", err);
+                                resolve(null);
+                            } else {
+                                resolve(url);
+                            }
+                        });
+                    });
+                };
+                
+                const generatePDF = async () => {
+                    if (!window.jspdf || !window.jspdf.jsPDF) {
+                        alert('Error: La funcionalidad de PDF no está disponible. Por favor recarga la página.');
+                        return;
+                    }
+                    
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: 'a4'
+                    });
+                    
+                    const pageWidth = doc.internal.pageSize.getWidth();
+                    const margin = 15;
+                    const contentWidth = pageWidth - margin * 2;
+                    
+                    // Generar QR primero y posicionarlo claramente
+                    const qrUrl = `https://express-hello-world-dmbr.onrender.com/api/certificados/${mongoId.value || 'exam-result'}`;
+                    const qrCode = await generateQRCode(qrUrl);
+                    
+                    // Posición y tamaño del QR
+                    const qrSize = 25;
+                    const qrX = pageWidth - margin - qrSize;
+                    const qrY = margin;
+                    
+                    // Añadir el QR con fondo blanco para asegurar visibilidad
+                    if (qrCode) {
+                        // Fondo blanco para el QR
+                        doc.setFillColor(255, 255, 255);
+                        doc.rect(qrX - 2, qrY - 2, qrSize + 4, qrSize + 4, 'F');
+                        
+                        // Añadir el QR
+                        doc.addImage(qrCode, 'PNG', qrX, qrY, qrSize, qrSize);
+                        
+                        // Texto pequeño debajo del QR
+                        doc.setFontSize(8);
+                        doc.setTextColor(100, 100, 100);
+                        doc.text('Escanee para verificar', qrX + qrSize/2, qrY + qrSize + 5, { align: 'center' });
+                    }
+                    
+                    // Encabezado del documento (ajustado para no solapar con QR)
+                    doc.setFontSize(20);
+                    doc.setTextColor(94, 53, 177);
+                    doc.text('Certificado de Examen', margin, 20);
+                    
+                    // Línea decorativa (más corta para no llegar al QR)
+                    doc.setDrawColor(94, 53, 177);
+                    doc.setLineWidth(0.5);
+                    doc.line(margin, 25, pageWidth - margin - qrSize - 10, 25);
+                    
+                    // Información del usuario
+                    doc.setFillColor(245, 245, 245);
+                    doc.roundedRect(margin, 30, contentWidth - qrSize - 5, 30, 3, 3, 'F');
+                    
+                    doc.setFontSize(12);
+                    doc.setTextColor(0, 0, 0);
+                    let yPos = 38;
+                    
+                    // Ajustar ancho de las columnas para dejar espacio al QR
+                    const col1 = margin + 5;
+                    const col2 = margin + (contentWidth - qrSize - 5) / 2;
+                    
+                    doc.text(`Nombre: ${currentUser.value.nombre}`, col1, yPos);
+                    doc.text(`Cédula: ${currentUser.value.ci}`, col2, yPos);
+                    yPos += 7;
+                    
+                    doc.text(`Código: ${currentUser.value.codigo}`, col1, yPos);
+                    doc.text(`Intento: ${attemptNumber.value}`, col2, yPos);
+                    yPos += 7;
+                    
+                    doc.text(`Circunscripción: ${selectedCircunscripcion.value}`, col1, yPos);
+                    doc.text(`Fecha: ${new Date().toLocaleDateString()}`, col2, yPos);
+                    yPos += 15;
+                    
+                    // Resultados del examen
+                    doc.setFillColor(238, 238, 238);
+                    doc.roundedRect(margin, yPos, contentWidth, 15, 3, 3, 'F');
+                    doc.setFontSize(14);
+                    doc.setTextColor(94, 53, 177);
+                    doc.text('Resultados del Examen', margin + 5, yPos + 10);
+                    yPos += 20;
+                    
+                    doc.setFontSize(12);
+                    doc.setTextColor(0, 0, 0);
+                    
+                    doc.text(`Puntuación: ${score.value}%`, col1, yPos);
+                    doc.text(`Correctas: ${correctAnswersCount.value} de ${selectedQuestions.value.length}`, col2, yPos);
+                    yPos += 7;
+                    
+                    doc.text(`Tiempo empleado: ${formatTime(elapsedTime.value)}`, col1, yPos);
+                    doc.text(`Circunscripción: ${selectedCircunscripcion.value}`, col2, yPos);
+                    yPos += 15;
+                    
+                    // Detalles del examen
+                    doc.setFillColor(238, 238, 238);
+                    doc.roundedRect(margin, yPos, contentWidth, 15, 3, 3, 'F');
+                    doc.setFontSize(14);
+                    doc.setTextColor(94, 53, 177);
+                    doc.text('Detalles del Examen', margin + 5, yPos + 10);
+                    yPos += 20;
+                    
+                    doc.setFontSize(12);
+                    doc.setTextColor(0, 0, 0);
+                    
+                    doc.text(`Inicio: ${formatDateTime(examStartTime.value)}`, margin, yPos);
+                    yPos += 7;
+                    
+                    doc.text(`Finalización: ${formatDateTime(examFinishTime.value)}`, margin, yPos);
+                    yPos += 7;
+                    
+                    if (examLocation.value) {
+                        doc.text(`Ubicación: Lat ${examLocation.value.latitude.toFixed(6)}, Long ${examLocation.value.longitude.toFixed(6)}`, margin, yPos);
+                    } else if (locationError.value) {
+                        doc.setTextColor(255, 0, 0);
+                        doc.text(`Error de ubicación: ${locationError.value}`, margin, yPos);
+                        doc.setTextColor(0, 0, 0);
+                    }
+                    yPos += 7;
+                    
+                    doc.text(`Dispositivo: ${isMobileDevice.value ? 'Móvil' : 'Computadora'}`, margin, yPos);
+                    yPos += 10;
+                    
+                    // Mapa de ubicación
+                    if (examLocation.value) {
+                        try {
+                            const mapContainer = document.createElement('div');
+                            mapContainer.style.width = '600px';
+                            mapContainer.style.height = '200px';
+                            mapContainer.style.position = 'absolute';
+                            mapContainer.style.left = '-9999px';
+                            
+                            const mapElement = document.createElement('div');
+                            mapElement.id = 'pdf-map';
+                            mapElement.style.width = '100%';
+                            mapElement.style.height = '100%';
+                            
+                            mapContainer.appendChild(mapElement);
+                            document.body.appendChild(mapContainer);
+                            
+                            const tempMap = L.map('pdf-map', {
+                                preferCanvas: true
+                            }).setView(
+                                [examLocation.value.latitude, examLocation.value.longitude], 
+                                16
+                            );
+                            
+                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            }).addTo(tempMap);
+                            
+                            L.marker([examLocation.value.latitude, examLocation.value.longitude])
+                                .addTo(tempMap)
+                                .bindPopup('Ubicación del examen');
+                            
+                            await new Promise(resolve => {
+                                tempMap.whenReady(() => {
+                                    setTimeout(resolve, 500);
+                                });
+                            });
+                            
+                            const canvas = await html2canvas(mapContainer, {
+                                width: 600,
+                                height: 200,
+                                scale: 2,
+                                logging: false,
+                                useCORS: true,
+                                backgroundColor: '#ffffff'
+                            });
+                            
+                            const mapImage = canvas.toDataURL('image/png');
+                            
+                            const imgWidth = contentWidth;
+                            const imgHeight = (imgWidth * 200) / 600;
+                            
+                            doc.addImage(mapImage, 'PNG', margin, yPos, imgWidth, imgHeight);
+                            yPos += imgHeight + 5;
+                            
+                            doc.setFontSize(10);
+                            doc.setTextColor(100, 100, 100);
+                            doc.text('Ubicación aproximada donde se realizó el examen', pageWidth / 2, yPos, { align: 'center' });
+                            yPos += 10;
+                            
+                            document.body.removeChild(mapContainer);
+                        } catch (error) {
+                            console.error('Error al generar mapa para PDF:', error);
+                        }
+                    }
+                    
+                    // Pie de página
+                    doc.setFontSize(10);
+                    doc.setTextColor(100, 100, 100);
+                    doc.text('Documento generado automáticamente - Sistema de Examen Interactivo', pageWidth / 2, 287, { align: 'center' });
+                    
+                    // Descargar PDF
+                    const filename = `Certificado_Examen_${currentUser.value.nombre.replace(' ', '_')}_${attemptNumber.value}.pdf`;
+                    doc.save(filename);
+                    
+                    showAutoDownloadNotification.value = true;
+                    setTimeout(() => {
+                        showAutoDownloadNotification.value = false;
+                    }, 5000);
+                };
+                
+                const downloadResults = () => {
+                    generatePDF().then(() => {
+                        showDownloadNotification.value = true;
+                        setTimeout(() => {
+                            showDownloadNotification.value = false;
+                        }, 3000);
+                    });
+                };
+                
+                const proccessData = async () => {
+                    const examData = {
+                        nombre: currentUser.value.nombre,
+                        ci: currentUser.value.ci,
+                        correo: currentUser.value.correo,
+                        codigo: currentUser.value.codigo,
+                        nota: score.value,
+                        tiempoRespuesta: elapsedTime.value,
+                        latitud: examLocation.value?.latitude,
+                        longitud: examLocation.value?.longitude,
+                        dispositivo: isMobileDevice.value ? 'Móvil' : 'Computadora',
+                        circunscripcion: selectedCircunscripcion.value,
+                        intento: attemptNumber.value
+                    };
+                    
+                    try {
+                        const response = await fetch('https://express-hello-world-dmbr.onrender.com/api/examenes', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(examData)
+                        });
+                    
+                        const data = await response.json();
+                        if (data && data._id) {
+                            mongoId.value = data.insertedId;
+                        }
+                    } catch (error) {
+                        console.error("Error al enviar datos al servidor:", error);
+                    }
+                };
+                
+                const finishExam = async () => {
+                    stopTimer();
+                    
+                    elapsedTime.value = Math.floor((new Date() - examStartedAt.value) / 1000);
+
+                    examFinishTime.value = new Date();
+                    currentScreen.value = 'results';
+                    lastExamScore.value = score.value;
+                    
+                    examResults.value = {
+                        userId: currentUser.value.codigo,
+                        nombre: currentUser.value.nombre,
+                        ci: currentUser.value.ci,
+                        correo: currentUser.value.correo,
+                        attempt: attemptNumber.value,
+                        score: score.value,
+                        correctAnswers: correctAnswersCount.value,
+                        totalQuestions: selectedQuestions.value.length,
+                        time: elapsedTime.value,
+                        date: new Date().toISOString(),
+                        answers: userAnswers.value,
+                        startTime: examStartTime.value.toISOString(),
+                        finishTime: examFinishTime.value.toISOString(),
+                        location: examLocation.value,
+                        locationError: locationError.value,
+                        deviceType: isMobileDevice.value ? 'Móvil' : 'Computadora',
+                        circunscripcion: selectedCircunscripcion.value
+                    };
+                    
+                    Cookies.set(`completed_${currentUser.value.codigo}`, 'true', { expires: 365 });
+                    Cookies.set(`results_${currentUser.value.codigo}`, JSON.stringify(examResults.value), { expires: 365 });
+                    
+                    hasCompletedExam.value = attemptNumber.value >= 2;
+                    
+                    setTimeout(() => {
+                        initLeafletMap();
+                    }, 300);
+                    
+                    await proccessData();
+                    
+                    await generatePDF();
+                };
+                
+                const returnToStart = () => {
+                    currentScreen.value = 'code';
+                    selectedCircunscripcion.value = '';
+                    examLocation.value = null;
+                    locationError.value = null;
+                };
+                
+                const formatDateTime = (date) => {
+                    if (!date) return "No disponible";
+                    return date.toLocaleString('es-ES', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
+                };
+                
+                const toggleAdmin = () => {
+                    isAdmin.value = !isAdmin.value;
+                    showConfig.value = isAdmin.value;
+                    
+                    if (isAdmin.value) {
+                        currentUser.value = signal.value.find(u => u.codigo === 'ADMIN');
+                    } else {
+                        currentUser.value = null;
+                        currentScreen.value = 'code';
+                    }
+                };
+                
+                const saveConfig = () => {
+                    showConfig.value = false;
+                    if (developmentMode) {
+                        localStorage.setItem('examConfig', JSON.stringify(examConfig.value));
+                    }
+                    alert('Configuración guardada exitosamente');
+                };
+                
+                const formatCountdown = (ms) => {
+                    if (ms <= 0) return "00:00:00";
+                    const totalSeconds = Math.floor(ms / 1000);
+                    const hours = Math.floor(totalSeconds / 3600);
+                    const minutes = Math.floor((totalSeconds % 3600) / 60);
+                    const seconds = totalSeconds % 60;
+                    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                };
+                
+                const formatTime = (seconds) => {
+                    const mins = Math.floor(seconds / 60);
+                    const secs = seconds % 60;
+                    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                };
+                
+                const updateTimeUntilStart = () => {
+                    const now = new Date();
+                    const [startHours, startMins] = examConfig.value.startTime.split(':').map(Number);
+                    const [endHours, endMins] = examConfig.value.endTime.split(':').map(Number);
+                    
+                    const startTime = new Date();
+                    startTime.setHours(startHours, startMins, 0, 0);
+                    
+                    const endTime = new Date();
+                    endTime.setHours(endHours, endMins, 0, 0);
+                    
+                    const newTimeUntilStart = Math.max(0, startTime - now);
+                    const newTimeUntilEnd = Math.max(0, endTime - now);
+                    
+                    if (newTimeUntilStart !== timeUntilStart.value || newTimeUntilEnd !== timeUntilEnd.value) {
+                        timeUntilStart.value = newTimeUntilStart;
+                        timeUntilEnd.value = newTimeUntilEnd;
+                    }
+                };
+                
+                const startTimeChecker = () => {
+                    if (timeUpdateInterval.value) {
+                        clearInterval(timeUpdateInterval.value);
+                    }
+                    
+                    timeUpdateInterval.value = setInterval(() => {
+                        updateTimeUntilStart();
+                    }, 1000);
+                    
+                    updateTimeUntilStart();
+                };
+                
+                const shuffleArray = (array) => {
+                    const newArray = [...array];
+                    for (let i = newArray.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+                    }
+                    return newArray;
+                };
+
+                // Inicialización
+                onMounted(() => {
+                    if (developmentMode) {
+                        const savedConfig = localStorage.getItem('examConfig');
+                        if (savedConfig) {
+                            examConfig.value = JSON.parse(savedConfig);
+                        }
+                    }
+                    
+                    startTimeChecker();
+                    
+                    document.addEventListener('keydown', (e) => {
+                        if (e.ctrlKey && ['c', 'C', 'x', 'X', 'a', 'A', 'i', 'I'].includes(e.key)) {
+                            e.preventDefault();
+                        }
+                        if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) {
+                            e.preventDefault();
+                        }
+                    });
+                    
+                    document.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                    });
+                    
+                    document.addEventListener('keydown', (e) => {
+                        if (e.ctrlKey && e.shiftKey && e.key === 'J') {
+                            e.preventDefault();
+                        }
+                    });
+                    
+                    if (isMobileDevice.value) {
+                        setTimeout(() => {
+                            if (codeInput.value) {
+                                codeInput.value.focus({
+                                    preventScroll: true
+                                });
+                                
+                                setTimeout(() => {
+                                    if (document.activeElement !== codeInput.value) {
+                                        codeInput.value.focus();
+                                    }
+                                }, 300);
+                            }
+                        }, 800);
+                    }
+                });
+
+                // Limpieza
+                onUnmounted(() => {
+                    stopTimer();
+                    if (timeUpdateInterval.value) {
+                        clearInterval(timeUpdateInterval.value);
+                    }
+                    if (leafletMap.value) {
+                        leafletMap.value.remove();
+                    }
+                });
+
+                return {
+                    currentScreen,
+                    enteredCode,
+                    isCodeBlocked,
+                    countdown,
+                    currentUser,
+                    selectedQuestions,
+                    currentQuestionIndex,
+                    selectedAnswers,
+                    showFeedback,
+                    answerIsFullyCorrect,
+                    answerIsPartiallyCorrect,
+                    userAnswers,
+                    elapsedTime,
+                    attemptNumber,
+                    isAdmin,
+                    showConfig,
+                    examConfig,
+                    timeLeft,
+                    timeUntilStart,
+                    timeUntilEnd,
+                    hasCompletedExam,
+                    lastExamScore,
+                    showDownloadNotification,
+                    showAutoDownloadNotification,
+                    developmentMode,
+                    currentQuestion,
+                    isLastQuestion,
+                    correctAnswersText,
+                    correctAnswersCount,
+                    score,
+                    isExamTime,
+                    examLocation,
+                    examStartTime,
+                    examFinishTime,
+                    locationError,
+                    currentQuestionImage,
+                    showLocationModal,
+                    isMobileDevice,
+                    codeInput,
+                    hiddenInput,
+                    selectedCircunscripcion,
+                    verifyCode,
+                    verifyAndStartExam,
+                    requestLocation,
+                    cancelExam,
+                    startExamAfterLocation,
+                    toggleAnswer,
+                    checkAnswer,
+                    nextQuestion,
+                    downloadResults,
+                    formatTime,
+                    formatCountdown,
+                    formatDateTime,
+                    toggleAdmin,
+                    saveConfig,
+                    isQuestionFullyCorrect,
+                    handleCodeInput,
+                    showKeyboard,
+                    returnToStart
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
