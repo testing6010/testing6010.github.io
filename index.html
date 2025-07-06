@@ -847,6 +847,7 @@
                 <div v-if="currentScreen === 'code'" class="card">
                     <div class="card-header">
                         <h2 class="card-title">Ingrese su código de acceso</h2>
+                        <h4 class="card-title">todos los grupos estan en esta area</h4>
                     </div>
                     
                     <div v-if="!isExamTime" class="alert alert-warning">
@@ -1166,7 +1167,7 @@
                 const examConfig = ref({
                     startTime: '06:00',
                     endTime: '16:00',
-                    duration: 5,
+                    duration: 7,
                     numQuestions: 10,
                     protectQuestions: true,
                     requireLocation: true
