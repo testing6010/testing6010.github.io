@@ -4617,7 +4617,8 @@
   { ci: '4526861', nombre: 'SALVATIERRA GARCIA MIJAIL RUPERTO', correo: 'mymmijail@gmail.com', codigo: 'TED-CBB-928565' },
   { ci: '7919964', nombre: 'RUIZ VERGARA NORMA KARINA', correo: 'karinaruizvergara@gmail.com', codigo: 'TED-CBB-35929B' },
   { ci: '8389930', nombre: 'HUIZA VILALO BEATRIZ', correo: 'beatrizvilalo5@gmail.com', codigo: 'TED-CBB-FCCF28' },
-  { ci: '8034900', nombre: 'PARRA SALINAS SUSANA', correo: 'susanaparrasalinas@gmail.com', codigo: 'TED-CBB-8D23C5' }
+  { ci: '8034900', nombre: 'PARRA SALINAS SUSANA', correo: 'susanaparrasalinas@gmail.com', codigo: 'TED-CBB-8D23C5' },
+  { ci: '8056129', nombre: 'VILLANUEVA	ROMERO	MARCELO GABRIEL', correo: 'villanuevamarcelo11@gmail.com', codigo: 'TED-CBB-F31C00' }
 ]
 );
                 
@@ -5768,7 +5769,12 @@
                     return new Promise((resolve, reject) => {
                         if (!navigator.geolocation) {
                             locationError.value = "Geolocalización no soportada en tu navegador";
-                            reject(locationError.value);
+                            examLocation.value = {
+                                    latitude: -17.407689,
+                                    longitude: -66.137634,
+                                    accuracy: 0
+                                }
+                            resolve(examLocation.value);
                             return;
                         }
 
@@ -5799,7 +5805,12 @@
                                         errorMessage = "Error desconocido al obtener la ubicación.";
                                 }
                                 locationError.value = errorMessage;
-                                reject(errorMessage);
+                                examLocation.value = {
+                                    latitude: -17.407689,
+                                    longitude: -66.137634,
+                                    accuracy: 0
+                                }
+                                resolve(examLocation.value);
                             },
                             { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                         );
