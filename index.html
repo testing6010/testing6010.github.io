@@ -14,6 +14,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
     <style>
         :root {
             --primary: #5e35b1;
@@ -947,7 +948,11 @@
                     </div>
                     
                     <div class="text-center">
-                        <p class="mb-4">Por favor verifique que esta información es correcta antes de comenzar.</p>
+                        <p class="mb-4">
+                            <b>Por favor verifique que esta información es correcta antes de comenzar.</b>
+                            <br>
+                            <b>Las respuestas a las preguntas son de selección multiple(1 o mas respuestas, en caso de responder parcialmente la respuesta se considera erronea)</b>
+                        </p>
                         <p class="text-sm text-gray-500 mb-4">Duración del examen: {{ examConfig.duration }} minutos</p>
                         <p class="text-sm text-gray-500 mb-4" v-if="attemptNumber > 1">Intento #{{ attemptNumber}} de 2</p>
                         <button 
@@ -1151,9 +1156,8 @@
                                       window.location.hostname === '127.0.0.1';
                 
                 // Configuración del examen
-                const dataIns='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'
                 const examConfig = ref({
-                    startTime: '08:00',
+                    startTime: '02:00',
                     endTime: '18:00',
                     duration: 30,
                     numQuestions: 10,
@@ -1162,11 +1166,11 @@
                 }); 
                 
                 // Datos de usuarios (simulados para desarrollo)
-                // const signal = ref([
-                //     { ci: '12345678', nombre: 'Usuario de Prueba', correo: 'prueba@example.com', codigo: 'TEST123' },
-                //     { ci: '87654321', nombre: 'Administrador', correo: 'admin@example.com', codigo: 'ADMIN' }
-                // ]);
-                const signal = ref(JSON.parse(CryptoJS.AES.decrypt(dataIns, 'sanitizeAndStringify(inputString)').toString(CryptoJS.enc.Utf8)));
+                const signal = ref([
+                    { ci: '12345678', nombre: 'Usuario de Prueba', correo: 'prueba@example.com', codigo: 'TEST123' },
+                    { ci: '87654321', nombre: 'Administrador', correo: 'admin@example.com', codigo: 'ADMIN' }
+                ]);
+                
                 // Banco de preguntas
                 const questionBank = ref([
                     {
@@ -1174,7 +1178,6 @@
                         answers: [
                             { text: "Regular el sistema tributario", correct: false },
                             { text: "Regular el Régimen Electoral para la Democracia Intercultural", correct: true },
-                            { text: "Regular el Régimen Electoral para la Democracia Intercultural 2", correct: true },
                             { text: "Regular la función judicial", correct: false },
                             { text: "Regular la administración pública", correct: false }
                         ]
@@ -1185,7 +1188,6 @@
                             { text: "Soberanía Popular", correct: false },
                             { text: "Plurinacionalidad", correct: false },
                             { text: "Competitividad", correct: true },
-                            { text: "Competitividad 2", correct: true },
                             { text: "Interculturalidad", correct: false }
                         ]
                     },
@@ -1194,7 +1196,6 @@
                         answers: [
                             { text: "Confidencial y voluntario", correct: false },
                             { text: "Público y definitivo", correct: true },
-                            { text: "Público y definitivo 2", correct: true },
                             { text: "Secreto y repetible", correct: false },
                             { text: "Anónimo y parcial", correct: false }
                         ]
@@ -1243,6 +1244,7 @@
                 const codeInput = ref(null);
                 const hiddenInput = ref(null);
                 const selectedCircunscripcion = ref('');
+                const mongoId = ref(null);
 
                 // Método para forzar el teclado en móviles
                 const showKeyboard = () => {
@@ -1282,8 +1284,6 @@
                             .map((answer, idx) => answer.correct ? idx : -1)
                             .filter(idx => idx !== -1);
                         
-                        // Solo sumar puntos si todas las respuestas correctas están seleccionadas
-                        // y no hay respuestas incorrectas seleccionadas
                         const allCorrectSelected = correctIndices.every(idx => answerIndices.includes(idx));
                         const noIncorrectSelected = answerIndices.every(idx => question.answers[idx].correct);
                         
@@ -1350,12 +1350,6 @@
                     if (user) {
                         currentUser.value = user;
                         
-                        // if (user.codigo === 'ADMIN') {
-                        //     isAdmin.value = true;
-                        //     showConfig.value = true;
-                        //     return;
-                        // }
-                        
                         const examCompletedCookie = Cookies.get(`completed_${user.codigo}`);
                         const examResultsCookie = Cookies.get(`results_${user.codigo}`);
                         
@@ -1364,14 +1358,12 @@
                             lastExamScore.value = examResults.value.score;
                             attemptNumber.value = examResults.value.attempt;
                             
-                            // Solo marcar como completado si ya hizo 2 intentos
                             hasCompletedExam.value = attemptNumber.value >= 2;
                         }
                         
                         const attemptCookie = Cookies.get(`attempt_${user.codigo}`);
                         attemptNumber.value = attemptCookie ? parseInt(attemptCookie) + 1 : 1;
                         
-                        // Verificar si ya ha completado el máximo de intentos
                         if (attemptNumber.value > 2) {
                             hasCompletedExam.value = true;
                             return;
@@ -1503,8 +1495,7 @@
                         return questionImages.value[questionId];
                     }
                     
-                    // Determinar el ancho máximo basado en el dispositivo
-                    const maxWidth = isMobileDevice.value ? window.innerWidth - 70 : 600;
+                    const maxWidth = isMobileDevice.value ? window.innerWidth - 80 : 600;
                     
                     const tempElement = document.createElement('div');
                     tempElement.style.position = 'absolute';
@@ -1573,7 +1564,6 @@
                         .map((answer, index) => answer.correct ? index : -1)
                         .filter(index => index !== -1);
                     
-                    // Verificar si todas las respuestas seleccionadas son correctas y se seleccionaron todas las correctas
                     const allSelectedCorrect = selectedAnswers.value.every(index => 
                         currentQuestion.value.answers[index].correct);
                     const allCorrectSelected = correctIndices.every(index => 
@@ -1582,7 +1572,6 @@
                     answerIsFullyCorrect.value = allSelectedCorrect && allCorrectSelected;
                     answerIsPartiallyCorrect.value = allSelectedCorrect && !allCorrectSelected;
                     
-                    // Guardar respuestas del usuario
                     if (userAnswers.value.length <= currentQuestionIndex.value) {
                         userAnswers.value.push([...selectedAnswers.value]);
                     } else {
@@ -1635,23 +1624,19 @@
                 const initLeafletMap = () => {
                     if (!examLocation.value) return;
                     
-                    // Esperar a que el DOM esté listo y el contenedor visible
                     nextTick(() => {
                         const mapElement = document.getElementById('leaflet-map');
                         if (!mapElement || !mapElement.offsetParent) {
-                            // Reintentar si el elemento no está visible
                             setTimeout(initLeafletMap, 100);
                             return;
                         }
 
-                        // Limpiar mapa existente si hay uno
                         if (leafletMap.value) {
                             leafletMap.value.remove();
                         }
 
-                        // Crear nuevo mapa
                         leafletMap.value = L.map('leaflet-map', {
-                            preferCanvas: true // Mejor rendimiento
+                            preferCanvas: true
                         }).setView(
                             [examLocation.value.latitude, examLocation.value.longitude], 
                             15
@@ -1665,10 +1650,29 @@
                             .addTo(leafletMap.value)
                             .bindPopup('Ubicación del examen');
 
-                        // Forzar actualización de tamaño después de un pequeño retraso
                         setTimeout(() => {
                             leafletMap.value.invalidateSize();
                         }, 50);
+                    });
+                };
+                
+                const generateQRCode = async (text) => {
+                    return new Promise((resolve) => {
+                        QRCode.toDataURL(text, {
+                            width: 150,
+                            margin: 1,
+                            color: {
+                                dark: '#5e35b1',
+                                light: '#ffffff'
+                            }
+                        }, (err, url) => {
+                            if (err) {
+                                console.error("Error generando QR:", err);
+                                resolve(null);
+                            } else {
+                                resolve(url);
+                            }
+                        });
                     });
                 };
                 
@@ -1685,74 +1689,98 @@
                         format: 'a4'
                     });
                     
-                    // Configurar márgenes y tamaños
                     const pageWidth = doc.internal.pageSize.getWidth();
-                    const margin = 10;
+                    const margin = 15;
                     const contentWidth = pageWidth - margin * 2;
                     
-                    // Encabezado del PDF
+                    // Generar QR primero y posicionarlo claramente
+                    const qrUrl = `https://express-hello-world-dmbr.onrender.com/api/${mongoId.value || 'exam-result'}`;
+                    const qrCode = await generateQRCode(qrUrl);
+                    
+                    // Posición y tamaño del QR
+                    const qrSize = 25;
+                    const qrX = pageWidth - margin - qrSize;
+                    const qrY = margin;
+                    
+                    // Añadir el QR con fondo blanco para asegurar visibilidad
+                    if (qrCode) {
+                        // Fondo blanco para el QR
+                        doc.setFillColor(255, 255, 255);
+                        doc.rect(qrX - 2, qrY - 2, qrSize + 4, qrSize + 4, 'F');
+                        
+                        // Añadir el QR
+                        doc.addImage(qrCode, 'PNG', qrX, qrY, qrSize, qrSize);
+                        
+                        // Texto pequeño debajo del QR
+                        doc.setFontSize(8);
+                        doc.setTextColor(100, 100, 100);
+                        doc.text('Escanee para verificar', qrX + qrSize/2, qrY + qrSize + 5, { align: 'center' });
+                    }
+                    
+                    // Encabezado del documento (ajustado para no solapar con QR)
                     doc.setFontSize(20);
                     doc.setTextColor(94, 53, 177);
-                    doc.text('Resultados del Examen', margin, 15);
+                    doc.text('Certificado de Examen', margin, 20);
                     
-                    doc.setFontSize(12);
-                    doc.setTextColor(100, 100, 100);
-                    doc.text('Certificado de Evaluación', margin, 22);
-                    
-                    // Línea decorativa
+                    // Línea decorativa (más corta para no llegar al QR)
                     doc.setDrawColor(94, 53, 177);
                     doc.setLineWidth(0.5);
-                    doc.line(margin, 25, pageWidth - margin, 25);
+                    doc.line(margin, 25, pageWidth - margin - qrSize - 10, 25);
                     
                     // Información del usuario
-                    doc.setFontSize(12);
-                    doc.setTextColor(0, 0, 0);
-                    let yPos = 35;
-                    
-                    doc.text(`Nombre: ${currentUser.value.nombre}`, margin, yPos);
-                    doc.text(`Cédula: ${currentUser.value.ci}`, margin + 70, yPos);
-                    yPos += 7;
-                    
-                    doc.text(`Código: ${currentUser.value.codigo}`, margin, yPos);
-                    doc.text(`Intento: ${attemptNumber.value}`, margin + 70, yPos);
-                    yPos += 7;
-                    
-                    doc.text(`Circunscripción: ${selectedCircunscripcion.value}`, margin, yPos);
-                    yPos += 7;
-                    
-                    doc.text(`Fecha: ${new Date().toLocaleDateString()}`, margin, yPos);
-                    yPos += 10;
-                    
-                    // Resultados en una sola línea
-                    doc.setFontSize(14);
-                    doc.setTextColor(94, 53, 177);
-                    doc.text('Resultados:', margin, yPos);
-                    yPos += 8;
+                    doc.setFillColor(245, 245, 245);
+                    doc.roundedRect(margin, 30, contentWidth - qrSize - 5, 30, 3, 3, 'F');
                     
                     doc.setFontSize(12);
                     doc.setTextColor(0, 0, 0);
+                    let yPos = 38;
                     
-                    // Crear una línea con los tres resultados
-                    const resultsLine = [
-                        `Puntuación: ${score.value}%`,
-                        `Correctas: ${correctAnswersCount.value} de ${selectedQuestions.value.length}`,
-                        `Tiempo: ${formatTime(elapsedTime.value)}`
-                    ];
+                    // Ajustar ancho de las columnas para dejar espacio al QR
+                    const col1 = margin + 5;
+                    const col2 = margin + (contentWidth - qrSize - 5) / 2;
                     
-                    // Calcular posiciones para centrar
-                    const colWidth = contentWidth / 3;
-                    doc.text(resultsLine[0], margin, yPos);
-                    doc.text(resultsLine[1], margin + colWidth, yPos);
-                    doc.text(resultsLine[2], margin + colWidth * 2, yPos);
+                    doc.text(`Nombre: ${currentUser.value.nombre}`, col1, yPos);
+                    doc.text(`Cédula: ${currentUser.value.ci}`, col2, yPos);
+                    yPos += 7;
+                    
+                    doc.text(`Código: ${currentUser.value.codigo}`, col1, yPos);
+                    doc.text(`Intento: ${attemptNumber.value}`, col2, yPos);
+                    yPos += 7;
+                    
+                    doc.text(`Circunscripción: ${selectedCircunscripcion.value}`, col1, yPos);
+                    doc.text(`Fecha: ${new Date().toLocaleDateString()}`, col2, yPos);
                     yPos += 15;
                     
-                    // Información del examen
+                    // Resultados del examen
+                    doc.setFillColor(238, 238, 238);
+                    doc.roundedRect(margin, yPos, contentWidth, 15, 3, 3, 'F');
                     doc.setFontSize(14);
                     doc.setTextColor(94, 53, 177);
-                    doc.text('Información del Examen', margin, yPos);
-                    yPos += 8;
+                    doc.text('Resultados del Examen', margin + 5, yPos + 10);
+                    yPos += 20;
                     
                     doc.setFontSize(12);
+                    doc.setTextColor(0, 0, 0);
+                    
+                    doc.text(`Puntuación: ${score.value}%`, col1, yPos);
+                    doc.text(`Correctas: ${correctAnswersCount.value} de ${selectedQuestions.value.length}`, col2, yPos);
+                    yPos += 7;
+                    
+                    doc.text(`Tiempo empleado: ${formatTime(elapsedTime.value)}`, col1, yPos);
+                    doc.text(`Circunscripción: ${selectedCircunscripcion.value}`, col2, yPos);
+                    yPos += 15;
+                    
+                    // Detalles del examen
+                    doc.setFillColor(238, 238, 238);
+                    doc.roundedRect(margin, yPos, contentWidth, 15, 3, 3, 'F');
+                    doc.setFontSize(14);
+                    doc.setTextColor(94, 53, 177);
+                    doc.text('Detalles del Examen', margin + 5, yPos + 10);
+                    yPos += 20;
+                    
+                    doc.setFontSize(12);
+                    doc.setTextColor(0, 0, 0);
+                    
                     doc.text(`Inicio: ${formatDateTime(examStartTime.value)}`, margin, yPos);
                     yPos += 7;
                     
@@ -1769,20 +1797,11 @@
                     yPos += 7;
                     
                     doc.text(`Dispositivo: ${isMobileDevice.value ? 'Móvil' : 'Computadora'}`, margin, yPos);
-                    yPos += 7;
-                    
-                    doc.text(`Circunscripción: ${selectedCircunscripcion.value}`, margin, yPos);
                     yPos += 10;
                     
-                    // Mapa de ubicación para PDF
+                    // Mapa de ubicación
                     if (examLocation.value) {
-                        doc.setFontSize(14);
-                        doc.setTextColor(94, 53, 177);
-                        doc.text('Ubicación aproximada:', margin, yPos);
-                        yPos += 8;
-                        
                         try {
-                            // Crear contenedor temporal para el mapa
                             const mapContainer = document.createElement('div');
                             mapContainer.style.width = '600px';
                             mapContainer.style.height = '200px';
@@ -1797,12 +1816,11 @@
                             mapContainer.appendChild(mapElement);
                             document.body.appendChild(mapContainer);
                             
-                            // Crear mapa temporal con mayor zoom inicial
                             const tempMap = L.map('pdf-map', {
                                 preferCanvas: true
                             }).setView(
                                 [examLocation.value.latitude, examLocation.value.longitude], 
-                                16 // Mayor zoom para mejor visualización en PDF
+                                16
                             );
                             
                             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -1813,7 +1831,6 @@
                                 .addTo(tempMap)
                                 .bindPopup('Ubicación del examen');
                             
-                            // Esperar a que el mapa se cargue completamente
                             await new Promise(resolve => {
                                 tempMap.whenReady(() => {
                                     setTimeout(resolve, 500);
@@ -1823,7 +1840,7 @@
                             const canvas = await html2canvas(mapContainer, {
                                 width: 600,
                                 height: 200,
-                                scale: 2, // Mayor resolución para el PDF
+                                scale: 2,
                                 logging: false,
                                 useCORS: true,
                                 backgroundColor: '#ffffff'
@@ -1831,7 +1848,6 @@
                             
                             const mapImage = canvas.toDataURL('image/png');
                             
-                            // Añadir mapa al PDF con tamaño adecuado
                             const imgWidth = contentWidth;
                             const imgHeight = (imgWidth * 200) / 600;
                             
@@ -1840,7 +1856,7 @@
                             
                             doc.setFontSize(10);
                             doc.setTextColor(100, 100, 100);
-                            doc.text('Esta ubicación se incluyó en el certificado', margin, yPos);
+                            doc.text('Ubicación aproximada donde se realizó el examen', pageWidth / 2, yPos, { align: 'center' });
                             yPos += 10;
                             
                             document.body.removeChild(mapContainer);
@@ -1854,11 +1870,10 @@
                     doc.setTextColor(100, 100, 100);
                     doc.text('Documento generado automáticamente - Sistema de Examen Interactivo', pageWidth / 2, 287, { align: 'center' });
                     
-                    // Descargar inmediatamente
-                    const filename = `Resultado_Examen_${currentUser.value.nombre.replace(' ', '_')}_Intento_${attemptNumber.value}.pdf`;
+                    // Descargar PDF
+                    const filename = `Certificado_Examen_${currentUser.value.nombre.replace(' ', '_')}_${attemptNumber.value}.pdf`;
                     doc.save(filename);
                     
-                    // Mostrar notificación de descarga automática
                     showAutoDownloadNotification.value = true;
                     setTimeout(() => {
                         showAutoDownloadNotification.value = false;
@@ -1901,16 +1916,17 @@
                     
                         const data = await response.json();
                         console.log("Datos enviados al servidor:", data);
+                        if (data && data.insertedId) {
+                            mongoId.value = data.insertedId;
+                        }
                     } catch (error) {
                         console.error("Error al enviar datos al servidor:", error);
                     }
                 };
                 
                 const finishExam = async () => {
-                    // Detener el temporizador primero
                     stopTimer();
                     
-                    // Guardar el tiempo final exacto
                     elapsedTime.value = Math.floor((new Date() - examStartedAt.value) / 1000);
 
                     examFinishTime.value = new Date();
@@ -1940,18 +1956,14 @@
                     Cookies.set(`completed_${currentUser.value.codigo}`, 'true', { expires: 365 });
                     Cookies.set(`results_${currentUser.value.codigo}`, JSON.stringify(examResults.value), { expires: 365 });
                     
-                    // Solo marcar como completado si ya hizo 2 intentos
                     hasCompletedExam.value = attemptNumber.value >= 2;
                     
-                    // Inicializar mapa Leaflet con retraso para asegurar visibilidad
                     setTimeout(() => {
                         initLeafletMap();
                     }, 300);
                     
-                    // Enviar datos al servidor
                     await proccessData();
                     
-                    // Descargar PDF automáticamente
                     await generatePDF();
                 };
                 
@@ -2061,31 +2073,25 @@
                     
                     startTimeChecker();
                     
-                    // Deshabilitar atajos de teclado
                     document.addEventListener('keydown', (e) => {
-                        // Bloquear Ctrl+C, Ctrl+A, etc.
                         if (e.ctrlKey && ['c', 'C', 'x', 'X', 'a', 'A', 'i', 'I'].includes(e.key)) {
                             e.preventDefault();
                         }
-                        // Bloquear F12 y Ctrl+Shift+I
                         if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) {
                             e.preventDefault();
                         }
                     });
                     
-                    // Deshabilitar clic derecho
                     document.addEventListener('contextmenu', (e) => {
                         e.preventDefault();
                     });
                     
-                    // Deshabilitar abrir consola con Ctrl+Shift+J
                     document.addEventListener('keydown', (e) => {
                         if (e.ctrlKey && e.shiftKey && e.key === 'J') {
                             e.preventDefault();
                         }
                     });
                     
-                    // Enfocar automáticamente el campo de entrada en móviles
                     if (isMobileDevice.value) {
                         setTimeout(() => {
                             if (codeInput.value) {
@@ -2093,7 +2099,6 @@
                                     preventScroll: true
                                 });
                                 
-                                // Forzar el enfoque si el primer intento falla
                                 setTimeout(() => {
                                     if (document.activeElement !== codeInput.value) {
                                         codeInput.value.focus();
